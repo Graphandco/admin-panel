@@ -303,7 +303,7 @@ function SidebarHeader({ className, ...props }) {
     <div
       data-slot="sidebar-header"
       data-sidebar="header"
-      className={cn("gap-2 p-2 flex flex-col", className)}
+      className={cn("gap-2 px-2 py-4 flex flex-col border-b border-white/10 bg-background", className)}
       {...props}
     />
   )

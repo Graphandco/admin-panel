@@ -146,9 +146,9 @@ const data = {
 export function AppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="py-5 pb-0">
+      <SidebarHeader>
         <Link href="/" className="flex items-center px-2 gap-4">
-          <Image src="/logo.svg" alt="Graph and Co" width={28} height={28} />
+          <Image src="/logo.svg" alt="Graph and Co" width={32} height={32} />
           <div className="grid flex-1 leading-tight">
               <span className="truncate text-sm font-medium text-white">Admin Panel</span>
               <span className="truncate text-xs text-muted-foreground">Graph and Co</span>

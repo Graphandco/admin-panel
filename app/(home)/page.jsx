@@ -1,23 +1,4 @@
-export const metadata = {
-  title: "Admin Panel - Graph and Co",
-  description:
-     "Panneau d'administration de Graph and Co",
-  openGraph: {
-     title: "Admin Panel - Graph and Co",
-     description:
-        "Panneau d'administration de Graph and Co",
-     url: "https://admin.graphandco.com",
-     images: [
-        {
-           url: "https://graphandco.com/og-image.jpg",
-           width: 1200,
-           height: 630,
-           alt: "Graph & Co - accueil",
-        },
-     ],
-     type: "website",
-  },
-};
+"use client"
 
 export default function Page() {
   return (
