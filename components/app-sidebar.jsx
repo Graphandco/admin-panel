@@ -11,12 +11,13 @@ import {
   Map,
   PieChart,
   Settings2,
-  Container,
+  SquareTerminal,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
+// import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -24,7 +25,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import Image from "next/image"
 
 // This is sample data.
 const data = {
@@ -33,12 +33,28 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-
+  teams: [
+    {
+      name: "Acme Inc",
+      logo: GalleryVerticalEnd,
+      plan: "Enterprise",
+    },
+    {
+      name: "Acme Corp.",
+      logo: AudioWaveform,
+      plan: "Startup",
+    },
+    {
+      name: "Evil Corp.",
+      logo: Command,
+      plan: "Free",
+    },
+  ],
   navMain: [
     {
-      title: "Docker",
+      title: "Playground",
       url: "#",
-      icon: Container,
+      icon: SquareTerminal,
       isActive: true,
       items: [
         {
@@ -143,14 +159,8 @@ const data = {
 export function AppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="py-5 pb-0">
-        <div className="flex items-center px-2 gap-4">
-          <Image src="/logo.svg" alt="Graph and Co" width={28} height={28} />
-          <div className="grid flex-1 leading-tight">
-              <span className="truncate font-medium text-white">Admin Panel</span>
-              <span className="truncate text-sm text-muted-foreground">Graph and Co</span>
-          </div>
-        </div>
+      <SidebarHeader>
+        {/* <TeamSwitcher teams={data.teams} /> */}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
