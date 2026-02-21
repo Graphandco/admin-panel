@@ -9,8 +9,8 @@ services:
       - .env
     networks:
       - web-network
-    volumes:
-      - ./server-actions:/opt/admin-scripts:ro
+    # Les variables .env (ADMIN_API_URL, TAILSCALE_API_URL, TAILSCALE_API_KEY, etc.)
+    # sont chargées via env_file. Override uniquement si nécessaire.
     environment:
       NODE_ENV: production
 

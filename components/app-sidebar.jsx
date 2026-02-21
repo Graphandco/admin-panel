@@ -11,13 +11,14 @@ import {
   Map,
   PieChart,
   Settings2,
-  SquareTerminal,
+  Container,
+  Network,
 } from "lucide-react"
+// import { SiTailscale } from "react-icons/si";
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
-// import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -25,41 +26,27 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import Image from "next/image"
+import Link from "next/link"
 
 // This is sample data.
 const data = {
   user: {
     name: "shadcn",
     email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "/logo.svg",
   },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
+
   navMain: [
     {
-      title: "Playground",
+      title: "Docker",
       url: "#",
-      icon: SquareTerminal,
+      icon: Container,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Containers",
+          url: "/docker",
         },
         {
           title: "Starred",
@@ -139,9 +126,9 @@ const data = {
   ],
   projects: [
     {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      name: "Tailscale",
+      url: "/tailscale",
+      icon: Network,
     },
     {
       name: "Sales & Marketing",
@@ -159,8 +146,14 @@ const data = {
 export function AppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        {/* <TeamSwitcher teams={data.teams} /> */}
+      <SidebarHeader className="py-5 pb-0">
+        <Link href="/" className="flex items-center px-2 gap-4">
+          <Image src="/logo.svg" alt="Graph and Co" width={28} height={28} />
+          <div className="grid flex-1 leading-tight">
+              <span className="truncate text-sm font-medium text-white">Admin Panel</span>
+              <span className="truncate text-xs text-muted-foreground">Graph and Co</span>
+          </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

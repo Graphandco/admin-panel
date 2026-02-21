@@ -10,9 +10,10 @@ services:
       - .:/app
       - admin-node-modules:/app/node_modules
       - .next:/app/.next
+    env_file:
+      - .env
     environment:
       NODE_ENV: development
-      PORT: 3010
 
 volumes:
   admin-node-modules:

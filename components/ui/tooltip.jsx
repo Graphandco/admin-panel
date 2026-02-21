@@ -21,7 +21,8 @@ function Tooltip(props) {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
-function TooltipTrigger(props) {
+function TooltipTrigger({ asChild, ...props }) {
+  // Base UI utilise "render", pas "asChild" (Radix). Filtrer asChild pour éviter les erreurs d'hydratation.
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
 
