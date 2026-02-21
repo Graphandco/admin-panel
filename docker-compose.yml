@@ -1,0 +1,19 @@
+services:
+  admin-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: admin-panel
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - web-network
+    volumes:
+      - ./server-actions:/opt/admin-scripts:ro
+    environment:
+      NODE_ENV: production
+
+networks:
+  web-network:
+    external: true

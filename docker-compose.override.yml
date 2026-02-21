@@ -1,0 +1,22 @@
+services:
+  admin-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: admin-panel-dev
+    networks:
+      - web-network
+    volumes:
+      - .:/app
+      - admin-node-modules:/app/node_modules
+      - .next:/app/.next
+    environment:
+      NODE_ENV: development
+      PORT: 3010
+
+volumes:
+  admin-node-modules:
+
+networks:
+  web-network:
+    external: true
