@@ -109,7 +109,7 @@ function StatusBadge({ active }) {
    );
 }
 
-export function DevicesTab({ devices = [], tailnet, loading, error }) {
+export function DevicesTab({ devices = [], tailnet, loading, error, onRefresh }) {
    if (error) {
       return (
          <Card className="my-6 p-6">

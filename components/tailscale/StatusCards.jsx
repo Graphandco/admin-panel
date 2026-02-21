@@ -6,36 +6,14 @@ import {
    CardTitle,
 } from "@/components/ui/card";
 import { Smartphone, Wifi, WifiOff } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
-import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 
 export function StatusCards({
    total = 0,
    active = 0,
    inactive = 0,
-   onRefresh,
-   loading,
 }) {
    return (
-      <>
-         <div className="flex justify-end items-center pb-4 px-1">
-            {onRefresh && (
-               <button
-                  onClick={onRefresh}
-                  disabled={loading}
-                  className={cn(buttonVariants({}))}
-               >
-                  {loading ? (
-                     <Loader2Icon className="size-4 mr-1 animate-spin" />
-                  ) : (
-                     <RefreshCwIcon className="size-4 mr-1" />
-                  )}
-                  Actualiser
-               </button>
-            )}
-         </div>
-         <div className="flex flex-wrap gap-6">
+      <div className="flex flex-wrap gap-6">
             <Card className="w-full sm:w-xs">
                <CardHeader>
                   <CardTitle>
@@ -90,7 +68,6 @@ export function StatusCards({
                   <p className="text-lg uppercase font-light">Inactifs</p>
                </CardContent>
             </Card>
-         </div>
-      </>
+      </div>
    );
 }

@@ -22,7 +22,10 @@ export const metadata = {
 export default function Layout({ children }) {
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-4 text-white">Tailscale</h1>
+            <header className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold text-white">Tailscale</h1>
+                <div id="tailscale-refresh-portal" />
+            </header>
             {children}
         </div>
     )
