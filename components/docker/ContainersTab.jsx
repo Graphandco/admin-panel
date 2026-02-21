@@ -95,12 +95,12 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
           <Table>
             <TableHeader className="bg-muted text-white">
               <TableRow>
-                <TableHead>Nom</TableHead>
+                <TableHead><span className="pl-2">Nom</span></TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>En ligne depuis</TableHead>
                 <TableHead>Créé le</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right"><span className="pr-2">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -119,10 +119,14 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
               ) : (
                 containers.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-medium font-mono text-sm">
-                      {getContainerName(c.names)}
+                    <TableCell className="text-sm">
+                      <span className="pl-2">
+                        {getContainerName(c.names)}
+                      </span>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{c.image}</TableCell>
+                    {/* <TableCell className="font-mono text-xs"><span className="bg-muted relative rounded px-2 py-[0.3rem] font-mono text-xs">{c.image}</span></TableCell>
+                    <TableCell> */}
+                    <TableCell className="text-sm">{c.image}</TableCell>
                     <TableCell>
                       <StatusBadge state={c.state} />
                     </TableCell>
@@ -143,7 +147,7 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                           <MoreHorizontalIcon />
                           <span className="sr-only">Open menu</span>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent className="pr-2" align="end">
                           <DropdownMenuItem>(re)démarrer</DropdownMenuItem>
                           <DropdownMenuItem>Build</DropdownMenuItem>
                           <DropdownMenuItem>Arrêter</DropdownMenuItem>

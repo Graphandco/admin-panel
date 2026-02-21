@@ -29,7 +29,7 @@ function CopyIpButton({ ip }) {
           <button
             type="button"
             onClick={handleCopy}
-            className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'h-7 w-7')}
+            className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'h-7 w-7 hover:text-primary cursor-pointer')}
           >
             <CopyIcon className="size-3.5" />
           </button>
@@ -135,7 +135,7 @@ export function DevicesTab({ devices = [], tailnet, loading, error, onRefresh })
           <Table>
             <TableHeader className="bg-muted text-white">
               <TableRow>
-                <TableHead>Appareil</TableHead>
+                <TableHead><span className="pl-2">Appareil</span></TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>IP</TableHead>
                 <TableHead>URL</TableHead>
@@ -161,13 +161,13 @@ export function DevicesTab({ devices = [], tailnet, loading, error, onRefresh })
                   const displayName = getDeviceDisplayName(device, tailnet)
                   return (
                     <TableRow key={device.id}>
-                      <TableCell className="font-medium font-mono text-sm">
-                        {displayName}
+                      <TableCell className="font-medium text-sm">
+                        <span className="pl-2">{displayName}</span>
                       </TableCell>
                       <TableCell>
                         <StatusBadge active={active} />
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
+                      <TableCell className="text-sm">
                         <span className="inline-flex items-center gap-1.5">
                           <span className="min-w-24">
                             {getDeviceIp(device)}
@@ -183,7 +183,7 @@ export function DevicesTab({ devices = [], tailnet, loading, error, onRefresh })
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
+                            className="inline-flex items-center gap-1 pr-2  hover:text-primary"
                           >
                             {url.replace(/^https?:\/\//, '')}
                             <ExternalLinkIcon className="size-3" />
