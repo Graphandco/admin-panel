@@ -25,6 +25,7 @@ export async function dockerPs() {
   }
 }
 
+/* dockerStats désactivé (stats non utilisées)
 export async function dockerStats() {
   try {
     const res = await adminApiFetch('/api/docker/stats')
@@ -35,6 +36,7 @@ export async function dockerStats() {
     return []
   }
 }
+*/
 
 async function dockerContainerAction(containerId, action) {
   const endpoints = { start: 'start', stop: 'stop', remove: 'remove', build: 'build' }
@@ -96,6 +98,7 @@ export async function dockerContainerCompose(containerId) {
   }
 }
 
+/* dockerLogs désactivé (logs non utilisés, vulnérable à l'injection)
 export async function dockerLogs(container) {
   try {
     const res = await adminApiFetch(
@@ -109,3 +112,4 @@ export async function dockerLogs(container) {
     throw err
   }
 }
+*/
