@@ -27,7 +27,19 @@ import {
    CheckIcon,
    Ban,
    SearchIcon,
+   PlayIcon,
+   SquareIcon,
+   LayersIcon,
+   WrenchIcon,
+   Trash2Icon,
 } from "lucide-react";
+import {
+   dockerContainerStart,
+   dockerContainerStop,
+   dockerContainerRemove,
+   dockerContainerBuild,
+   dockerContainerCompose,
+} from "@/app/actions/docker";
 
 function formatCreated(created) {
    if (created == null) return "-";
@@ -53,11 +65,19 @@ function getContainerName(names) {
 /** Parse "Up X seconds/minutes/hours/days/weeks" into seconds. Stopped => Infinity. */
 function getUptimeSeconds(status, state) {
    if (state !== "running" || !status) return Infinity;
-   const m = String(status).match(/^Up\s+(?:(\d+)\s+(second|minute|hour|day|week)s?)?/i);
+   const m = String(status).match(
+      /^Up\s+(?:(\d+)\s+(second|minute|hour|day|week)s?)?/i,
+   );
    if (!m) return 0;
    const val = parseInt(m[1] || "0", 10);
    const unit = (m[2] || "second").toLowerCase();
-   const multipliers = { second: 1, minute: 60, hour: 3600, day: 86400, week: 604800 };
+   const multipliers = {
+      second: 1,
+      minute: 60,
+      hour: 3600,
+      day: 86400,
+      week: 604800,
+   };
    return val * (multipliers[unit] || 1);
 }
 
@@ -81,6 +101,31 @@ function StatusBadge({ state }) {
 
 export function ContainersTab({ containers = [], loading, error, onRefresh }) {
    const [search, setSearch] = useState("");
+   const [actionId, setActionId] = useState(null);
+
+   async function handleAction(c, action) {
+      if (actionId) return;
+      const name = getContainerName(c.names);
+      setActionId(c.id);
+      try {
+         if (action === "start") await dockerContainerStart(c.id);
+         else if (action === "stop") await dockerContainerStop(c.id);
+         else if (action === "compose") await dockerContainerCompose(c.id);
+         else if (action === "build") await dockerContainerBuild(c.id);
+         else if (action === "remove") {
+            if (!confirm(`Supprimer le conteneur ${name} ?`)) {
+               setActionId(null);
+               return;
+            }
+            await dockerContainerRemove(c.id);
+         }
+         onRefresh?.();
+      } catch (err) {
+         alert(err.message || "Erreur");
+      } finally {
+         setActionId(null);
+      }
+   }
 
    const filteredContainers = search.trim()
       ? containers.filter((c) => {
@@ -153,7 +198,9 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                               colSpan={6}
                               className="text-center py-8 text-muted-foreground"
                            >
-                              {search.trim() ? "Aucun conteneur ne correspond" : "Aucun conteneur"}
+                              {search.trim()
+                                 ? "Aucun conteneur ne correspond"
+                                 : "Aucun conteneur"}
                            </TableCell>
                         </TableRow>
                      ) : (
@@ -165,63 +212,108 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                            )
                            .map((c) => (
                               <TableRow key={c.id}>
-                              <TableCell className="text-sm">
-                                 <span className="pl-2">
-                                    {getContainerName(c.names)}
-                                 </span>
-                              </TableCell>
-                              {/* <TableCell className="font-mono text-xs"><span className="bg-muted relative rounded px-2 py-[0.3rem] font-mono text-xs">{c.image}</span></TableCell>
+                                 <TableCell className="text-sm">
+                                    <span className="pl-2">
+                                       {getContainerName(c.names)}
+                                    </span>
+                                 </TableCell>
+                                 {/* <TableCell className="font-mono text-xs"><span className="bg-muted relative rounded px-2 py-[0.3rem] font-mono text-xs">{c.image}</span></TableCell>
                     <TableCell> */}
-                              <TableCell className="text-sm">
-                                 {c.image}
-                              </TableCell>
-                              <TableCell>
-                                 <StatusBadge state={c.state} />
-                              </TableCell>
-                              <TableCell>{c.status || "-"}</TableCell>
-                              <TableCell>{formatCreated(c.created)}</TableCell>
-                              <TableCell className="text-right">
-                                 <DropdownMenu>
-                                    <DropdownMenuTrigger
-                                       nativeButton={false}
-                                       render={
-                                          <div
-                                             role="button"
-                                             tabIndex={0}
-                                             className={cn(
-                                                buttonVariants({
-                                                   variant: "ghost",
-                                                   size: "icon",
-                                                }),
-                                             )}
-                                          />
-                                       }
-                                    >
-                                       <MoreHorizontalIcon />
-                                       <span className="sr-only">
-                                          Open menu
-                                       </span>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                       className="pr-2"
-                                       align="end"
-                                    >
-                                       <DropdownMenuItem>
-                                          (re)démarrer
-                                       </DropdownMenuItem>
-                                       <DropdownMenuItem>
-                                          Build
-                                       </DropdownMenuItem>
-                                       <DropdownMenuItem>
-                                          Arrêter
-                                       </DropdownMenuItem>
-                                       <DropdownMenuSeparator />
-                                       <DropdownMenuItem variant="destructive">
-                                          Supprimer
-                                       </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                 </DropdownMenu>
-                              </TableCell>
+                                 <TableCell className="text-sm">
+                                    {c.image}
+                                 </TableCell>
+                                 <TableCell>
+                                    <StatusBadge state={c.state} />
+                                 </TableCell>
+                                 <TableCell>{c.status || "-"}</TableCell>
+                                 <TableCell>
+                                    {formatCreated(c.created)}
+                                 </TableCell>
+                                 <TableCell className="text-right">
+                                    <DropdownMenu>
+                                       <DropdownMenuTrigger
+                                          nativeButton={false}
+                                          render={
+                                             <div
+                                                role="button"
+                                                tabIndex={0}
+                                                className={cn(
+                                                   buttonVariants({
+                                                      variant: "ghost",
+                                                      size: "icon",
+                                                   }),
+                                                )}
+                                             />
+                                          }
+                                       >
+                                          <MoreHorizontalIcon />
+                                          <span className="sr-only">
+                                             Open menu
+                                          </span>
+                                       </DropdownMenuTrigger>
+                                       <DropdownMenuContent
+                                          className="pr-2"
+                                          align="end"
+                                       >
+                                          <DropdownMenuItem
+                                             onClick={() =>
+                                                handleAction(c, "start")
+                                             }
+                                             disabled={
+                                                c.state === "running" ||
+                                                actionId === c.id
+                                             }
+                                          >
+                                             <PlayIcon className="size-4" />
+                                             Démarrer
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem
+                                             onClick={() =>
+                                                handleAction(c, "stop")
+                                             }
+                                             disabled={
+                                                c.state !== "running" ||
+                                                actionId === c.id
+                                             }
+                                          >
+                                             <SquareIcon className="size-4" />
+                                             Arrêter
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem
+                                             onClick={() =>
+                                                handleAction(c, "compose")
+                                             }
+                                             disabled={
+                                                c.state === "running" ||
+                                                actionId === c.id
+                                             }
+                                          >
+                                             <LayersIcon className="size-4" />
+                                             Compose
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem
+                                             onClick={() =>
+                                                handleAction(c, "build")
+                                             }
+                                             disabled={actionId === c.id}
+                                          >
+                                             <WrenchIcon className="size-4" />
+                                             Build
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                             variant="destructive"
+                                             onClick={() =>
+                                                handleAction(c, "remove")
+                                             }
+                                             disabled={actionId === c.id}
+                                          >
+                                             <Trash2Icon className="size-4" />
+                                             Supprimer
+                                          </DropdownMenuItem>
+                                       </DropdownMenuContent>
+                                    </DropdownMenu>
+                                 </TableCell>
                               </TableRow>
                            ))
                      )}
