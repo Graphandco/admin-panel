@@ -1,20 +1,12 @@
 "use client";
 
 import * as React from "react";
-import {
-   BookOpen,
-   Map,
-   PieChart,
-   Settings2,
-   Container,
-   Network,
-   Home,
-   UsersIcon,
-} from "lucide-react";
+import { Container, Home, UsersIcon } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
 import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
+import { NavAgence } from "@/components/nav-agence";
+import { NavReseau } from "@/components/nav-reseau";
 import { NavUser } from "@/components/nav-user";
 import {
    Sidebar,
@@ -56,15 +48,14 @@ function TailscaleIcon(props) {
    );
 }
 
-// This is sample data.
-const data = {
+const sidebarData = {
    user: {
       name: "shadcn",
       email: "m@example.com",
       avatar: "/logo.svg",
    },
 
-   navMain: [
+   vpsItems: [
       {
          title: "Docker",
          url: "/docker",
@@ -147,26 +138,18 @@ const data = {
       //    ],
       // },
    ],
-   projects: [
+   agenceItems: [
       {
-         name: "Tailscale",
-         url: "/tailscale",
-         icon: TailscaleIcon,
-      },
-      {
-         name: "Clients",
+         title: "Clients",
          url: "/clients",
          icon: UsersIcon,
       },
+   ],
+   reseauItems: [
       {
-         name: "Sales & Marketing",
-         url: "#",
-         icon: PieChart,
-      },
-      {
-         name: "Travel",
-         url: "#",
-         icon: Map,
+         title: "Tailscale",
+         url: "/tailscale",
+         icon: TailscaleIcon,
       },
    ],
 };
@@ -194,7 +177,7 @@ export function AppSidebar({ ...props }) {
                </div>
             </Link>
          </SidebarHeader>
-         <SidebarContent>
+         <SidebarContent className="text-white">
             <SidebarGroup>
                <SidebarMenu>
                   <SidebarMenuItem>
@@ -213,11 +196,12 @@ export function AppSidebar({ ...props }) {
                   </SidebarMenuItem>
                </SidebarMenu>
             </SidebarGroup>
-            <NavMain items={data.navMain} />
-            <NavProjects projects={data.projects} />
+            <NavMain items={sidebarData.vpsItems} />
+            <NavAgence items={sidebarData.agenceItems} />
+            <NavReseau items={sidebarData.reseauItems} />
          </SidebarContent>
-         <SidebarFooter>
-            <NavUser user={data.user} />
+         <SidebarFooter className="text-white">
+            <NavUser user={sidebarData.user} />
          </SidebarFooter>
          <SidebarRail />
       </Sidebar>
