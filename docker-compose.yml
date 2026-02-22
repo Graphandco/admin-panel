@@ -9,10 +9,11 @@ services:
       - .env
     networks:
       - web-network
-    # Les variables .env (ADMIN_API_URL, TAILSCALE_API_URL, TAILSCALE_API_KEY, etc.)
-    # sont chargées via env_file. Override uniquement si nécessaire.
+    # Variables .env: ADMIN_API_URL, ADMIN_API_KEY, TAILSCALE_*, etc.
     environment:
-      NODE_ENV: production
+      - NODE_ENV=production
+      - ADMIN_API_URL=${ADMIN_API_URL:-http://admin-api:3000}
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
 
 networks:
   web-network:

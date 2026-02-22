@@ -1,10 +1,19 @@
 'use server'
 
 const ADMIN_API_URL = process.env.ADMIN_API_URL || 'http://admin-api:3000'
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY
+
+function adminApiFetch(path) {
+  const headers = {}
+  if (ADMIN_API_KEY) {
+    headers['X-API-Key'] = ADMIN_API_KEY
+  }
+  return fetch(`${ADMIN_API_URL}${path}`, { headers })
+}
 
 export async function dockerPs() {
   try {
-    const res = await fetch(`${ADMIN_API_URL}/api/docker/ps`)
+    const res = await adminApiFetch('/api/docker/ps')
     const data = await res.json()
     if (!data.success) {
       throw new Error(data.error || 'Erreur API')
@@ -18,7 +27,7 @@ export async function dockerPs() {
 
 export async function dockerStats() {
   try {
-    const res = await fetch(`${ADMIN_API_URL}/api/docker/stats`)
+    const res = await adminApiFetch('/api/docker/stats')
     const data = await res.json()
     if (!data.success) return []
     return data.stats || []
@@ -29,8 +38,8 @@ export async function dockerStats() {
 
 export async function dockerLogs(container) {
   try {
-    const res = await fetch(
-      `${ADMIN_API_URL}/api/docker/logs?container=${encodeURIComponent(container)}`
+    const res = await adminApiFetch(
+      `/api/docker/logs?container=${encodeURIComponent(container)}`
     )
     const data = await res.json()
     if (!data.success) throw new Error(data.error || 'Erreur API')
