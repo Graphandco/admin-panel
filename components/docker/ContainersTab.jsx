@@ -101,6 +101,7 @@ function StatusBadge({ state }) {
 
 export function ContainersTab({ containers = [], loading, error, onRefresh }) {
    const [search, setSearch] = useState("");
+   const [stateFilter, setStateFilter] = useState("all");
    const [actionId, setActionId] = useState(null);
 
    async function handleAction(c, action) {
@@ -127,12 +128,17 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
       }
    }
 
-   const filteredContainers = search.trim()
-      ? containers.filter((c) => {
-           const name = getContainerName(c.names);
-           return name.toLowerCase().includes(search.trim().toLowerCase());
-        })
-      : containers;
+   const filteredContainers = containers
+      .filter((c) => {
+         if (stateFilter === "running") return c.state === "running";
+         if (stateFilter === "stopped") return c.state !== "running";
+         return true;
+      })
+      .filter((c) => {
+         if (!search.trim()) return true;
+         const name = getContainerName(c.names);
+         return name.toLowerCase().includes(search.trim().toLowerCase());
+      });
    if (error) {
       return (
          <Card className="my-6 p-6">
@@ -156,20 +162,57 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
 
    return (
       <div className="my-6">
+         <div className="flex justify-between items-center gap-3 mb-4">
+            <div className="flex gap-1">
+               <button
+                  onClick={() => setStateFilter("all")}
+                  className={cn(
+                     "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors",
+                     stateFilter === "all"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+               >
+                  Tous
+               </button>
+               <button
+                  onClick={() => setStateFilter("running")}
+                  className={cn(
+                     "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors",
+                     stateFilter === "running"
+                        ? "bg-green-500/20 text-green-600 dark:text-green-400"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+               >
+                  <CheckIcon className="size-3.5" />
+                  Actifs
+               </button>
+               <button
+                  onClick={() => setStateFilter("stopped")}
+                  className={cn(
+                     "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors",
+                     stateFilter === "stopped"
+                        ? "bg-slate-500/20 text-slate-600 dark:text-slate-400"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+               >
+                  <Ban className="size-3.5" />
+                  Inactifs
+               </button>
+            </div>
+            <div className="relative w-full max-w-xs">
+               <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+               <Input
+                  type="search"
+                  placeholder="Rechercher par nom..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8"
+               />
+            </div>
+         </div>
          <Card className="mb-6 p-0">
-            <CardContent className="pt-6">
-               <div className="flex justify-end mb-4">
-                  <div className="relative w-full max-w-xs">
-                     <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                     <Input
-                        type="search"
-                        placeholder="Rechercher par nom..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-8"
-                     />
-                  </div>
-               </div>
+            <CardContent>
                <Table>
                   <TableHeader className="bg-muted text-white">
                      <TableRow>
@@ -200,7 +243,11 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                            >
                               {search.trim()
                                  ? "Aucun conteneur ne correspond"
-                                 : "Aucun conteneur"}
+                                 : stateFilter === "running"
+                                   ? "Aucun conteneur actif"
+                                   : stateFilter === "stopped"
+                                     ? "Aucun conteneur inactif"
+                                     : "Aucun conteneur"}
                            </TableCell>
                         </TableRow>
                      ) : (
