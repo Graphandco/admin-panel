@@ -9,6 +9,7 @@ import {
    Container,
    Network,
    Home,
+   UsersIcon,
 } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
@@ -153,6 +154,11 @@ const data = {
          icon: TailscaleIcon,
       },
       {
+         name: "Clients",
+         url: "/clients",
+         icon: UsersIcon,
+      },
+      {
          name: "Sales & Marketing",
          url: "#",
          icon: PieChart,
@@ -193,7 +199,12 @@ export function AppSidebar({ ...props }) {
                <SidebarMenu>
                   <SidebarMenuItem>
                      <SidebarMenuButton
-                        render={<Link href="/" onClick={() => isMobile && setOpenMobile(false)} />}
+                        render={
+                           <Link
+                              href="/"
+                              onClick={() => isMobile && setOpenMobile(false)}
+                           />
+                        }
                         className="text-white hover:text-card"
                      >
                         <Home className="size-4 shrink-0" />
