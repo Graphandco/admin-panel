@@ -8,6 +8,7 @@ import {
    Settings2,
    Container,
    Network,
+   Home,
 } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
@@ -20,6 +21,11 @@ import {
    SidebarFooter,
    SidebarHeader,
    SidebarRail,
+   SidebarMenuItem,
+   SidebarMenu,
+   SidebarGroup,
+   SidebarMenuButton,
+   useSidebar,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import Link from "next/link";
@@ -60,7 +66,7 @@ const data = {
    navMain: [
       {
          title: "Docker",
-         url: "#",
+         url: "/docker",
          icon: Container,
          // isActive: true,
          items: [
@@ -68,19 +74,11 @@ const data = {
                title: "Containers",
                url: "/docker",
             },
-            {
-               title: "Starred",
-               url: "#",
-            },
-            {
-               title: "Settings",
-               url: "#",
-            },
          ],
       },
       {
          title: "Wordpress",
-         url: "#",
+         url: "/wordpress/dashboard",
          icon: WordPressIcon,
          items: [
             {
@@ -88,57 +86,65 @@ const data = {
                url: "/wordpress/dashboard",
             },
             {
+               title: "Sites",
+               url: "/wordpress/sites",
+            },
+            {
                title: "Extensions",
                url: "/wordpress/plugins",
             },
-         ],
-      },
-      {
-         title: "Documentation",
-         url: "#",
-         icon: BookOpen,
-         items: [
             {
-               title: "Introduction",
-               url: "#",
-            },
-            {
-               title: "Get Started",
-               url: "#",
-            },
-            {
-               title: "Tutorials",
-               url: "#",
-            },
-            {
-               title: "Changelog",
-               url: "#",
+               title: "Connexions",
+               url: "/wordpress/connexions",
             },
          ],
       },
-      {
-         title: "Settings",
-         url: "#",
-         icon: Settings2,
-         items: [
-            {
-               title: "General",
-               url: "#",
-            },
-            {
-               title: "Team",
-               url: "#",
-            },
-            {
-               title: "Billing",
-               url: "#",
-            },
-            {
-               title: "Limits",
-               url: "#",
-            },
-         ],
-      },
+      // {
+      //    title: "Documentation",
+      //    url: "#",
+      //    icon: BookOpen,
+      //    items: [
+      //       {
+      //          title: "Introduction",
+      //          url: "#",
+      //       },
+      //       {
+      //          title: "Get Started",
+      //          url: "#",
+      //       },
+      //       {
+      //          title: "Tutorials",
+      //          url: "#",
+      //       },
+      //       {
+      //          title: "Changelog",
+      //          url: "#",
+      //       },
+      //    ],
+      // },
+      // {
+      //    title: "Settings",
+      //    url: "#",
+      //    icon: Settings2,
+      //    items: [
+      //       {
+      //          title: "General",
+      //          url: "#",
+      //       },
+      //       {
+      //          title: "Team",
+      //          url: "#",
+      //       },
+      //       {
+      //          title: "Billing",
+      //          url: "#",
+      //       },
+      //       {
+      //          title: "Limits",
+      //          url: "#",
+      //       },
+      //    ],
+      // },
    ],
    projects: [
       {
@@ -160,6 +166,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }) {
+   const { isMobile, setOpenMobile } = useSidebar();
+
    return (
       <Sidebar collapsible="icon" {...props}>
          <SidebarHeader>
@@ -181,6 +189,19 @@ export function AppSidebar({ ...props }) {
             </Link>
          </SidebarHeader>
          <SidebarContent>
+            <SidebarGroup>
+               <SidebarMenu>
+                  <SidebarMenuItem>
+                     <SidebarMenuButton
+                        render={<Link href="/" onClick={() => isMobile && setOpenMobile(false)} />}
+                        className="text-white hover:text-card"
+                     >
+                        <Home className="size-4 shrink-0" />
+                        <span>Accueil</span>
+                     </SidebarMenuButton>
+                  </SidebarMenuItem>
+               </SidebarMenu>
+            </SidebarGroup>
             <NavMain items={data.navMain} />
             <NavProjects projects={data.projects} />
          </SidebarContent>

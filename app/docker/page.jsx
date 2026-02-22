@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { dockerPs, dockerStats } from "@/app/actions/docker";
+import { dockerPs } from "@/app/actions/docker";
 import { StatusCards } from "@/components/docker/StatusCards";
 import { ContainersTab } from "@/components/docker/ContainersTab";
 import { buttonVariants } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 
 export default function Page() {
    const [containers, setContainers] = useState([]);
-   const [stats, setStats] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
    const [mounted, setMounted] = useState(false);
@@ -22,9 +21,6 @@ export default function Page() {
          // Liste des conteneurs en premier (affichage immédiat du tableau)
          const list = await dockerPs();
          setContainers(list);
-         setLoading(false);
-         // Stats en arrière-plan (section optionnelle, pas bloquante)
-         dockerStats().then(setStats).catch(() => {});
       } catch (err) {
          setError(err.message || "Erreur lors du chargement");
       } finally {
@@ -67,17 +63,10 @@ export default function Page() {
          />
          <ContainersTab
             containers={containers}
+            loading={loading}
             error={error}
             onRefresh={load}
          />
-         {stats.length > 0 && (
-            <>
-               <h2 className="text-xl font-semibold mt-8 mb-2">Stats</h2>
-               <pre className="bg-muted p-4 rounded-md overflow-auto text-sm">
-                  {JSON.stringify(stats, null, 2)}
-               </pre>
-            </>
-         )}
       </>
    );
 }

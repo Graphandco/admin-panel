@@ -60,6 +60,30 @@ export async function wordpressPlugins(options = {}) {
 }
 
 /**
+ * 10 dernières connexions au backoffice WordPress
+ * @returns {Promise<Array<{ user: string, login: string }>>}
+ */
+export async function wordpressConnexions() {
+  try {
+    const res = await adminApiFetch('/api/wordpress/connexions')
+    const text = await res.text()
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch {
+      throw new Error(res.ok ? 'Réponse invalide' : `API ${res.status}`)
+    }
+    if (!data.success) {
+      throw new Error(data.error || 'Erreur API')
+    }
+    return data.connexions || []
+  } catch (err) {
+    console.error('wordpressConnexions:', err.message)
+    throw err
+  }
+}
+
+/**
  * Dernières modifications (posts/pages) sur tout le multisite
  * @returns {Promise<Array<{ title, modified, type, site_url, url?, blog_id }>>}
  */
@@ -80,5 +104,66 @@ export async function wordpressRecentChanges() {
   } catch (err) {
     console.error('wordpressRecentChanges:', err.message)
     throw err
+  }
+}
+
+/**
+ * Statistiques par type de contenu + espace disque
+ * @param {{ url?: string }} options - url optionnelle pour cibler un site
+ * @returns {Promise<{ content_types: Array<{name,label,count}>, disk_used: string|null }>}
+ */
+export async function wordpressSiteStats(options = {}) {
+  try {
+    const params = new URLSearchParams()
+    if (options.url) params.set('url', options.url)
+    const path = '/api/wordpress/site-stats' + (params.toString() ? `?${params}` : '')
+    const res = await adminApiFetch(path)
+    const text = await res.text()
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch {
+      throw new Error(res.ok ? 'Réponse invalide' : `API ${res.status}`)
+    }
+    if (!data.success) {
+      throw new Error(data.error || 'Erreur API')
+    }
+    return {
+      content_types: data.content_types || [],
+      disk_used: data.disk_used || null,
+    }
+  } catch (err) {
+    console.error('wordpressSiteStats:', err.message)
+    throw err
+  }
+}
+
+/**
+ * Infos d'un site (titre, logo, url, admin_url)
+ * @param {{ url: string }} options - url du site
+ * @returns {Promise<{ site_name, url, logo_url, admin_url }>}
+ */
+export async function wordpressSiteInfo(options) {
+  try {
+    if (!options?.url) return null
+    const res = await adminApiFetch(`/api/wordpress/site-info?url=${encodeURIComponent(options.url)}`)
+    const text = await res.text()
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch {
+      return null
+    }
+    if (!data.success) return null
+    return {
+      site_name: data.site_name || null,
+      tagline: data.tagline || null,
+      url: data.url || null,
+      logo_url: data.logo_url || null,
+      admin_url: data.admin_url || null,
+    }
+  } catch (err) {
+    console.error('wordpressSiteInfo:', err.message)
+    return null
   }
 }

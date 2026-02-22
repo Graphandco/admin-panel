@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
    DropdownMenu,
    DropdownMenuContent,
@@ -22,6 +26,7 @@ import {
    RefreshCwIcon,
    CheckIcon,
    Ban,
+   SearchIcon,
 } from "lucide-react";
 
 function formatCreated(created) {
@@ -75,6 +80,14 @@ function StatusBadge({ state }) {
 }
 
 export function ContainersTab({ containers = [], loading, error, onRefresh }) {
+   const [search, setSearch] = useState("");
+
+   const filteredContainers = search.trim()
+      ? containers.filter((c) => {
+           const name = getContainerName(c.names);
+           return name.toLowerCase().includes(search.trim().toLowerCase());
+        })
+      : containers;
    if (error) {
       return (
          <Card className="my-6 p-6">
@@ -99,7 +112,19 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
    return (
       <div className="my-6">
          <Card className="mb-6 p-0">
-            <CardContent>
+            <CardContent className="pt-6">
+               <div className="flex justify-end mb-4">
+                  <div className="relative w-full max-w-xs">
+                     <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                     <Input
+                        type="search"
+                        placeholder="Rechercher par nom..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-8"
+                     />
+                  </div>
+               </div>
                <Table>
                   <TableHeader className="bg-muted text-white">
                      <TableRow>
@@ -122,17 +147,17 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                               <Loader2Icon className="size-6 animate-spin mx-auto text-muted-foreground" />
                            </TableCell>
                         </TableRow>
-                     ) : containers.length === 0 ? (
+                     ) : filteredContainers.length === 0 ? (
                         <TableRow>
                            <TableCell
                               colSpan={6}
                               className="text-center py-8 text-muted-foreground"
                            >
-                              Aucun conteneur
+                              {search.trim() ? "Aucun conteneur ne correspond" : "Aucun conteneur"}
                            </TableCell>
                         </TableRow>
                      ) : (
-                        [...containers]
+                        [...filteredContainers]
                            .sort(
                               (a, b) =>
                                  getUptimeSeconds(a.status, a.state) -
