@@ -19,12 +19,12 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-         const [list, statsList] = await Promise.all([
-            dockerPs(),
-            dockerStats(),
-         ]);
+         // Liste des conteneurs en premier (affichage immédiat du tableau)
+         const list = await dockerPs();
          setContainers(list);
-         setStats(statsList);
+         setLoading(false);
+         // Stats en arrière-plan (section optionnelle, pas bloquante)
+         dockerStats().then(setStats).catch(() => {});
       } catch (err) {
          setError(err.message || "Erreur lors du chargement");
       } finally {
