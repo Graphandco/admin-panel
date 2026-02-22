@@ -22,6 +22,8 @@ import {
    Loader2Icon,
    ExternalLinkIcon,
    CopyIcon,
+   CheckIcon,
+   Ban,
 } from "lucide-react";
 
 function CopyIpButton({ ip }) {
@@ -98,12 +100,14 @@ function StatusBadge({ active }) {
    return (
       <span
          className={cn(
-            "inline-flex px-2 py-0.5 rounded-full text-xs font-medium",
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
             active
                ? "bg-green-500/20 text-green-600 dark:text-green-400"
                : "bg-slate-500/20 text-slate-600 dark:text-slate-400",
          )}
       >
+         {active && <CheckIcon className="size-3.5" />}
+         {!active && <Ban className="size-3.5" />}
          {active ? "Actif" : "Inactif"}
       </span>
    );

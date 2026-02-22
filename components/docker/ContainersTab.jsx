@@ -16,7 +16,13 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { MoreHorizontalIcon, Loader2Icon, RefreshCwIcon } from "lucide-react";
+import {
+   MoreHorizontalIcon,
+   Loader2Icon,
+   RefreshCwIcon,
+   CheckIcon,
+   Ban,
+} from "lucide-react";
 
 function formatCreated(created) {
    if (created == null) return "-";
@@ -39,17 +45,30 @@ function getContainerName(names) {
    return names[0].replace(/^\//, "");
 }
 
+/** Parse "Up X seconds/minutes/hours/days/weeks" into seconds. Stopped => Infinity. */
+function getUptimeSeconds(status, state) {
+   if (state !== "running" || !status) return Infinity;
+   const m = String(status).match(/^Up\s+(?:(\d+)\s+(second|minute|hour|day|week)s?)?/i);
+   if (!m) return 0;
+   const val = parseInt(m[1] || "0", 10);
+   const unit = (m[2] || "second").toLowerCase();
+   const multipliers = { second: 1, minute: 60, hour: 3600, day: 86400, week: 604800 };
+   return val * (multipliers[unit] || 1);
+}
+
 function StatusBadge({ state }) {
    const isRunning = state === "running";
    return (
       <span
          className={cn(
-            "inline-flex px-2 py-0.5 rounded-full text-xs font-medium",
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
             isRunning
                ? "bg-green-500/20 text-green-600 dark:text-green-400"
                : "bg-slate-500/20 text-slate-600 dark:text-slate-400",
          )}
       >
+         {isRunning && <CheckIcon className="size-3.5" />}
+         {!isRunning && <Ban className="size-3.5" />}
          {isRunning ? "Running" : "Stopped"}
       </span>
    );
@@ -113,8 +132,14 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                            </TableCell>
                         </TableRow>
                      ) : (
-                        containers.map((c) => (
-                           <TableRow key={c.id}>
+                        [...containers]
+                           .sort(
+                              (a, b) =>
+                                 getUptimeSeconds(a.status, a.state) -
+                                 getUptimeSeconds(b.status, b.state),
+                           )
+                           .map((c) => (
+                              <TableRow key={c.id}>
                               <TableCell className="text-sm">
                                  <span className="pl-2">
                                     {getContainerName(c.names)}
@@ -172,8 +197,8 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                                     </DropdownMenuContent>
                                  </DropdownMenu>
                               </TableCell>
-                           </TableRow>
-                        ))
+                              </TableRow>
+                           ))
                      )}
                   </TableBody>
                </Table>
