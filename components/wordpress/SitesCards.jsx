@@ -1,13 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-   Card,
-   CardHeader,
-   CardTitle,
-   CardAction,
-   CardContent,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { StatusCard } from "@/components/ui/status-card";
 import {
    Select,
    SelectContent,
@@ -128,7 +123,7 @@ export default function SitesCards() {
 
          <SiteInfos selectedSiteUrl={selectedSiteUrl} />
 
-         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+         <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {loading ? (
                <Card className="col-span-full flex items-center justify-center py-12">
                   <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
@@ -136,60 +131,27 @@ export default function SitesCards() {
             ) : (
                <>
                   {stats.disk_used && (
-                     <Card className="h-min border-sky-500/30 bg-sky-950/30">
-                        <CardHeader>
-                           <CardTitle className="flex items-center gap-2">
-                              <div className="size-10 p-2 bg-sky-600/20 border border-sky-500/30 rounded-md flex items-center justify-center">
-                                 <HardDriveIcon className="size-5 text-sky-400 opacity-90" />
-                              </div>
-                              <span className="text-base font-medium text-white">
-                                 Espace disque
-                              </span>
-                           </CardTitle>
-                           <CardAction>
-                              <span className="text-2xl font-bold text-white">
-                                 {stats.disk_used}
-                              </span>
-                           </CardAction>
-                        </CardHeader>
-                        <CardContent>
-                           <p className="text-muted-foreground text-sm">
-                              {selectedSiteUrl
-                                 ? "Uploads du site"
-                                 : "wp-content du multisite"}
-                           </p>
-                        </CardContent>
-                     </Card>
+                     <StatusCard
+                        Icon={HardDriveIcon}
+                        color="sky"
+                        label={
+                           selectedSiteUrl
+                              ? "Uploads du site"
+                              : "wp-content du multisite"
+                        }
+                        value={stats.disk_used}
+                     />
                   )}
                   {stats.content_types
                      .filter((ct) => (parseInt(ct.count, 10) || 0) >= 1)
                      .map((ct) => (
-                        <Card key={ct.name} className="h-min">
-                           <CardHeader>
-                              <CardTitle className="flex items-center gap-2">
-                                 <div className="size-10 p-2 bg-[#21759b]/10 border border-[#21759b]/20 rounded-md flex items-center justify-center">
-                                    <FileTextIcon className="size-5 text-[#21759b] opacity-90" />
-                                 </div>
-                                 <span className="text-base font-medium text-white">
-                                    {typeDisplayName(ct.name, ct.label)}
-                                 </span>
-                              </CardTitle>
-                              <CardAction>
-                                 <span className="text-2xl font-bold">
-                                    {parseInt(ct.count, 10) || 0}
-                                 </span>
-                              </CardAction>
-                           </CardHeader>
-                           <CardContent>
-                              <p className="text-muted-foreground text-sm">
-                                 {parseInt(ct.count, 10) || 0}{" "}
-                                 {typeDisplayName(
-                                    ct.name,
-                                    ct.label,
-                                 ).toLowerCase()}
-                              </p>
-                           </CardContent>
-                        </Card>
+                        <StatusCard
+                           key={ct.name}
+                           Icon={FileTextIcon}
+                           color="white"
+                           label={typeDisplayName(ct.name, ct.label)}
+                           value={parseInt(ct.count, 10) || 0}
+                        />
                      ))}
                </>
             )}
