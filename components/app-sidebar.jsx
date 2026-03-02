@@ -50,9 +50,9 @@ function TailscaleIcon(props) {
 
 const sidebarData = {
    user: {
-      name: "shadcn",
-      email: "m@example.com",
-      avatar: "/logo.svg",
+      name: "Régis",
+      email: "contact@graphandco.com",
+      avatar: "/avatar.webp",
    },
 
    vpsItems: [
@@ -65,6 +65,10 @@ const sidebarData = {
             {
                title: "Containers",
                url: "/docker",
+            },
+            {
+               title: "Cheatsheet",
+               url: "/docker/cheatsheet",
             },
          ],
       },

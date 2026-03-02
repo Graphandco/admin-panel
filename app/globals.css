@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -82,6 +83,7 @@
    --chart-5: oklch(0.47 0.12 46);
    /* --sidebar: oklch(0.21 0.034 264.665); */
    --sidebar: oklch(20.472% 0.01046 268.188);
+   --sidebar-secondary: hsl(220deg 25% 15%);
    /* --sidebar-foreground: hsl(209.52deg 30.43% 59.41%); */
    --sidebar-foreground: hsl(220, 2%, 61%);
    --sidebar-primary: hsl(46.82deg 96.65% 35.1%);

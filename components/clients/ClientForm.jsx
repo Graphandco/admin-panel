@@ -49,7 +49,8 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
       const payload = {
          ...form,
          annual_cost: form.annual_cost !== "" ? Number(form.annual_cost) : null,
-         creation_cost: form.creation_cost !== "" ? Number(form.creation_cost) : null,
+         creation_cost:
+            form.creation_cost !== "" ? Number(form.creation_cost) : null,
       };
       onSubmit(payload);
    }
@@ -62,7 +63,9 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                <Input
                   id="name"
                   value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, name: e.target.value }))
+                  }
                   required
                />
             </div>
@@ -71,7 +74,9 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                <Input
                   id="company"
                   value={form.company}
-                  onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, company: e.target.value }))
+                  }
                />
             </div>
             <div className="grid gap-2">
@@ -80,7 +85,9 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                   id="email"
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, email: e.target.value }))
+                  }
                />
             </div>
             <div className="grid gap-2">
@@ -89,7 +96,9 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                   id="website"
                   type="url"
                   value={form.website}
-                  onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, website: e.target.value }))
+                  }
                />
             </div>
             <div className="grid gap-2">
@@ -97,7 +106,9 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                <Input
                   id="phone"
                   value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, phone: e.target.value }))
+                  }
                />
             </div>
             <div className="grid gap-2">
@@ -113,7 +124,9 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                <Input
                   id="adresse"
                   value={form.adresse}
-                  onChange={(e) => setForm((f) => ({ ...f, adresse: e.target.value }))}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, adresse: e.target.value }))
+                  }
                />
             </div>
             <div className="grid gap-2">
@@ -123,7 +136,9 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                   type="number"
                   step="0.01"
                   value={form.annual_cost}
-                  onChange={(e) => setForm((f) => ({ ...f, annual_cost: e.target.value }))}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, annual_cost: e.target.value }))
+                  }
                />
             </div>
             <div className="grid gap-2">
@@ -133,7 +148,9 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                   type="number"
                   step="0.01"
                   value={form.creation_cost}
-                  onChange={(e) => setForm((f) => ({ ...f, creation_cost: e.target.value }))}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, creation_cost: e.target.value }))
+                  }
                />
             </div>
          </div>
@@ -142,17 +159,23 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                type="checkbox"
                id="invoice"
                checked={form.invoice}
-               onChange={(e) => setForm((f) => ({ ...f, invoice: e.target.checked }))}
+               onChange={(e) =>
+                  setForm((f) => ({ ...f, invoice: e.target.checked }))
+               }
                className="size-4 rounded border"
             />
             <Label htmlFor="invoice">Facture</Label>
          </div>
          <div className="flex gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onCancel} size="sm">
+            <Button
+               type="button"
+               onClick={onCancel}
+               variant="outline"
+               className="cursor-pointer"
+            >
                Annuler
             </Button>
-            <Button type="submit" disabled={saving} size="sm">
-               {saving ? <Loader2Icon className="size-4 animate-spin mr-1" /> : null}
+            <Button type="submit" disabled={saving} className="cursor-pointer">
                {mode === "edit" ? "Enregistrer" : "Créer"}
             </Button>
          </div>

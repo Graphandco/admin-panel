@@ -13,19 +13,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { CheckIcon, Ban, Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { checkSitesStatus } from "@/app/actions/sites";
+import { clientsList } from "@/app/actions/clients";
 
-// Liste des sites à surveiller (name, host)
-const SITES = [
-   { name: "Graphandco", host: "https://graphandco.com" },
-   { name: "Hola Mate", host: "https://holamate.fr" },
-   { name: "Infirmière 68000", host: "https://infirmiere68000.fr" },
-   { name: "3ème chance", host: "https://3emechance.fr" },
-   { name: "Elsass Compta", host: "https://elsass-compta.fr" },
-   { name: "Bomot", host: "https://bomo.fr" },
-   { name: "Willow Tarot", host: "https://willow-tarot.fr" },
-   { name: "Pêche Exotique", host: "https://peche-exotique.fr" },
-   { name: "Loide Guitare", host: "https://loide-guitare.fr" },
-];
+function sitesFromClients(clients) {
+   return clients
+      .filter((c) => c.website?.trim())
+      .map((c) => ({
+         name: c.company || c.name || c.website,
+         host: c.website.startsWith("http") ? c.website : `https://${c.website}`,
+      }));
+}
 
 function StatusBadge({ status }) {
    const isOk = status === 200;
@@ -56,7 +53,9 @@ export default function SitesStatus() {
       setLoading(true);
       setError(null);
       try {
-         const results = await checkSitesStatus(SITES);
+         const clients = await clientsList();
+         const sitesToCheck = sitesFromClients(clients);
+         const results = await checkSitesStatus(sitesToCheck);
          setSites(results);
       } catch (err) {
          setError(err.message || "Erreur lors du chargement");

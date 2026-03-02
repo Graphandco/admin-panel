@@ -211,7 +211,7 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                />
             </div>
          </div>
-         <Card className="mb-6 p-0">
+         <Card className="mb-6 p-0 md:p-0">
             <CardContent>
                <Table>
                   <TableHeader className="bg-muted text-white">
