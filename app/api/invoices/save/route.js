@@ -1,18 +1,48 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, unlink } from "fs/promises";
 import path from "path";
 
 const INVOICES_DIR = process.env.INVOICES_DIR || path.join(process.cwd(), "invoices");
+const ADMIN_API_URL = process.env.ADMIN_API_URL || "http://admin-api:3000";
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
+
+async function createInvoiceInDb({ clientId, invoiceNumber, filename, totalTtc }) {
+   const url = `${ADMIN_API_URL}/api/invoices`;
+   const res = await fetch(url, {
+      method: "POST",
+      headers: {
+         "Content-Type": "application/json",
+         ...(ADMIN_API_KEY && { "X-API-Key": ADMIN_API_KEY }),
+      },
+      body: JSON.stringify({
+         client_id: Number(clientId),
+         invoice_number: String(invoiceNumber || ""),
+         filename,
+         total_ttc: totalTtc != null ? Number(totalTtc) : null,
+      }),
+   });
+   const data = await res.json();
+   if (!data.success) throw new Error(data.error || "Erreur création facture en base");
+   return data.invoice;
+}
 
 export async function POST(request) {
    try {
       const formData = await request.formData();
       const file = formData.get("file");
       const invoiceNumber = formData.get("invoiceNumber");
+      const clientId = formData.get("clientId");
+      const totalTtc = formData.get("totalTtc");
 
       if (!file || typeof file.arrayBuffer !== "function") {
          return NextResponse.json(
             { error: "Fichier PDF requis" },
+            { status: 400 }
+         );
+      }
+      if (!clientId) {
+         return NextResponse.json(
+            { error: "Client requis" },
             { status: 400 }
          );
       }
@@ -27,6 +57,22 @@ export async function POST(request) {
       const filepath = path.join(INVOICES_DIR, filename);
 
       await writeFile(filepath, buffer);
+
+      try {
+         await createInvoiceInDb({
+            clientId,
+            invoiceNumber: invoiceNumber || "",
+            filename,
+            totalTtc: totalTtc != null ? Number(totalTtc) : null,
+         });
+      } catch (dbErr) {
+         try {
+            await unlink(filepath);
+         } catch {
+            /* ignore */
+         }
+         throw dbErr;
+      }
 
       return NextResponse.json({
          success: true,

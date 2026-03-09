@@ -28,17 +28,7 @@ const DRAFT_STORAGE_KEY = "invoice-form-draft";
 async function getLogoDataUrl() {
    const base = typeof window !== "undefined" ? window.location.origin : "";
    try {
-      let res = await fetch(`${base}/logo.png`);
-      if (res.ok) {
-         const blob = await res.blob();
-         return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(blob);
-         });
-      }
-      res = await fetch(`${base}/logo.svg`);
+      const res = await fetch(`${base}/logo.svg`);
       if (!res.ok) return null;
       const svgText = await res.text();
       const img = new Image();
@@ -172,6 +162,11 @@ export function InvoiceGenerator() {
          return;
       }
 
+      const totalTtc = validServices.reduce(
+         (sum, s) => sum + (Number(s.quantity) || 0) * (Number(s.unitPrice) || 0),
+         0
+      );
+
       setGenerating(true);
       try {
          const logoDataUrl = await getLogoDataUrl();
@@ -214,17 +209,22 @@ export function InvoiceGenerator() {
             `facture_${safeNum}_${selectedClient.company || selectedClient.name || "client"}.pdf`
          );
          formData.append("invoiceNumber", invoiceNumber.trim());
+         formData.append("clientId", String(selectedClient.id));
+         formData.append("totalTtc", String(totalTtc));
 
          const res = await fetch("/api/invoices/save", {
             method: "POST",
             body: formData,
          });
          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.warn(
-               "Sauvegarde serveur échouée:",
-               errData.error || res.status
-            );
+            const data = await res.json().catch(() => ({}));
+            const msg = data.error || `Erreur ${res.status}`;
+            const details = data.details ? `\n\nDétail : ${data.details}` : "";
+            const hint =
+               msg.toLowerCase().includes("not found") || res.status === 404
+                  ? "\n\n→ Redémarrez le conteneur admin-api pour charger les routes factures."
+                  : "";
+            alert(`${msg}${details}${hint}`);
          }
          try {
             localStorage.removeItem(DRAFT_STORAGE_KEY);
