@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
    Table,
@@ -38,75 +38,87 @@ export function InvoicesList() {
       fetchInvoices();
    }, []);
 
-   if (loading) {
-      return (
-         <Card>
-            <CardContent className="flex items-center justify-center py-16">
-               <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
-            </CardContent>
-         </Card>
-      );
-   }
 
    if (error) {
       return (
-         <Card>
-            <CardContent className="py-8">
-               <p className="text-destructive">{error}</p>
-            </CardContent>
+         <Card className="mb-6 p-6">
+            <div className="text-destructive flex items-center gap-3">
+               <p>{error}</p>
+               <button
+                  onClick={fetchInvoices}
+                  className={cn(
+                     buttonVariants({ variant: "outline", size: "sm" }),
+                  )}
+               >
+                  <RefreshCwIcon className="size-4 mr-1" />
+                  Réessayer
+               </button>
+            </div>
          </Card>
       );
    }
 
    return (
-      <Card>
-         <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-               <h2 className="text-lg font-semibold">Factures enregistrées</h2>
-               <Button variant="outline" size="sm" onClick={fetchInvoices}>
-                  <RefreshCwIcon className="size-4 mr-1" />
-                  Actualiser
-               </Button>
-            </div>
-            {invoices.length === 0 ? (
-               <p className="text-muted-foreground py-8 text-center">
-                  Aucune facture pour le moment.
-               </p>
-            ) : (
+      <div className="my-6">
+         <Card className="mb-6 p-0 md:p-0">
+            <CardContent>
                <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-muted text-white">
                      <TableRow>
-                        <TableHead>Fichier</TableHead>
-                        <TableHead className="w-24 text-right">
-                           Télécharger
+                        <TableHead className="pl-2">Fichier</TableHead>
+                        <TableHead className="text-right pe-2">
+                           Actions
                         </TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {invoices.map((inv) => (
-                        <TableRow key={inv.name}>
-                           <TableCell className="font-medium">
-                              {inv.name}
-                           </TableCell>
-                           <TableCell className="text-right">
-                              <a
-                                 href={inv.path}
-                                 download={inv.name}
-                                 className={cn(
-                                    buttonVariants({ variant: "ghost", size: "sm" }),
-                                    "inline-flex"
-                                 )}
-                              >
-                                 <DownloadIcon className="size-4 mr-1" />
-                                 PDF
-                              </a>
+                     {loading ? (
+                        <TableRow>
+                           <TableCell
+                              colSpan={2}
+                              className="text-center py-8"
+                           >
+                              <Loader2Icon className="size-6 animate-spin mx-auto text-muted-foreground" />
                            </TableCell>
                         </TableRow>
-                     ))}
+                     ) : invoices.length === 0 ? (
+                        <TableRow>
+                           <TableCell
+                              colSpan={2}
+                              className="text-center py-8 text-muted-foreground"
+                           >
+                              Aucune facture pour le moment
+                           </TableCell>
+                        </TableRow>
+                     ) : (
+                        invoices.map((inv) => (
+                           <TableRow key={inv.name}>
+                              <TableCell className="pl-2 font-medium">
+                                 {inv.name}
+                              </TableCell>
+                              <TableCell className="text-right pe-2">
+                                 <a
+                                    href={inv.path}
+                                    download={inv.name}
+                                    className={cn(
+                                       buttonVariants({
+                                          variant: "ghost",
+                                          size: "icon",
+                                       }),
+                                       "inline-flex"
+                                    )}
+                                    title="Télécharger"
+                                 >
+                                    <DownloadIcon className="size-4" />
+                                 </a>
+                              </TableCell>
+                           </TableRow>
+                        ))
+                     )}
                   </TableBody>
                </Table>
-            )}
-         </CardContent>
-      </Card>
+            </CardContent>
+         </Card>
+      </div>
    );
 }
