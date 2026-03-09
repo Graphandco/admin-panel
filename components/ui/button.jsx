@@ -46,6 +46,7 @@ function Button({
    className,
    variant = "default",
    size = "default",
+   asChild,
    ...props
 }) {
    return (

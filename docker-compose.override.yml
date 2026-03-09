@@ -10,10 +10,12 @@ services:
       - .:/app
       - admin-node-modules:/app/node_modules
       - .next:/app/.next
+      - ./invoices:/app/invoices
     env_file:
       - .env
     environment:
       NODE_ENV: development
+      INVOICES_DIR: /app/invoices
 
 volumes:
   admin-node-modules:

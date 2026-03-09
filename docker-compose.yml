@@ -1,20 +1,27 @@
 services:
-  admin-panel:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-    container_name: admin-panel
-    restart: unless-stopped
-    env_file:
-      - .env
-    networks:
-      - web-network
-    # Variables .env: ADMIN_API_URL, ADMIN_API_KEY, TAILSCALE_*, etc.
-    environment:
-      - NODE_ENV=production
-      - ADMIN_API_URL=${ADMIN_API_URL:-http://admin-api:3000}
-      - ADMIN_API_KEY=${ADMIN_API_KEY}
+   admin-panel:
+      build:
+         context: .
+         dockerfile: Dockerfile.prod
+      container_name: admin-panel
+      restart: unless-stopped
+      env_file:
+         - .env
+      networks:
+         - web-network
+      # Variables .env: ADMIN_API_URL, ADMIN_API_KEY, TAILSCALE_*, etc.
+      environment:
+         - NODE_ENV=production
+         - ADMIN_API_URL=${ADMIN_API_URL:-http://admin-api:3000}
+         - ADMIN_API_KEY=${ADMIN_API_KEY}
+         - INVOICES_DIR=/app/invoices
+      volumes:
+         - invoices-data:/app/invoices
+      # mem_limit: 512m
+
+volumes:
+   invoices-data:
 
 networks:
-  web-network:
-    external: true
+   web-network:
+      external: true

@@ -20,6 +20,9 @@
 # production
 /build
 
+# factures générées
+/invoices
+
 # misc
 .DS_Store
 *.pem

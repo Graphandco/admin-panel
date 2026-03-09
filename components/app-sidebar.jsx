@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Container, Home, UsersIcon } from "lucide-react";
+import { Container, Home, UsersIcon, FileTextIcon } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
 import { NavMain } from "@/components/nav-main";
@@ -147,6 +147,15 @@ const sidebarData = {
          title: "Clients",
          url: "/clients",
          icon: UsersIcon,
+         items: [
+            { title: "Liste", url: "/clients" },
+            { title: "Factures", url: "/clients/factures" },
+         ],
+      },
+      {
+         title: "Générateur de facture",
+         url: "/agence/generateur-facture",
+         icon: FileTextIcon,
       },
    ],
    reseauItems: [
