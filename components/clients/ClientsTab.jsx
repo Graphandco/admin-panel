@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import {
    Table,
@@ -72,7 +73,6 @@ export function ClientsTab() {
    const [clients, setClients] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
-   const [addDialogOpen, setAddDialogOpen] = useState(false);
    const [editDialogId, setEditDialogId] = useState(null);
    const [viewDialogId, setViewDialogId] = useState(null);
    const [saving, setSaving] = useState(false);
@@ -104,13 +104,8 @@ export function ClientsTab() {
    async function handleSubmitClient(payload, mode, clientId) {
       setSaving(true);
       try {
-         if (mode === "edit") {
-            await clientUpdate(clientId, payload);
-            setEditDialogId(null);
-         } else {
-            await clientCreate(payload);
-            setAddDialogOpen(false);
-         }
+         await clientUpdate(clientId, payload);
+         setEditDialogId(null);
          load();
       } catch (err) {
          alert(err.message || "Erreur");
@@ -132,37 +127,23 @@ export function ClientsTab() {
    }
 
    const addButton = (
-      <button
-         onClick={() => setAddDialogOpen(true)}
+      <Link
+         href="/clients/generators/nouveau-client"
          className={cn(buttonVariants())}
       >
          <PlusIcon className="size-4 mr-2" />
          Ajouter un client
-      </button>
+      </Link>
    );
 
    return (
       <>
          {mounted &&
             typeof document !== "undefined" &&
-            createPortal(
-               addButton,
-               document.getElementById("clients-add-portal"),
-            )}
-         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-               <DialogHeader>
-                  <DialogTitle>Nouveau client</DialogTitle>
-               </DialogHeader>
-               <ClientForm
-                  client={null}
-                  mode="add"
-                  onSubmit={(p) => handleSubmitClient(p, "add")}
-                  onCancel={() => setAddDialogOpen(false)}
-                  saving={saving}
-               />
-            </DialogContent>
-         </Dialog>
+            (() => {
+               const portal = document.getElementById("clients-add-portal");
+               return portal ? createPortal(addButton, portal) : null;
+            })()}
          <Dialog
             open={!!viewDialogId}
             onOpenChange={(v) => !v && setViewDialogId(null)}

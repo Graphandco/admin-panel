@@ -15,12 +15,7 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/components/ui/select";
-import {
-   Loader2Icon,
-   DownloadIcon,
-   PlusIcon,
-   Trash2Icon,
-} from "lucide-react";
+import { Loader2Icon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 const EMPTY_SERVICE = { description: "", quantity: 1, unitPrice: "" };
 const DRAFT_STORAGE_KEY = "invoice-form-draft";
@@ -71,7 +66,7 @@ export function InvoiceGenerator() {
    const [selectedClientId, setSelectedClientId] = useState("");
    const [invoiceNumber, setInvoiceNumber] = useState("");
    const [invoiceDate, setInvoiceDate] = useState(
-      formatDateForInput(new Date())
+      formatDateForInput(new Date()),
    );
    const [services, setServices] = useState([{ ...EMPTY_SERVICE }]);
    const [generating, setGenerating] = useState(false);
@@ -90,8 +85,10 @@ export function InvoiceGenerator() {
          const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
          if (raw) {
             const draft = JSON.parse(raw);
-            if (draft.selectedClientId != null) setSelectedClientId(draft.selectedClientId);
-            if (draft.invoiceNumber != null) setInvoiceNumber(draft.invoiceNumber);
+            if (draft.selectedClientId != null)
+               setSelectedClientId(draft.selectedClientId);
+            if (draft.invoiceNumber != null)
+               setInvoiceNumber(draft.invoiceNumber);
             if (draft.invoiceDate != null) setInvoiceDate(draft.invoiceDate);
             if (Array.isArray(draft.services) && draft.services.length > 0) {
                setServices(
@@ -99,7 +96,7 @@ export function InvoiceGenerator() {
                      description: s?.description ?? "",
                      quantity: s?.quantity ?? 1,
                      unitPrice: s?.unitPrice ?? "",
-                  }))
+                  })),
                );
             }
          }
@@ -127,7 +124,9 @@ export function InvoiceGenerator() {
       }
    }, [selectedClientId, invoiceNumber, invoiceDate, services]);
 
-   const selectedClient = clients.find((c) => String(c.id) === selectedClientId);
+   const selectedClient = clients.find(
+      (c) => String(c.id) === selectedClientId,
+   );
 
    function addService() {
       setServices((s) => [...s, { ...EMPTY_SERVICE }]);
@@ -139,9 +138,7 @@ export function InvoiceGenerator() {
 
    function updateService(index, field, value) {
       setServices((s) =>
-         s.map((item, i) =>
-            i === index ? { ...item, [field]: value } : item
-         )
+         s.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
       );
    }
 
@@ -155,7 +152,7 @@ export function InvoiceGenerator() {
          return;
       }
       const validServices = services.filter(
-         (s) => s.description?.trim() && (Number(s.quantity) || 0) > 0
+         (s) => s.description?.trim() && (Number(s.quantity) || 0) > 0,
       );
       if (validServices.length === 0) {
          alert("Ajoutez au moins une prestation avec une description.");
@@ -163,8 +160,9 @@ export function InvoiceGenerator() {
       }
 
       const totalTtc = validServices.reduce(
-         (sum, s) => sum + (Number(s.quantity) || 0) * (Number(s.unitPrice) || 0),
-         0
+         (sum, s) =>
+            sum + (Number(s.quantity) || 0) * (Number(s.unitPrice) || 0),
+         0,
       );
 
       setGenerating(true);
@@ -189,7 +187,7 @@ export function InvoiceGenerator() {
                services={validServices}
                logoDataUrl={logoDataUrl}
                company={company}
-            />
+            />,
          ).toBlob();
 
          const url = URL.createObjectURL(blob);
@@ -206,7 +204,7 @@ export function InvoiceGenerator() {
          formData.append(
             "file",
             blob,
-            `facture_${safeNum}_${selectedClient.company || selectedClient.name || "client"}.pdf`
+            `facture_${safeNum}_${selectedClient.company || selectedClient.name || "client"}.pdf`,
          );
          formData.append("invoiceNumber", invoiceNumber.trim());
          formData.append("clientId", String(selectedClient.id));
@@ -263,7 +261,7 @@ export function InvoiceGenerator() {
       <div className="space-y-6">
          <Card>
             <CardContent className="pt-6">
-               <h2 className="text-lg font-semibold mb-4">
+               <h2 className="text-xl font-semibold mb-4 text-primary">
                   Nouvelle facture
                </h2>
                <div className="grid gap-4 sm:grid-cols-2">
@@ -362,7 +360,9 @@ export function InvoiceGenerator() {
                   <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground">
                      <div className="col-span-6">Désignation</div>
                      <div className="col-span-2 text-right">Quantité</div>
-                     <div className="col-span-2 text-right">Prix unit. TTC (€)</div>
+                     <div className="col-span-2 text-right">
+                        Prix unit. TTC (€)
+                     </div>
                      <div className="col-span-2"></div>
                   </div>
                   {services.map((s, i) => (
@@ -386,11 +386,7 @@ export function InvoiceGenerator() {
                               step="1"
                               value={s.quantity}
                               onChange={(e) =>
-                                 updateService(
-                                    i,
-                                    "quantity",
-                                    e.target.value
-                                 )
+                                 updateService(i, "quantity", e.target.value)
                               }
                            />
                         </div>

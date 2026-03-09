@@ -22,6 +22,8 @@
 
 # factures générées
 /invoices
+# contrats générés
+/contracts
 
 # misc
 .DS_Store

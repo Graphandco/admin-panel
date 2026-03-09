@@ -15,12 +15,15 @@ services:
          - ADMIN_API_URL=${ADMIN_API_URL:-http://admin-api:3000}
          - ADMIN_API_KEY=${ADMIN_API_KEY}
          - INVOICES_DIR=/app/invoices
+         - CONTRACTS_DIR=/app/contracts
       volumes:
          - invoices-data:/app/invoices
+         - contracts-data:/app/contracts
       # mem_limit: 512m
 
 volumes:
    invoices-data:
+   contracts-data:
 
 networks:
    web-network:

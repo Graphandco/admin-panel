@@ -22,8 +22,12 @@ const SEGMENT_LABELS = {
    docker: "Docker",
    clients: "Clients",
    factures: "Factures",
+   contrats: "Contrats",
    agence: "Agence",
-   "generateur-facture": "Générateur de facture",
+   generators: "Ajouter",
+   "nouveau-client": "Nouveau client",
+   facture: "Génération de facture",
+   contrat: "Génération de contrat",
    tailscale: "Tailscale",
 };
 
