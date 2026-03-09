@@ -145,14 +145,18 @@ const styles = StyleSheet.create({
       backgroundColor: "#fafafa",
    },
    colDesc: {
-      flex: 3,
+      flex: 2.6,
    },
    colQty: {
       flex: 0.8,
       textAlign: "right",
    },
    colUnit: {
-      flex: 1.2,
+      flex: 1.4,
+      textAlign: "right",
+   },
+   colDiscount: {
+      flex: 0.8,
       textAlign: "right",
    },
    colTotal: {
@@ -257,6 +261,14 @@ function formatDateFR(dateStr) {
    return dateStr;
 }
 
+function formatEuro(value) {
+   const n = Number(value);
+   if (isNaN(n)) return "0,00";
+   return n
+      .toLocaleString("fr-FR", { minimumFractionDigits: 2 })
+      .replace(/\s/g, " ");
+}
+
 export function InvoiceDocument({
    client,
    invoiceNumber,
@@ -265,10 +277,18 @@ export function InvoiceDocument({
    logoDataUrl = null,
    company = {},
 }) {
-   const totalTTC = services.reduce(
-      (sum, s) => sum + (Number(s.quantity) || 0) * (Number(s.unitPrice) || 0),
-      0,
-   );
+   function getDiscountPercent(s) {
+      const v = s.discountPercent;
+      if (v === "" || v === null || v === undefined) return 0;
+      const n = Number(v);
+      return !isNaN(n) && n >= 0 && n <= 100 ? n : 0;
+   }
+
+   const totalTTC = services.reduce((sum, s) => {
+      const subtotal = (Number(s.quantity) || 0) * (Number(s.unitPrice) || 0);
+      const discount = getDiscountPercent(s) / 100;
+      return sum + subtotal * (1 - discount);
+   }, 0);
 
    const footerParts = [
       "Exonéré de TVA, art. 293-B du CGI",
@@ -339,6 +359,11 @@ export function InvoiceDocument({
                      {client?.adresse ? (
                         <Text style={styles.companyLine}>{client.adresse}</Text>
                      ) : null}
+                     {(client?.post_code || client?.city) ? (
+                        <Text style={styles.companyLine}>
+                           {[client.post_code, client.city].filter(Boolean).join(" ")}
+                        </Text>
+                     ) : null}
                      <Text style={styles.paymentConditions}>
                         Conditions de réglement : 15 jours
                      </Text>
@@ -346,20 +371,23 @@ export function InvoiceDocument({
                </View>
 
                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                     Détail des prestations
-                  </Text>
                   <View style={styles.table}>
                      <View style={styles.tableHeader}>
                         <Text style={styles.colDesc}>Désignation</Text>
                         <Text style={styles.colQty}>Qté</Text>
-                        <Text style={styles.colUnit}>Prix unit. TTC</Text>
+                        <Text style={styles.colUnit}>Prix TTC</Text>
+                        <Text style={styles.colDiscount}>Remise %</Text>
                         <Text style={styles.colTotal}>Total TTC</Text>
                      </View>
                      {services.map((s, i) => {
                         const qty = Number(s.quantity) || 0;
                         const unit = Number(s.unitPrice) || 0;
-                        const total = qty * unit;
+                        const discountPct = getDiscountPercent(s);
+                        const subtotal = qty * unit;
+                        const total =
+                           discountPct > 0
+                              ? subtotal * (1 - discountPct / 100)
+                              : subtotal;
                         return (
                            <View
                               key={i}
@@ -376,16 +404,13 @@ export function InvoiceDocument({
                               </Text>
                               <Text style={styles.colQty}>{qty}</Text>
                               <Text style={styles.colUnit}>
-                                 {unit.toLocaleString("fr-FR", {
-                                    minimumFractionDigits: 2,
-                                 })}{" "}
-                                 €
+                                 {formatEuro(unit)} €
+                              </Text>
+                              <Text style={styles.colDiscount}>
+                                 {discountPct > 0 ? `${discountPct} %` : "—"}
                               </Text>
                               <Text style={styles.colTotal}>
-                                 {total.toLocaleString("fr-FR", {
-                                    minimumFractionDigits: 2,
-                                 })}{" "}
-                                 €
+                                 {formatEuro(total)} €
                               </Text>
                            </View>
                         );
@@ -397,10 +422,7 @@ export function InvoiceDocument({
                   <View style={[styles.totalRow, styles.totalMain]}>
                      <Text style={styles.totalLabel}>Total TTC</Text>
                      <Text style={styles.totalValue}>
-                        {totalTTC.toLocaleString("fr-FR", {
-                           minimumFractionDigits: 2,
-                        })}{" "}
-                        €
+                        {formatEuro(totalTTC)} €
                      </Text>
                   </View>
                </View>

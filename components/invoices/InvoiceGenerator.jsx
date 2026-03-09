@@ -17,7 +17,12 @@ import {
 } from "@/components/ui/select";
 import { Loader2Icon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
-const EMPTY_SERVICE = { description: "", quantity: 1, unitPrice: "" };
+const EMPTY_SERVICE = {
+   description: "",
+   quantity: 1,
+   unitPrice: "",
+   discountPercent: "",
+};
 const DRAFT_STORAGE_KEY = "invoice-form-draft";
 
 async function getLogoDataUrl() {
@@ -96,6 +101,7 @@ export function InvoiceGenerator() {
                      description: s?.description ?? "",
                      quantity: s?.quantity ?? 1,
                      unitPrice: s?.unitPrice ?? "",
+                     discountPercent: s?.discountPercent ?? "",
                   })),
                );
             }
@@ -159,11 +165,19 @@ export function InvoiceGenerator() {
          return;
       }
 
-      const totalTtc = validServices.reduce(
-         (sum, s) =>
-            sum + (Number(s.quantity) || 0) * (Number(s.unitPrice) || 0),
-         0,
-      );
+      function getDiscountPercent(s) {
+         const v = s.discountPercent;
+         if (v === "" || v === null || v === undefined) return 0;
+         const n = Number(v);
+         return !isNaN(n) && n >= 0 && n <= 100 ? n : 0;
+      }
+
+      const totalTtc = validServices.reduce((sum, s) => {
+         const subtotal =
+            (Number(s.quantity) || 0) * (Number(s.unitPrice) || 0);
+         const discount = getDiscountPercent(s) / 100;
+         return sum + subtotal * (1 - discount);
+      }, 0);
 
       setGenerating(true);
       try {
@@ -332,6 +346,11 @@ export function InvoiceGenerator() {
                            {selectedClient.adresse}
                         </p>
                      )}
+                     {(selectedClient.post_code || selectedClient.city) && (
+                        <p className="text-sm text-muted-foreground">
+                           {[selectedClient.post_code, selectedClient.city].filter(Boolean).join(" ")}
+                        </p>
+                     )}
                      {selectedClient.email && (
                         <p className="text-sm text-muted-foreground">
                            {selectedClient.email}
@@ -358,11 +377,12 @@ export function InvoiceGenerator() {
                </div>
                <div className="space-y-3">
                   <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground">
-                     <div className="col-span-6">Désignation</div>
+                     <div className="col-span-5">Désignation</div>
                      <div className="col-span-2 text-right">Quantité</div>
                      <div className="col-span-2 text-right">
                         Prix unit. TTC (€)
                      </div>
+                     <div className="col-span-1 text-right">Remise %</div>
                      <div className="col-span-2"></div>
                   </div>
                   {services.map((s, i) => (
@@ -370,7 +390,7 @@ export function InvoiceGenerator() {
                         key={i}
                         className="grid grid-cols-12 gap-2 items-center"
                      >
-                        <div className="col-span-6">
+                        <div className="col-span-5">
                            <Input
                               value={s.description}
                               onChange={(e) =>
@@ -400,6 +420,23 @@ export function InvoiceGenerator() {
                                  updateService(i, "unitPrice", e.target.value)
                               }
                               placeholder="0.00"
+                           />
+                        </div>
+                        <div className="col-span-1">
+                           <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.5"
+                              value={s.discountPercent}
+                              onChange={(e) =>
+                                 updateService(
+                                    i,
+                                    "discountPercent",
+                                    e.target.value,
+                                 )
+                              }
+                              placeholder="0"
                            />
                         </div>
                         <div className="col-span-2">

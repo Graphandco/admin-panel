@@ -20,7 +20,9 @@ function sitesFromClients(clients) {
       .filter((c) => c.website?.trim())
       .map((c) => ({
          name: c.company || c.name || c.website,
-         host: c.website.startsWith("http") ? c.website : `https://${c.website}`,
+         host: c.website.startsWith("http")
+            ? c.website
+            : `https://${c.website}`,
       }));
 }
 
@@ -70,7 +72,7 @@ export default function SitesStatus() {
 
    if (error) {
       return (
-         <Card className="p-6">
+         <Card className="h-full">
             <div className="text-destructive flex items-center gap-3">
                <p>{error}</p>
                <button
@@ -87,7 +89,7 @@ export default function SitesStatus() {
 
    return (
       <div className="">
-         <Card className="mb-6 p-0">
+         <Card className="h-full">
             <CardContent>
                <Table>
                   {/* <TableHeader className="bg-muted text-white">

@@ -7,6 +7,7 @@ import {
    UsersIcon,
    FileTextIcon,
    PlusIcon,
+   Globe,
 } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
@@ -158,6 +159,11 @@ const sidebarData = {
             { title: "Factures", url: "/clients/factures" },
             { title: "Contrats", url: "/clients/contrats" },
          ],
+      },
+      {
+         title: "Sites",
+         url: "/agence/sites",
+         icon: Globe,
       },
       {
          title: "Ajouter",

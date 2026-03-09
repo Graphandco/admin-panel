@@ -15,6 +15,8 @@ const EMPTY_FORM = {
    website: "",
    phone: "",
    adresse: "",
+   post_code: "",
+   city: "",
    payment_date: "",
    annual_cost: "",
    creation_cost: "",
@@ -30,6 +32,8 @@ function clientToForm(c) {
       website: c.website ?? "",
       phone: c.phone ?? "",
       adresse: c.adresse ?? "",
+      post_code: c.post_code ?? "",
+      city: c.city ?? "",
       payment_date: c.payment_date ?? "",
       annual_cost: c.annual_cost != null ? String(c.annual_cost) : "",
       creation_cost: c.creation_cost != null ? String(c.creation_cost) : "",
@@ -126,6 +130,26 @@ export function ClientForm({ client, mode, onSubmit, onCancel, saving }) {
                   value={form.adresse}
                   onChange={(e) =>
                      setForm((f) => ({ ...f, adresse: e.target.value }))
+                  }
+               />
+            </div>
+            <div className="grid gap-2">
+               <Label htmlFor="post_code">Code postal</Label>
+               <Input
+                  id="post_code"
+                  value={form.post_code}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, post_code: e.target.value }))
+                  }
+               />
+            </div>
+            <div className="grid gap-2">
+               <Label htmlFor="city">Ville</Label>
+               <Input
+                  id="city"
+                  value={form.city}
+                  onChange={(e) =>
+                     setForm((f) => ({ ...f, city: e.target.value }))
                   }
                />
             </div>

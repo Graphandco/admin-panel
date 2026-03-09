@@ -49,7 +49,7 @@ export default function DockerCard() {
 
    if (error) {
       return (
-         <Card>
+         <Card className="h-full">
             <CardContent className="py-6">
                <div className="text-destructive flex items-center gap-3">
                   <p>{error}</p>
@@ -67,7 +67,7 @@ export default function DockerCard() {
    }
 
    return (
-      <Card className="h-min">
+      <Card className="h-full">
          <CardHeader>
             <CardTitle className="flex items-center gap-2">
                <Container

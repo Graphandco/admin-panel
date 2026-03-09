@@ -62,7 +62,7 @@ export default function PluginsCard() {
    }
 
    return (
-      <Card className="h-min">
+      <Card className="h-full">
          <CardHeader>
             <CardTitle className="flex items-center gap-2">
                <div className="size-10 p-2 bg-[#21759b]/10 border border-[#21759b]/20 rounded-md flex items-center justify-center">

@@ -217,22 +217,38 @@ export function ClientsTab() {
                                     </TableCell>
                                     <TableCell>{c.email || "—"}</TableCell>
                                     <TableCell>
-                                       {c.website ? (
-                                          <a
-                                             href={
-                                                c.website.startsWith("http")
-                                                   ? c.website
-                                                   : `https://${c.website}`
-                                             }
-                                             target="_blank"
-                                             rel="noopener noreferrer"
-                                             className="text-primary hover:underline"
-                                          >
-                                             {c.website}
-                                          </a>
-                                       ) : (
-                                          "—"
-                                       )}
+                                       {(() => {
+                                          const urls =
+                                             c.websites?.length > 0
+                                                ? c.websites
+                                                : c.website
+                                                   ? [c.website]
+                                                   : [];
+                                          return urls.length > 0 ? (
+                                             urls.map((url, i) => {
+                                                const href =
+                                                   url.startsWith("http")
+                                                      ? url
+                                                      : `https://${url}`;
+                                                return (
+                                                   <a
+                                                      key={i}
+                                                      href={href}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className="text-primary hover:underline block"
+                                                   >
+                                                      {url.replace(
+                                                         /^https?:\/\//i,
+                                                         "",
+                                                      )}
+                                                   </a>
+                                                );
+                                             })
+                                          ) : (
+                                             "—"
+                                          );
+                                       })()}
                                     </TableCell>
                                     <TableCell>
                                        {formatDate(c.payment_date)}

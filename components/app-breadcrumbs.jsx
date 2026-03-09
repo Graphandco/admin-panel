@@ -17,6 +17,7 @@ const SEGMENT_LABELS = {
    wordpress: "Wordpress",
    dashboard: "Tableau de bord",
    sites: "Sites",
+   agence: "Agence",
    plugins: "Extensions",
    connexions: "Connexions",
    docker: "Docker",

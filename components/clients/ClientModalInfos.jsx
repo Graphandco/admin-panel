@@ -68,22 +68,31 @@ export function ClientModalInfos({ client }) {
             Site web
          </dt>
          <dd>
-            {c.website ? (
-               <a
-                  href={
-                     c.website.startsWith("http")
-                        ? c.website
-                        : `https://${c.website}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-               >
-                  {c.website}
-               </a>
-            ) : (
-               "—"
-            )}
+            {(() => {
+               const urls =
+                  c.websites?.length > 0
+                     ? c.websites
+                     : c.website
+                        ? [c.website]
+                        : [];
+               return urls.length > 0 ? (
+                  urls.map((url, i) => (
+                     <a
+                        key={i}
+                        href={
+                           url.startsWith("http") ? url : `https://${url}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline block"
+                     >
+                        {url.replace(/^https?:\/\//i, "")}
+                     </a>
+                  ))
+               ) : (
+                  "—"
+               );
+            })()}
          </dd>
          <dt className="flex items-center gap-2 text-muted-foreground">
             <PhoneIcon className="size-3.5 shrink-0" />
@@ -94,7 +103,22 @@ export function ClientModalInfos({ client }) {
             <MapPinIcon className="size-3.5 shrink-0" />
             Adresse
          </dt>
-         <dd>{c.adresse || "—"}</dd>
+         <dd>
+            {c.adresse ? (
+               <>
+                  {c.adresse}
+                  {(c.post_code || c.city) && (
+                     <span className="block mt-0.5">
+                        {[c.post_code, c.city].filter(Boolean).join(" ")}
+                     </span>
+                  )}
+               </>
+            ) : c.post_code || c.city ? (
+               [c.post_code, c.city].filter(Boolean).join(" ")
+            ) : (
+               "—"
+            )}
+         </dd>
          <dt className="flex items-center gap-2 text-muted-foreground">
             <CalendarIcon className="size-3.5 shrink-0" />
             Date de paiement

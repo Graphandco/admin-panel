@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import DockerCard from "@/components/home/DockerCard";
-import SitesStatus from "@/components/home/SitesStatus";
+import SitesCard from "@/components/home/SitesCard";
 import PluginsCard from "@/components/wordpress/PluginsCard";
 
 export default function Page() {
    return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-         <SitesStatus />
+         <SitesCard />
          <Link href="/docker">
             <DockerCard />
          </Link>
