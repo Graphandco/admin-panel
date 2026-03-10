@@ -2,6 +2,7 @@
 import Link from "next/link";
 import DockerCard from "@/components/home/DockerCard";
 import SitesCard from "@/components/home/SitesCard";
+import TailscaleCard from "@/components/home/TailscaleCard";
 import PluginsCard from "@/components/wordpress/PluginsCard";
 
 export default function Page() {
@@ -11,6 +12,7 @@ export default function Page() {
          <Link href="/docker">
             <DockerCard />
          </Link>
+         <TailscaleCard />
          <Link href="/wordpress/plugins">
             <PluginsCard />
          </Link>
