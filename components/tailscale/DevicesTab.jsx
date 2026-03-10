@@ -138,7 +138,7 @@ export function DevicesTab({ devices = [], tailnet, loading, error, onRefresh })
    return (
       <div className="my-6">
          <Card className="mb-6 p-0">
-            <CardContent>
+            <CardContent className="px-0">
                <Table>
                   <TableHeader className="bg-muted text-white">
                      <TableRow>

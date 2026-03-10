@@ -152,7 +152,7 @@ export default function PluginsTab() {
             </Select>
          </div>
          <Card className="mb-6 p-0 md:p-0">
-            <CardContent>
+            <CardContent className="px-0">
                <Table>
                   <TableHeader className="bg-muted text-white">
                      <TableRow>

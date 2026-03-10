@@ -8,6 +8,7 @@ import {
    FileTextIcon,
    PlusIcon,
    Globe,
+   BarChart3,
 } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
@@ -78,6 +79,11 @@ const sidebarData = {
                url: "/docker/cheatsheet",
             },
          ],
+      },
+      {
+         title: "Stats VPS",
+         url: "/vps/stats",
+         icon: BarChart3,
       },
       {
          title: "Wordpress",

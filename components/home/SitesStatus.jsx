@@ -90,7 +90,7 @@ export default function SitesStatus() {
    return (
       <div className="">
          <Card className="h-full">
-            <CardContent>
+            <CardContent className="px-0">
                <Table>
                   {/* <TableHeader className="bg-muted text-white">
                      <TableRow>
