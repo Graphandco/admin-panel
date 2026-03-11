@@ -22,3 +22,16 @@ export async function getSystemStats() {
       throw err;
    }
 }
+
+export async function getSystemStatsHistory(date) {
+   try {
+      const params = date ? `?date=${encodeURIComponent(date)}` : "";
+      const res = await adminApiFetch(`/api/system/stats/history${params}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Erreur API");
+      return data.data || [];
+   } catch (err) {
+      console.error("getSystemStatsHistory:", err.message);
+      throw err;
+   }
+}

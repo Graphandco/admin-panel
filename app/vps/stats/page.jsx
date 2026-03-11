@@ -12,8 +12,16 @@ import {
    ChartTooltip,
    ChartTooltipContent,
 } from "@/components/ui/chart";
-import { PieChart, Pie, Cell } from "recharts";
-import { getSystemStats } from "@/app/actions/system";
+import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis } from "recharts";
+import {
+   Select,
+   SelectContent,
+   SelectItem,
+   SelectTrigger,
+   SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { getSystemStats, getSystemStatsHistory } from "@/app/actions/system";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -54,10 +62,111 @@ function formatUptime(seconds) {
    return parts.join(" ");
 }
 
+function getDateOptions() {
+   const opts = [];
+   for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const value = `${yyyy}-${mm}-${dd}`;
+      const label =
+         i === 0 ? "Aujourd'hui" : i === 1 ? "Hier" : d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+      opts.push({ value, label });
+   }
+   return opts;
+}
+
+const historyChartConfig = {
+   cpu_percent: { label: "CPU", color: "#3b82f6" },
+   mem_percent: { label: "RAM", color: "#ef4444" },
+   disk_percent: { label: "Disque", color: "#22c55e" },
+};
+
+function MetricsHistoryChart({ data, loading }) {
+   const chartData = (data || []).map((r) => ({
+      ...r,
+      time: r.ts ? new Date(r.ts).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "",
+   }));
+
+   if (loading) return null;
+   if (chartData.length === 0) {
+      return (
+         <Card>
+            <CardContent className="py-8">
+               <p className="text-sm text-muted-foreground text-center">
+                  Aucune donnée pour cette période. Configurez le cron de collecte (voir CRON.md).
+               </p>
+            </CardContent>
+         </Card>
+      );
+   }
+
+   return (
+      <Card>
+         <CardContent className="py-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+               Historique des métriques (24 h)
+            </h3>
+            <ChartContainer config={historyChartConfig} className="h-[280px] w-full">
+               <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                  <XAxis
+                     dataKey="time"
+                     tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                     tickLine={false}
+                  />
+                  <YAxis
+                     domain={[0, 100]}
+                     tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                     tickFormatter={(v) => `${v}%`}
+                  />
+                  <ChartTooltip
+                     content={
+                        <ChartTooltipContent
+                           formatter={(v) => `${v}%`}
+                        />
+                     }
+                  />
+                  <Line
+                     type="monotone"
+                     dataKey="cpu_percent"
+                     stroke="#3b82f6"
+                     strokeWidth={2}
+                     dot={false}
+                     name="CPU"
+                  />
+                  <Line
+                     type="monotone"
+                     dataKey="mem_percent"
+                     stroke="#ef4444"
+                     strokeWidth={2}
+                     dot={false}
+                     name="RAM"
+                  />
+                  <Line
+                     type="monotone"
+                     dataKey="disk_percent"
+                     stroke="#22c55e"
+                     strokeWidth={2}
+                     dot={false}
+                     name="Disque"
+                  />
+               </LineChart>
+            </ChartContainer>
+         </CardContent>
+      </Card>
+   );
+}
+
 export default function VpsStatsPage() {
    const [stats, setStats] = useState(null);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
+   const [historyData, setHistoryData] = useState([]);
+   const [loadingHistory, setLoadingHistory] = useState(false);
+   const today = new Date().toISOString().slice(0, 10);
+   const [selectedDate, setSelectedDate] = useState(today);
 
    async function load() {
       setLoading(true);
@@ -72,9 +181,25 @@ export default function VpsStatsPage() {
       }
    }
 
+   async function loadHistory() {
+      setLoadingHistory(true);
+      try {
+         const data = await getSystemStatsHistory(selectedDate);
+         setHistoryData(data);
+      } catch {
+         setHistoryData([]);
+      } finally {
+         setLoadingHistory(false);
+      }
+   }
+
    useEffect(() => {
       load();
    }, []);
+
+   useEffect(() => {
+      loadHistory();
+   }, [selectedDate]);
 
    if (error) {
       return (
@@ -167,6 +292,7 @@ export default function VpsStatsPage() {
                </CardContent>
             </Card>
          ) : (
+            <>
             <div className="grid gap-6 md:grid-cols-3">
                <Card>
                   <CardHeader>
@@ -279,6 +405,40 @@ export default function VpsStatsPage() {
                   </CardContent>
                </Card>
             </div>
+
+            <div className="mt-6 space-y-4">
+               <div className="flex flex-wrap items-end gap-4">
+                  <div className="space-y-2 min-w-[180px]">
+                     <Label htmlFor="metrics-date">Période</Label>
+                     <Select
+                        value={selectedDate}
+                        onValueChange={setSelectedDate}
+                        disabled={loadingHistory}
+                     >
+                        <SelectTrigger id="metrics-date">
+                           <SelectValue placeholder="Choisir une date" />
+                        </SelectTrigger>
+                        <SelectContent>
+                           {getDateOptions().map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                 {o.label}
+                              </SelectItem>
+                           ))}
+                        </SelectContent>
+                     </Select>
+                  </div>
+               </div>
+               {loadingHistory ? (
+                  <Card>
+                     <CardContent className="flex items-center justify-center py-12">
+                        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+                     </CardContent>
+                  </Card>
+               ) : (
+                  <MetricsHistoryChart data={historyData} loading={loadingHistory} />
+               )}
+            </div>
+            </>
          )}
       </div>
    );
