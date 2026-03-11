@@ -11,6 +11,8 @@ import {
    ChartContainer,
    ChartTooltip,
    ChartTooltipContent,
+   ChartLegend,
+   ChartLegendContent,
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis } from "recharts";
 import {
@@ -152,6 +154,7 @@ function MetricsHistoryChart({ data, loading }) {
                      dot={false}
                      name="Disque"
                   />
+                  <ChartLegend content={<ChartLegendContent />} />
                </LineChart>
             </ChartContainer>
          </CardContent>
@@ -167,6 +170,7 @@ export default function VpsStatsPage() {
    const [loadingHistory, setLoadingHistory] = useState(false);
    const today = new Date().toISOString().slice(0, 10);
    const [selectedDate, setSelectedDate] = useState(today);
+   const selectedDateLabel = getDateOptions().find((o) => o.value === selectedDate)?.label ?? selectedDate;
 
    async function load() {
       setLoading(true);
@@ -416,7 +420,9 @@ export default function VpsStatsPage() {
                         disabled={loadingHistory}
                      >
                         <SelectTrigger id="metrics-date">
-                           <SelectValue placeholder="Choisir une date" />
+                           <SelectValue placeholder="Choisir une date">
+                              {selectedDateLabel}
+                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                            {getDateOptions().map((o) => (
