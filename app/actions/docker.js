@@ -25,18 +25,17 @@ export async function dockerPs() {
   }
 }
 
-/* dockerStats désactivé (stats non utilisées)
-export async function dockerStats() {
+export async function dockerStatsAll() {
   try {
     const res = await adminApiFetch('/api/docker/stats')
     const data = await res.json()
-    if (!data.success) return []
+    if (!data.success) throw new Error(data.error || 'Erreur API')
     return data.stats || []
-  } catch {
-    return []
+  } catch (err) {
+    console.error('dockerStatsAll:', err.message)
+    throw err
   }
 }
-*/
 
 async function dockerContainerAction(containerId, action) {
   const endpoints = { start: 'start', stop: 'stop', remove: 'remove', build: 'build' }
@@ -98,11 +97,22 @@ export async function dockerContainerCompose(containerId) {
   }
 }
 
-/* dockerLogs désactivé (logs non utilisés, vulnérable à l'injection)
-export async function dockerLogs(container) {
+export async function dockerContainerStats(containerId) {
+  try {
+    const res = await adminApiFetch(`/api/docker/stats/${encodeURIComponent(containerId)}`)
+    const data = await res.json()
+    if (!data.success) throw new Error(data.error || 'Erreur API')
+    return data.stats || null
+  } catch (err) {
+    console.error('dockerContainerStats:', err.message)
+    throw err
+  }
+}
+
+export async function dockerLogs(containerId, tail = 100) {
   try {
     const res = await adminApiFetch(
-      `/api/docker/logs?container=${encodeURIComponent(container)}`
+      `/api/docker/logs?container=${encodeURIComponent(containerId)}&tail=${tail}`
     )
     const data = await res.json()
     if (!data.success) throw new Error(data.error || 'Erreur API')
@@ -112,4 +122,3 @@ export async function dockerLogs(container) {
     throw err
   }
 }
-*/

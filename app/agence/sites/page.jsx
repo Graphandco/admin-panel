@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
    Table,
    TableBody,
@@ -10,6 +10,12 @@ import {
    TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+   ChartContainer,
+   ChartTooltip,
+   ChartTooltipContent,
+} from "@/components/ui/chart";
+import { BarChart, Bar, Cell, XAxis, YAxis } from "recharts";
 import { cn } from "@/lib/utils";
 import {
    CheckIcon,
@@ -35,6 +41,90 @@ import { checkAgenceSitesStatus } from "@/app/actions/sites";
 function stripHttps(url) {
    if (!url || typeof url !== "string") return url || "";
    return url.replace(/^https?:\/\//i, "").trim();
+}
+
+const MAX_RESPONSE_MS = 1000;
+
+function getBarColor(ms) {
+   if (ms < 400) return "#22c55e";
+   if (ms < 700) return "#f59e0b";
+   return "#ef4444";
+}
+
+function ResponseTimeBarChart({ sites, statusMap }) {
+   const chartData = useMemo(() => {
+      return sites
+         .filter((s) => statusMap[s.id]?.responseTimeMs != null)
+         .map((s) => ({
+            name: stripHttps(s.address) || `Site #${s.id}`,
+            value: statusMap[s.id].responseTimeMs,
+            fill: getBarColor(statusMap[s.id].responseTimeMs),
+         }));
+   }, [sites, statusMap]);
+
+   if (chartData.length === 0) return null;
+
+   const chartConfig = {
+      value: { label: "Temps (ms)", color: "hsl(var(--chart-1))" },
+   };
+
+   const barHeight = 32;
+   const chartHeight = Math.max(200, chartData.length * barHeight);
+
+   return (
+      <Card className="mb-4">
+         <CardContent className="py-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+               Temps de réponse par site
+            </h3>
+            <div className="max-w-2xl">
+               <ChartContainer
+                  config={chartConfig}
+                  className="w-full min-h-0"
+                  style={{ height: chartHeight }}
+               >
+                  <BarChart
+                     data={chartData}
+                     layout="vertical"
+                     margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+                  >
+                     <XAxis
+                        type="number"
+                        domain={[0, MAX_RESPONSE_MS]}
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                        tickFormatter={(v) => `${v} ms`}
+                     />
+                     <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={220}
+                        interval={0}
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                        tickLine={false}
+                     />
+                  <ChartTooltip
+                     content={
+                        <ChartTooltipContent
+                           formatter={(v) => `${v} ms`}
+                        />
+                     }
+                  />
+                  <Bar
+                     dataKey="value"
+                     radius={[0, 4, 4, 0]}
+                     maxBarSize={20}
+                     barCategoryGap={8}
+                  >
+                     {chartData.map((entry, i) => (
+                        <Cell key={i} fill={entry.fill} />
+                     ))}
+                  </Bar>
+               </BarChart>
+            </ChartContainer>
+            </div>
+         </CardContent>
+      </Card>
+   );
 }
 
 function StatusBadge({ status }) {
@@ -148,6 +238,7 @@ export default function SitesPage() {
                Rafraîchir
             </button>
          </header>
+         <ResponseTimeBarChart sites={sites} statusMap={statusMap} />
          <Card className="mb-6 p-0 md:p-0">
             <CardContent className="px-0">
                <Table>
@@ -156,9 +247,6 @@ export default function SitesPage() {
                         <TableHead className="pl-2">Site</TableHead>
                         <TableHead>Backoffice</TableHead>
                         <TableHead>Statut</TableHead>
-                        <TableHead className="text-right pe-2">
-                           Temps de réponse
-                        </TableHead>
                         <TableHead className="w-12 pe-2"></TableHead>
                      </TableRow>
                   </TableHeader>
@@ -166,7 +254,7 @@ export default function SitesPage() {
                      {loading ? (
                         <TableRow>
                            <TableCell
-                              colSpan={5}
+                              colSpan={4}
                               className="text-center py-8"
                            >
                               <Loader2Icon className="size-6 animate-spin mx-auto text-muted-foreground" />
@@ -175,7 +263,7 @@ export default function SitesPage() {
                      ) : sites.length === 0 ? (
                         <TableRow>
                            <TableCell
-                              colSpan={5}
+                              colSpan={4}
                               className="text-center py-8 text-muted-foreground"
                            >
                               Aucun site
@@ -196,7 +284,7 @@ export default function SitesPage() {
                                        href={fullUrl}
                                        target="_blank"
                                        rel="noopener noreferrer"
-                                       className="inline-flex items-center gap-1 text-primary hover:underline"
+                                       className="inline-flex items-center gap-1 text-white hover:underline"
                                     >
                                        {displayUrl || "—"}
                                        <ExternalLinkIcon className="size-3.5" />
@@ -204,19 +292,24 @@ export default function SitesPage() {
                                  </TableCell>
                                  <TableCell>
                                     {backofficeUrl ? (
-                                       <a
-                                          href={
-                                             backofficeUrl.startsWith("http")
-                                                ? backofficeUrl
-                                                : `https://${backofficeUrl}`
-                                          }
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1 text-primary hover:underline"
-                                          title="Ouvrir le backoffice"
-                                       >
-                                          <LayoutDashboardIcon className="size-4" />
-                                       </a>
+                                       <span className="inline-flex items-center gap-1.5">
+                                          <a
+                                             href={
+                                                backofficeUrl.startsWith("http")
+                                                   ? backofficeUrl
+                                                   : `https://${backofficeUrl}`
+                                             }
+                                             target="_blank"
+                                             rel="noopener noreferrer"
+                                             className="inline-flex text-white hover:opacity-80"
+                                             title="Ouvrir le backoffice"
+                                          >
+                                             <LayoutDashboardIcon className="size-4" />
+                                          </a>
+                                          {statusData?.status === 200 && (
+                                             <CheckIcon className="size-3.5 text-green-500" />
+                                          )}
+                                       </span>
                                     ) : (
                                        <span className="text-muted-foreground">—</span>
                                     )}
@@ -226,15 +319,6 @@ export default function SitesPage() {
                                        <StatusBadge status={statusData.status} />
                                     ) : (
                                        <span className="text-muted-foreground">—</span>
-                                    )}
-                                 </TableCell>
-                                 <TableCell className="text-right pe-2">
-                                    {statusData?.responseTimeMs != null ? (
-                                       <span className="text-muted-foreground text-sm">
-                                          {statusData.responseTimeMs} ms
-                                       </span>
-                                    ) : (
-                                       "—"
                                     )}
                                  </TableCell>
                                  <TableCell className="pe-2">

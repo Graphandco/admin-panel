@@ -42,6 +42,18 @@ function tooltipFormatter(value) {
    return value?.toLocaleString?.() ?? value;
 }
 
+function formatUptime(seconds) {
+   if (!seconds || seconds < 0) return "—";
+   const days = Math.floor(seconds / 86400);
+   const hours = Math.floor((seconds % 86400) / 3600);
+   const mins = Math.floor((seconds % 3600) / 60);
+   const parts = [];
+   if (days > 0) parts.push(`${days} j`);
+   if (hours > 0) parts.push(`${hours} h`);
+   parts.push(`${mins} min`);
+   return parts.join(" ");
+}
+
 export default function VpsStatsPage() {
    const [stats, setStats] = useState(null);
    const [loading, setLoading] = useState(true);
@@ -123,8 +135,15 @@ export default function VpsStatsPage() {
 
    return (
       <div>
-         <header className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-white">Stats VPS</h1>
+         <header className="flex flex-wrap justify-between items-center gap-4 mb-4">
+            <div>
+               <h1 className="text-2xl font-bold text-white">Stats VPS</h1>
+               {stats?.uptime != null && (
+                  <span className="inline-block mt-2 px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-sm font-medium">
+                     Uptime : {formatUptime(stats.uptime)}
+                  </span>
+               )}
+            </div>
             <Button
                variant="outline"
                size="sm"

@@ -71,8 +71,16 @@ const sidebarData = {
          // isActive: true,
          items: [
             {
-               title: "Containers",
+               title: "Tableau de bord",
                url: "/docker",
+            },
+            {
+               title: "Stats",
+               url: "/docker/stats",
+            },
+            {
+               title: "Logs",
+               url: "/docker/logs",
             },
             {
                title: "Cheatsheet",
@@ -176,7 +184,10 @@ const sidebarData = {
          url: "/clients/generators/nouveau-client",
          icon: PlusIcon,
          items: [
-            { title: "Nouveau client", url: "/clients/generators/nouveau-client" },
+            {
+               title: "Nouveau client",
+               url: "/clients/generators/nouveau-client",
+            },
             { title: "Site", url: "/clients/generators/site" },
             { title: "Nouvelle facture", url: "/clients/generators/facture" },
             { title: "Nouveau contrat", url: "/clients/generators/contrat" },
