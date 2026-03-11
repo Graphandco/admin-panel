@@ -11,6 +11,21 @@ function adminApiFetch(path, options = {}) {
    return fetch(`${ADMIN_API_URL}${path}`, { ...options, headers });
 }
 
+export async function agenceSiteCreate(payload) {
+   try {
+      const res = await adminApiFetch("/api/sites", {
+         method: "POST",
+         body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Erreur API");
+      return data.site;
+   } catch (err) {
+      console.error("agenceSiteCreate:", err.message);
+      throw err;
+   }
+}
+
 export async function agenceSitesList() {
    try {
       const res = await adminApiFetch("/api/sites");

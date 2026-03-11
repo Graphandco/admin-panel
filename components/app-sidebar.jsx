@@ -177,6 +177,7 @@ const sidebarData = {
          icon: PlusIcon,
          items: [
             { title: "Nouveau client", url: "/clients/generators/nouveau-client" },
+            { title: "Site", url: "/clients/generators/site" },
             { title: "Nouvelle facture", url: "/clients/generators/facture" },
             { title: "Nouveau contrat", url: "/clients/generators/contrat" },
          ],
