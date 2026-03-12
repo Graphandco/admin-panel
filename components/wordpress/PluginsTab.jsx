@@ -18,7 +18,9 @@ import {
    SelectTrigger,
 } from "@/components/ui/select";
 import { Loader2Icon, RefreshCwIcon, ArrowUpCircle } from "lucide-react";
-import { wordpressPlugins, wordpressSites } from "@/app/actions/wordpress";
+import { toast } from "sonner";
+import { wordpressPlugins, wordpressSites, wordpressPluginUpdate } from "@/app/actions/wordpress";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function StatusBadge({ status }) {
@@ -61,6 +63,7 @@ export default function PluginsTab() {
    const [loading, setLoading] = useState(true);
    const [loadingSites, setLoadingSites] = useState(true);
    const [error, setError] = useState(null);
+   const [updatingPlugin, setUpdatingPlugin] = useState(null);
 
    useEffect(() => {
       wordpressSites()
@@ -88,6 +91,23 @@ export default function PluginsTab() {
    useEffect(() => {
       loadPlugins();
    }, [selectedSiteUrl]);
+
+   async function handleUpdate(p) {
+      if (!p.name || p.update !== "available") return;
+      setUpdatingPlugin(p.name);
+      try {
+         await wordpressPluginUpdate({
+            plugin: p.name,
+            url: selectedSiteUrl || undefined,
+         });
+         await loadPlugins();
+         toast.success(`${p.title || p.name} mis à jour`);
+      } catch (err) {
+         toast.error(err.message || "Erreur lors de la mise à jour");
+      } finally {
+         setUpdatingPlugin(null);
+      }
+   }
 
    if (error) {
       return (
@@ -195,10 +215,27 @@ export default function PluginsTab() {
                                  <StatusBadge status={p.status} />
                               </TableCell>
                               <TableCell>
-                                 <UpdateBadge
-                                    update={p.update}
-                                    updateVersion={p.update_version}
-                                 />
+                                 <div className="flex items-center gap-2">
+                                    <UpdateBadge
+                                       update={p.update}
+                                       updateVersion={p.update_version}
+                                    />
+                                    {p.update === "available" && (
+                                       <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleUpdate(p)}
+                                          disabled={updatingPlugin != null}
+                                          className="shrink-0"
+                                       >
+                                          {updatingPlugin === p.name ? (
+                                             <Loader2Icon className="size-4 animate-spin" />
+                                          ) : (
+                                             "Mettre à jour"
+                                          )}
+                                       </Button>
+                                    )}
+                                 </div>
                               </TableCell>
                            </TableRow>
                         ))

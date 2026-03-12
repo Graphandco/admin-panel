@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 import { AppSidebar } from "@/components/app-sidebar";
@@ -66,6 +67,7 @@ export default function RootLayout({ children }) {
                   </SidebarInset>
                </SidebarProvider>
             </TooltipProvider>
+            <Toaster position="bottom-right" richColors />
          </body>
       </html>
    );

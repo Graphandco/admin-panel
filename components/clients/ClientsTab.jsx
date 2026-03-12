@@ -39,6 +39,7 @@ import {
    Trash2Icon,
    EyeIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
    clientsList,
    clientCreate,
@@ -107,8 +108,9 @@ export function ClientsTab() {
          await clientUpdate(clientId, payload);
          setEditDialogId(null);
          load();
+         toast.success("Le client a été mis à jour");
       } catch (err) {
-         alert(err.message || "Erreur");
+         toast.error(err.message || "Erreur lors de la mise à jour");
       } finally {
          setSaving(false);
       }

@@ -9,6 +9,7 @@ import {
    PlusIcon,
    Globe,
    BarChart3,
+   ArchiveIcon,
 } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
@@ -65,6 +66,12 @@ const sidebarData = {
 
    vpsItems: [
       {
+         title: "Stats VPS",
+         url: "/vps/stats",
+         icon: BarChart3,
+      },
+
+      {
          title: "Docker",
          url: "/docker",
          icon: Container,
@@ -89,11 +96,6 @@ const sidebarData = {
          ],
       },
       {
-         title: "Stats VPS",
-         url: "/vps/stats",
-         icon: BarChart3,
-      },
-      {
          title: "Wordpress",
          url: "/wordpress/dashboard",
          icon: WordPressIcon,
@@ -115,6 +117,11 @@ const sidebarData = {
                url: "/wordpress/connexions",
             },
          ],
+      },
+      {
+         title: "Sauvegardes",
+         url: "/vps/backups",
+         icon: ArchiveIcon,
       },
       // {
       //    title: "Documentation",

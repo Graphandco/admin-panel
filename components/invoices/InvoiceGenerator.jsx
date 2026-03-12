@@ -16,6 +16,7 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import { Loader2Icon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
 
 const EMPTY_SERVICE = {
    description: "",
@@ -236,7 +237,9 @@ export function InvoiceGenerator() {
                msg.toLowerCase().includes("not found") || res.status === 404
                   ? "\n\n→ Redémarrez le conteneur admin-api pour charger les routes factures."
                   : "";
-            alert(`${msg}${details}${hint}`);
+            toast.error(`${msg}${details}${hint}`);
+         } else {
+            toast.success("La facture a été créée");
          }
          try {
             localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -244,7 +247,7 @@ export function InvoiceGenerator() {
             // ignore
          }
       } catch (err) {
-         alert(err.message || "Erreur lors de la génération");
+         toast.error(err.message || "Erreur lors de la génération");
       } finally {
          setGenerating(false);
          setSaving(false);

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { clientCreate } from "@/app/actions/clients";
+import { toast } from "sonner";
 
 export default function NouveauClientCard() {
    const router = useRouter();
@@ -14,9 +15,10 @@ export default function NouveauClientCard() {
       setSaving(true);
       try {
          await clientCreate(payload);
+         toast.success("Le client a été créé");
          router.push("/clients");
       } catch (err) {
-         alert(err.message || "Erreur");
+         toast.error(err.message || "Erreur");
       } finally {
          setSaving(false);
       }

@@ -16,6 +16,7 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import { Loader2Icon, DownloadIcon } from "lucide-react";
+import { toast } from "sonner";
 
 async function getLogoDataUrl() {
    const base = typeof window !== "undefined" ? window.location.origin : "";
@@ -155,10 +156,12 @@ export function ContractGenerator() {
                msg.toLowerCase().includes("not found") || res.status === 404
                   ? "\n\n→ Redémarrez le conteneur admin-api pour charger les routes contrats."
                   : "";
-            alert(`${msg}${details}${hint}`);
+            toast.error(`${msg}${details}${hint}`);
+         } else {
+            toast.success("Le contrat a été créé");
          }
       } catch (err) {
-         alert(err.message || "Erreur lors de la génération");
+         toast.error(err.message || "Erreur lors de la génération");
       } finally {
          setGenerating(false);
          setSaving(false);

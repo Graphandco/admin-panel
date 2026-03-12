@@ -3,12 +3,12 @@
 const ADMIN_API_URL = process.env.ADMIN_API_URL || 'http://admin-api:3000'
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY
 
-function adminApiFetch(path) {
-  const headers = {}
+function adminApiFetch(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...options.headers }
   if (ADMIN_API_KEY) {
     headers['X-API-Key'] = ADMIN_API_KEY
   }
-  return fetch(`${ADMIN_API_URL}${path}`, { headers })
+  return fetch(`${ADMIN_API_URL}${path}`, { ...options, headers })
 }
 
 /**
@@ -55,6 +55,28 @@ export async function wordpressPlugins(options = {}) {
     return data.plugins || []
   } catch (err) {
     console.error('wordpressPlugins:', err.message)
+    throw err
+  }
+}
+
+/**
+ * Met à jour un plugin WordPress via WP-CLI
+ * @param {{ plugin: string, url?: string }} options - slug du plugin, url optionnelle pour cibler un site
+ * @returns {Promise<{ success: boolean }>}
+ */
+export async function wordpressPluginUpdate(options = {}) {
+  try {
+    const res = await adminApiFetch('/api/wordpress/plugins/update', {
+      method: 'POST',
+      body: JSON.stringify({ plugin: options.plugin, url: options.url || null }),
+    })
+    const data = await res.json()
+    if (!data.success) {
+      throw new Error(data.error || data.stderr || 'Erreur lors de la mise à jour')
+    }
+    return { success: true }
+  } catch (err) {
+    console.error('wordpressPluginUpdate:', err.message)
     throw err
   }
 }

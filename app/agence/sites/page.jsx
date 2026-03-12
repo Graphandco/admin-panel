@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { agenceSitesList, agenceSiteUpdate } from "@/app/actions/agence-sites";
 import { checkAgenceSitesStatus } from "@/app/actions/sites";
+import { toast } from "sonner";
 
 function stripHttps(url) {
    if (!url || typeof url !== "string") return url || "";
@@ -198,8 +199,9 @@ export default function SitesPage() {
          await agenceSiteUpdate(editSite.id, editForm);
          setEditSite(null);
          load();
+         toast.success("Le site a été mis à jour");
       } catch (err) {
-         alert(err.message || "Erreur lors de l'enregistrement");
+         toast.error(err.message || "Erreur lors de l'enregistrement");
       } finally {
          setSaving(false);
       }

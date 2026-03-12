@@ -16,6 +16,7 @@ import {
 import { Loader2Icon } from "lucide-react";
 import { clientsList } from "@/app/actions/clients";
 import { agenceSiteCreate } from "@/app/actions/agence-sites";
+import { toast } from "sonner";
 
 export default function SiteForm() {
    const router = useRouter();
@@ -48,9 +49,10 @@ export default function SiteForm() {
             address: form.address.trim(),
             backoffice: form.backoffice.trim(),
          });
+         toast.success("Le site a été créé");
          router.push("/agence/sites");
       } catch (err) {
-         alert(err.message || "Erreur lors de la création");
+         toast.error(err.message || "Erreur lors de la création");
       } finally {
          setSaving(false);
       }
