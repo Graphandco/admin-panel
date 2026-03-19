@@ -11,6 +11,7 @@ import {
    BarChart3,
    ArchiveIcon,
    HardDrive,
+   Rocket,
 } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
@@ -118,6 +119,11 @@ const sidebarData = {
                url: "/wordpress/connexions",
             },
          ],
+      },
+      {
+         title: "Déploiements",
+         url: "/deploy",
+         icon: Rocket,
       },
       {
          title: "Sauvegardes",
