@@ -8,10 +8,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { PieChart, Pie, Cell } from "recharts";
 import { getNasStats } from "@/app/actions/nas";
-import { Loader2Icon, RefreshCwIcon, HardDriveIcon, CpuIcon, ClockIcon } from "lucide-react";
+import { Loader2Icon, RefreshCwIcon, HardDriveIcon, ClockIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
+const chartConfig = {
+  used: { label: "Utilisée", color: "#ef4444" },
+  free: { label: "Libre", color: "#22c55e" },
+};
+
+function formatBytes(val) {
+  if (val == null || val < 1024) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(val) / Math.log(k));
+  return `${(val / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+}
+
+function tooltipFormatter(value) {
+  if (typeof value === "number" && value >= 1024) return formatBytes(value);
+  return value?.toLocaleString?.() ?? value;
+}
 
 function formatUptime(seconds) {
   if (!seconds || seconds < 0) return "—";
@@ -63,59 +86,110 @@ function NasStatsCards({ data, loading, name }) {
 
   const stats = data?.stats || {};
   const mem = stats.memory || {};
-  const loadavg = stats.loadavg || {};
-  const loadSep = " / ";
-  const loadLabel = "1 min, 5 min, 15 min";
+  const disk = stats.disk || {};
+
+  const memData = [
+    { name: "used", value: mem.used || 0, fill: "#ef4444" },
+    { name: "free", value: Math.max(0, (mem.total || 0) - (mem.used || 0)), fill: "#22c55e" },
+  ];
+  const diskData = [
+    { name: "used", value: disk.used || 0, fill: "#ef4444" },
+    { name: "free", value: Math.max(0, (disk.total || 0) - (disk.used || 0)), fill: "#22c55e" },
+  ];
+  const hasMem = (mem.total || 0) > 0;
+  const hasDisk = (disk.total || 0) > 0;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">RAM</CardTitle>
-          <HardDriveIcon className="size-4 text-muted-foreground" />
+        <CardHeader>
+          <CardTitle className="text-base">Mémoire RAM</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {mem.usedFormatted} / {mem.totalFormatted} ({mem.percent}%)
+          </p>
         </CardHeader>
         <CardContent>
           {loading ? (
             <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
           ) : (
-            <>
-              <div className="text-2xl font-bold text-white">
-                {mem.usedFormatted} / {mem.totalFormatted}
-              </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all"
-                  style={{ width: `${Math.min(100, mem.percent || 0)}%` }}
+            <ChartContainer config={chartConfig} className="min-h-[180px] w-full">
+              <PieChart accessibilityLayer>
+                <Pie
+                  data={memData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={2}
+                >
+                  {memData.map((entry, index) => (
+                    <Cell key={index} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={tooltipFormatter}
+                      nameKey="name"
+                    />
+                  }
                 />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{mem.percent}% utilisée</p>
-            </>
+              </PieChart>
+            </ChartContainer>
           )}
         </CardContent>
       </Card>
+
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Charge (load average)</CardTitle>
-          <CpuIcon className="size-4 text-muted-foreground" />
+        <CardHeader>
+          <CardTitle className="text-base">Espace disque</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {disk.total
+              ? `${disk.usedFormatted} / ${disk.totalFormatted} (${disk.percent}%)${disk.mount ? ` — ${disk.mount}` : ""}`
+              : "Aucune partition principale détectée"}
+          </p>
         </CardHeader>
         <CardContent>
           {loading ? (
             <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+          ) : !disk.total ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">—</p>
           ) : (
-            <>
-              <div className="text-2xl font-bold text-white">
-                {[loadavg.load1, loadavg.load5, loadavg.load15]
-                  .map((v) => v?.toFixed(2) ?? "—")
-                  .join(loadSep)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{loadLabel}</p>
-            </>
+            <ChartContainer config={chartConfig} className="min-h-[180px] w-full">
+              <PieChart accessibilityLayer>
+                <Pie
+                  data={diskData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={2}
+                >
+                  {diskData.map((entry, index) => (
+                    <Cell key={index} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={tooltipFormatter}
+                      nameKey="name"
+                    />
+                  }
+                />
+              </PieChart>
+            </ChartContainer>
           )}
         </CardContent>
       </Card>
+
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Uptime</CardTitle>
+        <CardHeader>
+          <CardTitle className="text-base">Uptime</CardTitle>
           <ClockIcon className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

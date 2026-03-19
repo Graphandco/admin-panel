@@ -206,7 +206,7 @@ const sidebarData = {
    ],
    reseauItems: [
       {
-         title: "NAS Unraid",
+         title: "NAS",
          url: "/nas",
          icon: HardDrive,
       },
