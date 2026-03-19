@@ -12,12 +12,14 @@ services:
       - .next:/app/.next
       - ./invoices:/app/invoices
       - ./contracts:/app/contracts
+      - ./quotes:/app/quotes
     env_file:
       - .env
     environment:
       NODE_ENV: development
       INVOICES_DIR: /app/invoices
       CONTRACTS_DIR: /app/contracts
+      QUOTES_DIR: /app/quotes
 
 volumes:
   admin-node-modules:

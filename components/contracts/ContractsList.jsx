@@ -25,7 +25,15 @@ import {
    RefreshCwIcon,
    Trash2Icon,
    MoreHorizontalIcon,
+   EyeIcon,
 } from "lucide-react";
+import {
+   Dialog,
+   DialogContent,
+   DialogHeader,
+   DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
    contractsList,
    contractDeleteWithFile,
@@ -51,6 +59,7 @@ export function ContractsList() {
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
    const [actionId, setActionId] = useState(null);
+   const [previewFilename, setPreviewFilename] = useState(null);
 
    async function fetchContracts() {
       setLoading(true);
@@ -110,6 +119,8 @@ export function ContractsList() {
 
    const downloadUrl = (filename) =>
       `/api/contracts/download?file=${encodeURIComponent(filename)}`;
+   const previewUrl = (filename) =>
+      `/api/contracts/download?file=${encodeURIComponent(filename)}&preview=1#zoom=100`;
 
    return (
       <div className="my-6">
@@ -121,6 +132,9 @@ export function ContractsList() {
                         <TableHead className="pl-2">Fichier</TableHead>
                         <TableHead>Société</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead className="w-12 text-center">
+                           Aperçu
+                        </TableHead>
                         <TableHead className="text-right pe-2">
                            Actions
                         </TableHead>
@@ -130,7 +144,7 @@ export function ContractsList() {
                      {loading ? (
                         <TableRow>
                            <TableCell
-                              colSpan={4}
+                              colSpan={5}
                               className="text-center py-8"
                            >
                               <Loader2Icon className="size-6 animate-spin mx-auto text-muted-foreground" />
@@ -139,7 +153,7 @@ export function ContractsList() {
                      ) : contracts.length === 0 ? (
                         <TableRow>
                            <TableCell
-                              colSpan={4}
+                              colSpan={5}
                               className="text-center py-8 text-muted-foreground"
                            >
                               Aucun contrat pour le moment
@@ -156,6 +170,19 @@ export function ContractsList() {
                               </TableCell>
                               <TableCell>
                                  {formatDate(ct.created_at)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                 <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8"
+                                    onClick={() =>
+                                       setPreviewFilename(ct.filename)
+                                    }
+                                    title="Aperçu"
+                                 >
+                                    <EyeIcon className="size-4" />
+                                 </Button>
                               </TableCell>
                               <TableCell className="text-right pe-2">
                                  <DropdownMenu>
@@ -218,6 +245,28 @@ export function ContractsList() {
                </Table>
             </CardContent>
          </Card>
+
+         <Dialog
+            open={!!previewFilename}
+            onOpenChange={(open) => !open && setPreviewFilename(null)}
+         >
+            <DialogContent className="w-[90vw] md:w-[80vw] max-w-[90vw] md:max-w-[80vw] max-h-[90vh] flex flex-col p-0">
+               <DialogHeader className="px-6 pt-6 pb-2">
+                  <DialogTitle>
+                     {previewFilename || "Aperçu contrat"}
+                  </DialogTitle>
+               </DialogHeader>
+               <div className="flex-1 min-h-0 px-6 pb-6">
+                  {previewFilename && (
+                     <iframe
+                        src={previewUrl(previewFilename)}
+                        className="w-full h-[70vh] rounded border border-border"
+                        title="Aperçu PDF"
+                     />
+                  )}
+               </div>
+            </DialogContent>
+         </Dialog>
       </div>
    );
 }

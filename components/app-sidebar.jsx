@@ -10,6 +10,7 @@ import {
    Globe,
    BarChart3,
    ArchiveIcon,
+   HardDrive,
 } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
@@ -178,6 +179,7 @@ const sidebarData = {
          items: [
             { title: "Liste", url: "/clients" },
             { title: "Factures", url: "/clients/factures" },
+            { title: "Devis", url: "/clients/devis" },
             { title: "Contrats", url: "/clients/contrats" },
          ],
       },
@@ -197,11 +199,17 @@ const sidebarData = {
             },
             { title: "Site", url: "/clients/generators/site" },
             { title: "Nouvelle facture", url: "/clients/generators/facture" },
+            { title: "Nouveau devis", url: "/clients/generators/devis" },
             { title: "Nouveau contrat", url: "/clients/generators/contrat" },
          ],
       },
    ],
    reseauItems: [
+      {
+         title: "NAS Unraid",
+         url: "/nas",
+         icon: HardDrive,
+      },
       {
          title: "Tailscale",
          url: "/tailscale",

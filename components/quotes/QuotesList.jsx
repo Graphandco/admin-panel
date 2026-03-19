@@ -34,7 +34,7 @@ import {
    MoreHorizontalIcon,
    EyeIcon,
 } from "lucide-react";
-import { invoicesList, invoiceDeleteWithFile } from "@/app/actions/invoices";
+import { quotesList, quoteDeleteWithFile } from "@/app/actions/quotes";
 
 function formatDate(str) {
    if (!str) return "—";
@@ -59,19 +59,19 @@ function formatCurrency(val) {
       : `${n.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €`;
 }
 
-export function InvoicesList() {
-   const [invoices, setInvoices] = useState([]);
+export function QuotesList() {
+   const [quotes, setQuotes] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
    const [actionId, setActionId] = useState(null);
    const [previewFilename, setPreviewFilename] = useState(null);
 
-   async function fetchInvoices() {
+   async function fetchQuotes() {
       setLoading(true);
       setError(null);
       try {
-         const list = await invoicesList();
-         setInvoices(list);
+         const list = await quotesList();
+         setQuotes(list);
       } catch (err) {
          setError(err.message);
       } finally {
@@ -80,22 +80,22 @@ export function InvoicesList() {
    }
 
    useEffect(() => {
-      fetchInvoices();
+      fetchQuotes();
    }, []);
 
-   async function handleDelete(inv) {
+   async function handleDelete(q) {
       if (actionId) return;
       if (
          !confirm(
-            `Supprimer la facture ${inv.filename} ?\n\nLa facture sera supprimée de la base de données et le fichier PDF sera effacé.`,
+            `Supprimer le devis ${q.filename} ?\n\nLe devis sera supprimé de la base de données et le fichier PDF sera effacé.`,
          )
       ) {
          return;
       }
-      setActionId(inv.id);
+      setActionId(q.id);
       try {
-         await invoiceDeleteWithFile(inv.id);
-         fetchInvoices();
+         await quoteDeleteWithFile(q.id);
+         fetchQuotes();
       } catch (err) {
          alert(err.message || "Erreur lors de la suppression");
       } finally {
@@ -109,7 +109,7 @@ export function InvoicesList() {
             <div className="text-destructive flex items-center gap-3">
                <p>{error}</p>
                <button
-                  onClick={fetchInvoices}
+                  onClick={fetchQuotes}
                   className={cn(
                      buttonVariants({ variant: "outline", size: "sm" }),
                   )}
@@ -123,9 +123,9 @@ export function InvoicesList() {
    }
 
    const downloadUrl = (filename) =>
-      `/api/invoices/download?file=${encodeURIComponent(filename)}`;
+      `/api/quotes/download?file=${encodeURIComponent(filename)}`;
    const previewUrl = (filename) =>
-      `/api/invoices/download?file=${encodeURIComponent(filename)}&preview=1#zoom=100`;
+      `/api/quotes/download?file=${encodeURIComponent(filename)}&preview=1#zoom=100`;
 
    return (
       <div className="my-6">
@@ -153,29 +153,29 @@ export function InvoicesList() {
                               <Loader2Icon className="size-6 animate-spin mx-auto text-muted-foreground" />
                            </TableCell>
                         </TableRow>
-                     ) : invoices.length === 0 ? (
+                     ) : quotes.length === 0 ? (
                         <TableRow>
                            <TableCell
                               colSpan={6}
                               className="text-center py-8 text-muted-foreground"
                            >
-                              Aucune facture pour le moment
+                              Aucun devis pour le moment
                            </TableCell>
                         </TableRow>
                      ) : (
-                        invoices.map((inv) => (
-                           <TableRow key={inv.id}>
+                        quotes.map((q) => (
+                           <TableRow key={q.id}>
                               <TableCell className="pl-2 font-medium">
-                                 {inv.filename}
+                                 {q.filename}
                               </TableCell>
                               <TableCell>
-                                 {inv.client_company || inv.client_name || "—"}
+                                 {q.client_company || q.client_name || "—"}
                               </TableCell>
                               <TableCell>
-                                 {formatDate(inv.created_at)}
+                                 {formatDate(q.created_at)}
                               </TableCell>
                               <TableCell className="text-right">
-                                 {formatCurrency(inv.total_ttc)}
+                                 {formatCurrency(q.total_ttc)}
                               </TableCell>
                               <TableCell className="text-center">
                                  <Button
@@ -183,7 +183,7 @@ export function InvoicesList() {
                                     size="icon"
                                     className="size-8"
                                     onClick={() =>
-                                       setPreviewFilename(inv.filename)
+                                       setPreviewFilename(q.filename)
                                     }
                                     title="Aperçu"
                                  >
@@ -220,8 +220,8 @@ export function InvoicesList() {
                                           onClick={() => {
                                              const a =
                                                 document.createElement("a");
-                                             a.href = downloadUrl(inv.filename);
-                                             a.download = inv.filename;
+                                             a.href = downloadUrl(q.filename);
+                                             a.download = q.filename;
                                              a.click();
                                           }}
                                        >
@@ -231,10 +231,10 @@ export function InvoicesList() {
                                        <DropdownMenuSeparator />
                                        <DropdownMenuItem
                                           variant="destructive"
-                                          onClick={() => handleDelete(inv)}
-                                          disabled={actionId === inv.id}
+                                          onClick={() => handleDelete(q)}
+                                          disabled={actionId === q.id}
                                        >
-                                          {actionId === inv.id ? (
+                                          {actionId === q.id ? (
                                              <Loader2Icon className="size-4 mr-2 animate-spin" />
                                           ) : (
                                              <Trash2Icon className="size-4 mr-2" />
@@ -259,7 +259,7 @@ export function InvoicesList() {
             <DialogContent className="w-[90vw] md:w-[80vw] max-w-[90vw] md:max-w-[80vw] max-h-[90vh] flex flex-col p-0">
                <DialogHeader className="px-6 pt-6 pb-2">
                   <DialogTitle>
-                     {previewFilename || "Aperçu facture"}
+                     {previewFilename || "Aperçu devis"}
                   </DialogTitle>
                </DialogHeader>
                <div className="flex-1 min-h-0 px-6 pb-6">

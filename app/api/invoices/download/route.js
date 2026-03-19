@@ -8,15 +8,18 @@ export async function GET(request) {
    try {
       const { searchParams } = new URL(request.url);
       const file = searchParams.get("file");
+      const preview = searchParams.get("preview");
       if (!file || file.includes("..") || file.includes("/") || file.includes("\\")) {
          return NextResponse.json({ error: "Fichier invalide" }, { status: 400 });
       }
       const filepath = path.join(INVOICES_DIR, file);
       const buffer = await readFile(filepath);
+      const disposition =
+         preview === "1" ? "inline" : `attachment; filename="${file}"`;
       return new NextResponse(buffer, {
          headers: {
             "Content-Type": "application/pdf",
-            "Content-Disposition": `attachment; filename="${file}"`,
+            "Content-Disposition": disposition,
          },
       });
    } catch (err) {

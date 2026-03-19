@@ -24,6 +24,8 @@
 /invoices
 # contrats générés
 /contracts
+# devis générés
+/quotes
 
 # misc
 .DS_Store

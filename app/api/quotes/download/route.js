@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
 
-const CONTRACTS_DIR = process.env.CONTRACTS_DIR || path.join(process.cwd(), "contracts");
+const QUOTES_DIR = process.env.QUOTES_DIR || path.join(process.cwd(), "quotes");
 
 export async function GET(request) {
    try {
@@ -12,7 +12,7 @@ export async function GET(request) {
       if (!file || file.includes("..") || file.includes("/") || file.includes("\\")) {
          return NextResponse.json({ error: "Fichier invalide" }, { status: 400 });
       }
-      const filepath = path.join(CONTRACTS_DIR, file);
+      const filepath = path.join(QUOTES_DIR, file);
       const buffer = await readFile(filepath);
       const disposition =
          preview === "1" ? "inline" : `attachment; filename="${file}"`;
@@ -26,7 +26,7 @@ export async function GET(request) {
       if (err.code === "ENOENT") {
          return NextResponse.json({ error: "Fichier introuvable" }, { status: 404 });
       }
-      console.error("contract download error:", err.message);
+      console.error("quote download error:", err.message);
       return NextResponse.json(
          { error: err.message || "Erreur lors du téléchargement" },
          { status: 500 }

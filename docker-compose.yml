@@ -16,14 +16,17 @@ services:
          - ADMIN_API_KEY=${ADMIN_API_KEY}
          - INVOICES_DIR=/app/invoices
          - CONTRACTS_DIR=/app/contracts
+         - QUOTES_DIR=/app/quotes
       volumes:
          - invoices-data:/app/invoices
          - contracts-data:/app/contracts
+         - quotes-data:/app/quotes
       # mem_limit: 512m
 
 volumes:
    invoices-data:
    contracts-data:
+   quotes-data:
 
 networks:
    web-network:

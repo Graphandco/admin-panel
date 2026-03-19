@@ -25,13 +25,14 @@ const SEGMENT_LABELS = {
    stats: "Stats VPS",
    clients: "Clients",
    factures: "Factures",
+   devis: "Devis",
    contrats: "Contrats",
-   agence: "Agence",
    generators: "Ajouter",
    "nouveau-client": "Nouveau client",
    facture: "Génération de facture",
    contrat: "Génération de contrat",
    tailscale: "Tailscale",
+   nas: "NAS Unraid",
 };
 
 function getBreadcrumbSegments(pathname) {
