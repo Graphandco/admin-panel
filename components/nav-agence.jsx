@@ -31,10 +31,8 @@ export function NavAgence({ items }) {
                   >
                      <SidebarMenuItem>
                         <CollapsibleTrigger
-                           render={
-                              <SidebarMenuButton tooltip={item.title} />
-                           }
-                           className="group/trigger text-white hover:text-card"
+                           render={<SidebarMenuButton tooltip={item.title} />}
+                           className="group/trigger hover:text-card"
                         >
                            {item.icon && <item.icon />}
                            <span>{item.title}</span>
@@ -59,10 +57,10 @@ export function NavAgence({ items }) {
                   <SidebarMenuItem key={item.title}>
                      <SidebarMenuButton render={<a href={item.url} />}>
                         {item.icon && <item.icon />}
-                        <span className="text-white">{item.title}</span>
+                        <span className="">{item.title}</span>
                      </SidebarMenuButton>
                   </SidebarMenuItem>
-               )
+               ),
             )}
          </SidebarMenu>
       </SidebarGroup>

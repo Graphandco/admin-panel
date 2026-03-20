@@ -17,7 +17,7 @@ export function NavReseau({ items }) {
                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton render={<a href={item.url} />}>
                      {item.icon && <item.icon />}
-                     <span className="text-white">{item.title}</span>
+                     <span className="">{item.title}</span>
                   </SidebarMenuButton>
                </SidebarMenuItem>
             ))}

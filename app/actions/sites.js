@@ -1,6 +1,6 @@
 "use server";
 
-const CHECK_TIMEOUT_MS = 10000;
+const CHECK_TIMEOUT_MS = 5000;
 
 /**
  * Vérifie le statut HTTP d'une URL.
@@ -9,10 +9,7 @@ const CHECK_TIMEOUT_MS = 10000;
 async function checkUrl({ name, host }) {
    try {
       const controller = new AbortController();
-      const timeout = setTimeout(
-         () => controller.abort(),
-         CHECK_TIMEOUT_MS,
-      );
+      const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
       const res = await fetch(host, {
          method: "HEAD",
          signal: controller.signal,
@@ -33,10 +30,7 @@ async function checkUrlWithTiming({ name, host }) {
    const start = performance.now();
    try {
       const controller = new AbortController();
-      const timeout = setTimeout(
-         () => controller.abort(),
-         CHECK_TIMEOUT_MS,
-      );
+      const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
       const res = await fetch(host, {
          method: "HEAD",
          signal: controller.signal,
@@ -70,7 +64,9 @@ export async function checkHomepageSitesStats(websites) {
    const sitesToCheck = websites
       .filter((w) => w.address?.trim())
       .map((w) => ({
-         host: w.address.startsWith("http") ? w.address : `https://${w.address}`,
+         host: w.address.startsWith("http")
+            ? w.address
+            : `https://${w.address}`,
       }));
    const backofficesToCheck = websites
       .filter((w) => w.backoffice?.trim())
@@ -81,7 +77,9 @@ export async function checkHomepageSitesStats(websites) {
       }));
 
    const [siteResults, backofficeResults] = await Promise.all([
-      Promise.all(sitesToCheck.map((s) => checkUrl({ name: "", host: s.host }))),
+      Promise.all(
+         sitesToCheck.map((s) => checkUrl({ name: "", host: s.host })),
+      ),
       Promise.all(
          backofficesToCheck.map((s) => checkUrl({ name: "", host: s.host })),
       ),
@@ -101,25 +99,48 @@ export async function checkHomepageSitesStats(websites) {
 }
 
 /**
- * Vérifie le statut et le temps de réponse des sites Agence.
- * @param {{ id: number, address: string, ... }[]} sites
+ * Vérifie le statut et le temps de réponse des sites Agence (address + backoffice).
+ * @param {{ id: number, address: string, backoffice?: string }[]} sites
  */
 export async function checkAgenceSitesStatus(sites) {
    const toCheck = sites
       .filter((s) => s.address?.trim())
       .map((s) => ({
          id: s.id,
-         name: s.address,
-         host: s.address.startsWith("http") ? s.address : `https://${s.address}`,
+         address: s.address.startsWith("http")
+            ? s.address
+            : `https://${s.address}`,
+         backoffice: s.backoffice?.trim()
+            ? s.backoffice.startsWith("http")
+               ? s.backoffice
+               : `https://${s.backoffice}`
+            : null,
       }));
+
    const results = await Promise.all(
       toCheck.map(async (item) => {
-         const { id, name, host } = item;
-         const { status, responseTimeMs } = await checkUrlWithTiming({
-            name,
-            host,
-         });
-         return { id, host, status, responseTimeMs };
+         const [siteResult, backofficeResult] = await Promise.all([
+            checkUrlWithTiming({ name: item.address, host: item.address }),
+            item.backoffice
+               ? checkUrlWithTiming({
+                    name: item.backoffice,
+                    host: item.backoffice,
+                 })
+               : null,
+         ]);
+
+         return {
+            id: item.id,
+            host: item.address,
+            status: siteResult.status,
+            responseTimeMs: siteResult.responseTimeMs,
+            ...(item.backoffice && {
+               backoffice: {
+                  status: backofficeResult.status,
+                  responseTimeMs: backofficeResult.responseTimeMs,
+               },
+            }),
+         };
       }),
    );
    return results;

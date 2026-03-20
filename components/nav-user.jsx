@@ -9,6 +9,8 @@ import {
    Sparkles,
    EarthIcon,
    ChartLine,
+   ImageIcon,
+   Cloud,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -87,23 +89,6 @@ export function NavUser({ user }) {
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                     <DropdownMenuItem>
-                        <Sparkles />
-                        Upgrade to Pro
-                     </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                     <DropdownMenuItem>
-                        <BadgeCheck />
-                        Account
-                     </DropdownMenuItem>
-                     <Link href="https://stats.graphandco.com/" target="_blank">
-                        <DropdownMenuItem>
-                           <ChartLine />
-                           Statistiques Matomo
-                        </DropdownMenuItem>
-                     </Link>
                      <Link
                         href="https://hpanel.hostinger.com/vps/496857/overview"
                         target="_blank"
@@ -113,10 +98,30 @@ export function NavUser({ user }) {
                            Panel Hostinger
                         </DropdownMenuItem>
                      </Link>
-                     <DropdownMenuItem>
-                        <Bell />
-                        Notifications
-                     </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                     <Link
+                        href="https://convert-image.graphandco.com/"
+                        target="_blank"
+                     >
+                        <DropdownMenuItem>
+                           <ImageIcon />
+                           Image converter
+                        </DropdownMenuItem>
+                     </Link>
+                     <Link href="https://stats.graphandco.com/" target="_blank">
+                        <DropdownMenuItem>
+                           <ChartLine />
+                           Statistiques Matomo
+                        </DropdownMenuItem>
+                     </Link>
+                     <Link href="https://dash.cloudflare.com/" target="_blank">
+                        <DropdownMenuItem>
+                           <Cloud />
+                           Cloudflare
+                        </DropdownMenuItem>
+                     </Link>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
