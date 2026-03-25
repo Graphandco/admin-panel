@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import {
    Container,
    Home,
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import Link from "next/link";
+import { isNavLinkActive } from "@/lib/nav-matches";
 
 function WordPressIcon(props) {
    return (
@@ -203,7 +205,10 @@ const sidebarData = {
                title: "Nouveau client",
                url: "/clients/generators/nouveau-client",
             },
-            { title: "Site", url: "/clients/generators/site" },
+            {
+               title: "Nouveau site",
+               url: "/clients/generators/site",
+            },
             { title: "Nouvelle facture", url: "/clients/generators/facture" },
             { title: "Nouveau devis", url: "/clients/generators/devis" },
             { title: "Nouveau contrat", url: "/clients/generators/contrat" },
@@ -226,6 +231,7 @@ const sidebarData = {
 
 export function AppSidebar({ ...props }) {
    const { isMobile, setOpenMobile } = useSidebar();
+   const pathname = usePathname();
 
    return (
       <Sidebar collapsible="icon" {...props}>
@@ -259,6 +265,7 @@ export function AppSidebar({ ...props }) {
                            />
                         }
                         className="text-white hover:text-card"
+                        isActive={isNavLinkActive(pathname, "/")}
                      >
                         <Home className="size-4 shrink-0" />
                         <span>Accueil</span>
