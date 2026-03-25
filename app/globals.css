@@ -101,3 +101,18 @@
       @apply bg-background text-foreground;
    }
 }
+
+h1 {
+   position: relative;
+   display: flex;
+   align-items: end;
+   gap: 2px;
+}
+h1:before {
+   content: "";
+   width: 5px;
+   aspect-ratio: 1;
+   background: var(--accent);
+   border-radius: 50px;
+   margin-bottom: 6px;
+}

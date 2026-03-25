@@ -34,10 +34,7 @@ import {
    DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-   contractsList,
-   contractDeleteWithFile,
-} from "@/app/actions/contracts";
+import { contractsList, contractDeleteWithFile } from "@/app/actions/contracts";
 
 function formatDate(str) {
    if (!str) return "—";
@@ -82,7 +79,7 @@ export function ContractsList() {
       if (actionId) return;
       if (
          !confirm(
-            `Supprimer le contrat ${ct.filename} ?\n\nLe contrat sera supprimé de la base de données et le fichier PDF sera effacé.`
+            `Supprimer le contrat ${ct.filename} ?\n\nLe contrat sera supprimé de la base de données et le fichier PDF sera effacé.`,
          )
       ) {
          return;
@@ -100,20 +97,23 @@ export function ContractsList() {
 
    if (error) {
       return (
-         <Card className="mb-6 p-6">
-            <div className="text-destructive flex items-center gap-3">
-               <p>{error}</p>
-               <button
-                  onClick={fetchContracts}
-                  className={cn(
-                     buttonVariants({ variant: "outline", size: "sm" })
-                  )}
-               >
-                  <RefreshCwIcon className="size-4 mr-1" />
-                  Réessayer
-               </button>
-            </div>
-         </Card>
+         <>
+            <h2 className="text-xl font-bold text-white">Contrats</h2>
+            <Card className="mb-6 p-6">
+               <div className="text-destructive flex items-center gap-3">
+                  <p>{error}</p>
+                  <button
+                     onClick={fetchContracts}
+                     className={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                     )}
+                  >
+                     <RefreshCwIcon className="size-4 mr-1" />
+                     Réessayer
+                  </button>
+               </div>
+            </Card>
+         </>
       );
    }
 
@@ -143,10 +143,7 @@ export function ContractsList() {
                   <TableBody>
                      {loading ? (
                         <TableRow>
-                           <TableCell
-                              colSpan={5}
-                              className="text-center py-8"
-                           >
+                           <TableCell colSpan={5} className="text-center py-8">
                               <Loader2Icon className="size-6 animate-spin mx-auto text-muted-foreground" />
                            </TableCell>
                         </TableRow>
@@ -168,9 +165,7 @@ export function ContractsList() {
                               <TableCell>
                                  {ct.client_company || ct.client_name || "—"}
                               </TableCell>
-                              <TableCell>
-                                 {formatDate(ct.created_at)}
-                              </TableCell>
+                              <TableCell>{formatDate(ct.created_at)}</TableCell>
                               <TableCell className="text-center">
                                  <Button
                                     variant="ghost"
@@ -196,10 +191,10 @@ export function ContractsList() {
                                                 buttonVariants({
                                                    variant: "ghost",
                                                    size: "icon",
-                                                })
+                                                }),
                                              )}
                                           />
-                                    }
+                                       }
                                     >
                                        <MoreHorizontalIcon />
                                        <span className="sr-only">

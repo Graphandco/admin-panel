@@ -95,7 +95,7 @@ export default function DockerLogsPage() {
    return (
       <div>
          <header className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-white">Logs</h1>
+            <h2 className="text-xl font-bold text-white">Logs</h2>
          </header>
 
          {error ? (
@@ -145,7 +145,10 @@ export default function DockerLogsPage() {
                            onCheckedChange={setLive}
                            disabled={!selectedId || loadingLogs}
                         />
-                        <Label htmlFor="live" className="cursor-pointer text-sm">
+                        <Label
+                           htmlFor="live"
+                           className="cursor-pointer text-sm"
+                        >
                            Temps réel
                         </Label>
                      </div>
@@ -164,7 +167,7 @@ export default function DockerLogsPage() {
                               <Loader2Icon className="size-6 animate-spin" />
                            </div>
                         ) : (
-                           <pre className="whitespace-pre-wrap break-words text-foreground">
+                           <pre className="whitespace-pre-wrap wrap-break-word text-foreground">
                               {logs || "Aucun log"}
                            </pre>
                         )}

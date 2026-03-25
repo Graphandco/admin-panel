@@ -105,20 +105,23 @@ export function QuotesList() {
 
    if (error) {
       return (
-         <Card className="mb-6 p-6">
-            <div className="text-destructive flex items-center gap-3">
-               <p>{error}</p>
-               <button
-                  onClick={fetchQuotes}
-                  className={cn(
-                     buttonVariants({ variant: "outline", size: "sm" }),
-                  )}
-               >
-                  <RefreshCwIcon className="size-4 mr-1" />
-                  Réessayer
-               </button>
-            </div>
-         </Card>
+         <>
+            <h2 className="text-xl font-bold text-white">Devis</h2>
+            <Card className="mb-6 p-6">
+               <div className="text-destructive flex items-center gap-3">
+                  <p>{error}</p>
+                  <button
+                     onClick={fetchQuotes}
+                     className={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                     )}
+                  >
+                     <RefreshCwIcon className="size-4 mr-1" />
+                     Réessayer
+                  </button>
+               </div>
+            </Card>
+         </>
       );
    }
 
@@ -171,9 +174,7 @@ export function QuotesList() {
                               <TableCell>
                                  {q.client_company || q.client_name || "—"}
                               </TableCell>
-                              <TableCell>
-                                 {formatDate(q.created_at)}
-                              </TableCell>
+                              <TableCell>{formatDate(q.created_at)}</TableCell>
                               <TableCell className="text-right">
                                  {formatCurrency(q.total_ttc)}
                               </TableCell>
@@ -258,9 +259,7 @@ export function QuotesList() {
          >
             <DialogContent className="w-[90vw] md:w-[80vw] max-w-[90vw] md:max-w-[80vw] max-h-[90vh] flex flex-col p-0">
                <DialogHeader className="px-6 pt-6 pb-2">
-                  <DialogTitle>
-                     {previewFilename || "Aperçu devis"}
-                  </DialogTitle>
+                  <DialogTitle>{previewFilename || "Aperçu devis"}</DialogTitle>
                </DialogHeader>
                <div className="flex-1 min-h-0 px-6 pb-6">
                   {previewFilename && (

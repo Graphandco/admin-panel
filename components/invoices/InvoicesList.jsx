@@ -105,20 +105,23 @@ export function InvoicesList() {
 
    if (error) {
       return (
-         <Card className="mb-6 p-6">
-            <div className="text-destructive flex items-center gap-3">
-               <p>{error}</p>
-               <button
-                  onClick={fetchInvoices}
-                  className={cn(
-                     buttonVariants({ variant: "outline", size: "sm" }),
-                  )}
-               >
-                  <RefreshCwIcon className="size-4 mr-1" />
-                  Réessayer
-               </button>
-            </div>
-         </Card>
+         <>
+            <h2 className="text-xl font-bold text-white">Factures</h2>
+            <Card className="mb-6 p-6">
+               <div className="text-destructive flex items-center gap-3">
+                  <p>{error}</p>
+                  <button
+                     onClick={fetchInvoices}
+                     className={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                     )}
+                  >
+                     <RefreshCwIcon className="size-4 mr-1" />
+                     Réessayer
+                  </button>
+               </div>
+            </Card>
+         </>
       );
    }
 

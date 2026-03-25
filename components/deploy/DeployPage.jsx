@@ -289,9 +289,6 @@ export default function DeployPage() {
    return (
       <div className="space-y-6">
          <div>
-            <h2 className="text-lg font-semibold text-white mb-1">
-               Déploiements
-            </h2>
             <p className="text-sm text-muted-foreground">
                Lance les scripts deploy.sh (GitHub Actions + docker compose)
                pour chaque projet.

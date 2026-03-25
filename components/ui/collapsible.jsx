@@ -9,7 +9,10 @@ function Collapsible(props) {
 
 function CollapsibleTrigger(props) {
    return (
-      <CollapsiblePrimitive.Trigger data-slot="collapsible-trigger" {...props} />
+      <CollapsiblePrimitive.Trigger
+         data-slot="collapsible-trigger"
+         {...props}
+      />
    );
 }
 
@@ -23,9 +26,9 @@ function CollapsibleContent({ className, ...props }) {
          data-slot="collapsible-content"
          className={cn(
             "overflow-hidden [&[hidden]:not([hidden='until-found'])]:hidden",
-            "h-[var(--collapsible-panel-height)]",
+            "h-(--collapsible-panel-height)",
             "transition-[height] duration-200 ease-out",
-            "data-[starting-style]:h-0 data-[ending-style]:h-0",
+            "data-starting-style:h-0 data-ending-style:h-0",
             className,
          )}
          {...props}

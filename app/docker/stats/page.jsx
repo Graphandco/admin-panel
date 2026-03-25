@@ -84,7 +84,9 @@ function StatMiniCard({ title, value, fillUsed, loading }) {
       return (
          <Card className="h-full min-w-0">
             <CardHeader className="py-2 px-3">
-               <CardTitle className="text-sm font-medium text-white">{title}</CardTitle>
+               <CardTitle className="text-sm font-medium text-white">
+                  {title}
+               </CardTitle>
             </CardHeader>
             <CardContent className="flex items-center justify-center py-6">
                <span className="text-muted-foreground">—</span>
@@ -95,7 +97,8 @@ function StatMiniCard({ title, value, fillUsed, loading }) {
    const isPercent = typeof value === "object" && value?.total === 100;
    const used = value?.used ?? 0;
    const total = value?.total ?? 1;
-   const percent = value?.percent ?? (total > 0 ? Math.round((used / total) * 100) : 0);
+   const percent =
+      value?.percent ?? (total > 0 ? Math.round((used / total) * 100) : 0);
    const free = Math.max(0, total - used);
    const chartData = [
       { name: "used", value: used, fill: fillUsed },
@@ -224,7 +227,10 @@ function RamUsageBarChart({ stats, loading }) {
                   >
                      <XAxis
                         type="number"
-                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                        tick={{
+                           fill: "hsl(var(--muted-foreground))",
+                           fontSize: 10,
+                        }}
                         tickFormatter={(v) => formatBytes(v)}
                      />
                      <YAxis
@@ -232,7 +238,10 @@ function RamUsageBarChart({ stats, loading }) {
                         dataKey="name"
                         width={220}
                         interval={0}
-                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                        tick={{
+                           fill: "hsl(var(--muted-foreground))",
+                           fontSize: 11,
+                        }}
                         tickLine={false}
                      />
                      <ChartTooltip
@@ -288,7 +297,10 @@ export default function DockerStatsPage() {
          ]);
          setContainers(list);
          setAllStats(stats);
-         if (!selectedId && list.filter((c) => c.state === "running").length > 0) {
+         if (
+            !selectedId &&
+            list.filter((c) => c.state === "running").length > 0
+         ) {
             const firstRunning = list.find((c) => c.state === "running");
             if (firstRunning) setSelectedId(firstRunning.id);
          }
@@ -326,7 +338,7 @@ export default function DockerStatsPage() {
    return (
       <div>
          <header className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-white">Stats</h1>
+            <h2 className="text-2xl font-bold text-white">Stats</h2>
             <button
                onClick={loadContainersAndStats}
                disabled={loading}
