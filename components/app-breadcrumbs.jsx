@@ -33,6 +33,9 @@ const SEGMENT_LABELS = {
    contrat: "Génération de contrat",
    tailscale: "Tailscale",
    nas: "NAS Unraid",
+   caddy: "Caddy",
+   mapping: "Mapping",
+   redirects: "Redirections",
 };
 
 function getBreadcrumbSegments(pathname) {

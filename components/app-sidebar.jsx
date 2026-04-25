@@ -13,6 +13,7 @@ import {
    ArchiveIcon,
    HardDrive,
    Rocket,
+   ShoppingCart,
 } from "lucide-react";
 // import { SiTailscale } from "react-icons/si";
 
@@ -96,6 +97,25 @@ const sidebarData = {
             {
                title: "Cheatsheet",
                url: "/docker/cheatsheet",
+            },
+         ],
+      },
+      {
+         title: "Caddy",
+         url: "/caddy",
+         icon: ShoppingCart,
+         items: [
+            {
+               title: "Tableau de bord",
+               url: "/caddy",
+            },
+            {
+               title: "Mapping",
+               url: "/caddy/mapping",
+            },
+            {
+               title: "Redirections",
+               url: "/caddy/redirects",
             },
          ],
       },

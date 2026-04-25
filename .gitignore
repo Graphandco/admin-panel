@@ -10,6 +10,11 @@
 !.yarn/releases
 !.yarn/versions
 
+# TLS / secrets locaux
+*.key
+*.pem
+*.crt
+
 # testing
 /coverage
 

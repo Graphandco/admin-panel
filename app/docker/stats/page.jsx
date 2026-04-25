@@ -338,7 +338,7 @@ export default function DockerStatsPage() {
    return (
       <div>
          <header className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-white">Stats</h2>
+            <h2 className="text-xl font-bold text-white">Stats</h2>
             <button
                onClick={loadContainersAndStats}
                disabled={loading}

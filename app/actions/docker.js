@@ -38,7 +38,13 @@ export async function dockerStatsAll() {
 }
 
 async function dockerContainerAction(containerId, action) {
-  const endpoints = { start: 'start', stop: 'stop', remove: 'remove', build: 'build' }
+  const endpoints = {
+    start: 'start',
+    stop: 'stop',
+    remove: 'remove',
+    build: 'build',
+    restart: 'restart',
+  }
   const path = `/api/docker/container/${containerId}/${endpoints[action]}`
   const res = await adminApiFetch(path, { method: 'POST' })
   let data
@@ -66,6 +72,15 @@ export async function dockerContainerStop(containerId) {
     return await dockerContainerAction(containerId, 'stop')
   } catch (err) {
     console.error('dockerContainerStop:', err.message)
+    throw err
+  }
+}
+
+export async function dockerContainerRestart(containerId) {
+  try {
+    return await dockerContainerAction(containerId, 'restart')
+  } catch (err) {
+    console.error('dockerContainerRestart:', err.message)
     throw err
   }
 }
