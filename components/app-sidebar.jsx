@@ -83,12 +83,12 @@ const sidebarData = {
          // isActive: true,
          items: [
             {
-               title: "Tableau de bord",
-               url: "/docker",
-            },
-            {
                title: "Stats",
                url: "/docker/stats",
+            },
+            {
+               title: "Containers",
+               url: "/docker",
             },
             {
                title: "Logs",

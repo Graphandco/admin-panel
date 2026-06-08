@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import {
@@ -19,49 +19,20 @@ import {
    pathnameMatchesNavSection,
    isNavSubItemActive,
 } from "@/lib/nav-matches";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-const HOVER_LEAVE_MS = 150;
 
 /**
- * Sous-menu sidebar : ouverture au survol (desktop), au clic (mobile),
+ * Sous-menu sidebar : ouverture au clic sur le trigger,
  * reste déplié lorsque la route active est dans la section.
  */
 export function NavCollapsibleItem({ item, triggerClassName }) {
    const pathname = usePathname();
-   const isMobile = useIsMobile();
    const matches = pathnameMatchesNavSection(pathname, item);
    const [open, setOpen] = useState(matches);
-   const leaveTimerRef = useRef(null);
 
    useEffect(() => {
       if (matches) setOpen(true);
       else setOpen(false);
    }, [matches, pathname]);
-
-   useEffect(() => {
-      return () => {
-         if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
-      };
-   }, []);
-
-   const handleMouseEnter = () => {
-      if (isMobile) return;
-      if (leaveTimerRef.current) {
-         clearTimeout(leaveTimerRef.current);
-         leaveTimerRef.current = null;
-      }
-      setOpen(true);
-   };
-
-   const handleMouseLeave = () => {
-      if (isMobile) return;
-      if (matches) return;
-      leaveTimerRef.current = setTimeout(() => {
-         setOpen(false);
-         leaveTimerRef.current = null;
-      }, HOVER_LEAVE_MS);
-   };
 
    return (
       <Collapsible
@@ -71,10 +42,7 @@ export function NavCollapsibleItem({ item, triggerClassName }) {
          }}
          className="group/collapsible"
       >
-         <SidebarMenuItem
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-         >
+         <SidebarMenuItem>
             <CollapsibleTrigger
                render={<SidebarMenuButton tooltip={item.title} />}
                className={triggerClassName}
