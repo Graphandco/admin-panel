@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-   Card,
-   CardContent,
-   CardHeader,
-   CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
    ChartContainer,
    ChartTooltip,
@@ -74,7 +69,15 @@ function getDateOptions() {
       const dd = String(d.getDate()).padStart(2, "0");
       const value = `${yyyy}-${mm}-${dd}`;
       const label =
-         i === 0 ? "Aujourd'hui" : i === 1 ? "Hier" : d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+         i === 0
+            ? "Aujourd'hui"
+            : i === 1
+              ? "Hier"
+              : d.toLocaleDateString("fr-FR", {
+                   weekday: "short",
+                   day: "numeric",
+                   month: "short",
+                });
       opts.push({ value, label });
    }
    return opts;
@@ -89,7 +92,12 @@ const historyChartConfig = {
 function MetricsHistoryChart({ data, loading }) {
    const chartData = (data || []).map((r) => ({
       ...r,
-      time: r.ts ? new Date(r.ts).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "",
+      time: r.ts
+         ? new Date(r.ts).toLocaleTimeString("fr-FR", {
+              hour: "2-digit",
+              minute: "2-digit",
+           })
+         : "",
    }));
 
    if (loading) return null;
@@ -98,7 +106,8 @@ function MetricsHistoryChart({ data, loading }) {
          <Card>
             <CardContent className="py-8">
                <p className="text-sm text-muted-foreground text-center">
-                  Aucune donnée pour cette période. Configurez le cron de collecte (voir CRON.md).
+                  Aucune donnée pour cette période. Configurez le cron de
+                  collecte (voir CRON.md).
                </p>
             </CardContent>
          </Card>
@@ -111,23 +120,30 @@ function MetricsHistoryChart({ data, loading }) {
             <h3 className="text-sm font-medium text-muted-foreground mb-3">
                Historique des métriques (24 h)
             </h3>
-            <ChartContainer config={historyChartConfig} className="h-[280px] w-full">
-               <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+            <ChartContainer config={historyChartConfig} className="h-70 w-full">
+               <LineChart
+                  data={chartData}
+                  margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+               >
                   <XAxis
                      dataKey="time"
-                     tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                     tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 10,
+                     }}
                      tickLine={false}
                   />
                   <YAxis
                      domain={[0, 100]}
-                     tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                     tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 10,
+                     }}
                      tickFormatter={(v) => `${v}%`}
                   />
                   <ChartTooltip
                      content={
-                        <ChartTooltipContent
-                           formatter={(v) => `${v}%`}
-                        />
+                        <ChartTooltipContent formatter={(v) => `${v}%`} />
                      }
                   />
                   <Line
@@ -170,7 +186,9 @@ export default function VpsStatsPage() {
    const [loadingHistory, setLoadingHistory] = useState(false);
    const today = new Date().toISOString().slice(0, 10);
    const [selectedDate, setSelectedDate] = useState(today);
-   const selectedDateLabel = getDateOptions().find((o) => o.value === selectedDate)?.label ?? selectedDate;
+   const selectedDateLabel =
+      getDateOptions().find((o) => o.value === selectedDate)?.label ??
+      selectedDate;
 
    async function load() {
       setLoading(true);
@@ -208,9 +226,7 @@ export default function VpsStatsPage() {
    if (error) {
       return (
          <div>
-            <h1 className="text-2xl font-bold text-white mb-4">
-               Stats VPS
-            </h1>
+            <h1 className="text-2xl font-bold text-white mb-4">Stats VPS</h1>
             <Card>
                <CardContent className="py-6">
                   <div className="text-destructive flex items-center gap-3">
@@ -297,153 +313,219 @@ export default function VpsStatsPage() {
             </Card>
          ) : (
             <>
-            <div className="grid gap-6 md:grid-cols-3">
-               <Card>
-                  <CardHeader>
-                     <CardTitle className="text-base">Mémoire RAM</CardTitle>
-                     <p className="text-sm text-muted-foreground">
-                        {stats?.memory.usedFormatted} / {stats?.memory.totalFormatted} ({stats?.memory.percent}%)
-                     </p>
-                  </CardHeader>
-                  <CardContent>
-                     <ChartContainer config={chartConfig} className="min-h-[180px] w-full">
-                        <PieChart accessibilityLayer>
-                           <Pie
-                              data={memData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={70}
-                              paddingAngle={2}
-                           >
-                              {memData.map((entry, index) => (
-                                 <Cell key={index} fill={entry.fill} />
-                              ))}
-                           </Pie>
-                           <ChartTooltip
-                              content={
-                                 <ChartTooltipContent
-                                    formatter={tooltipFormatter}
-                                    nameKey="name"
-                                 />
-                              }
-                           />
-                        </PieChart>
-                     </ChartContainer>
-                  </CardContent>
-               </Card>
-
-               <Card>
-                  <CardHeader>
-                     <CardTitle className="text-base">CPU</CardTitle>
-                     <p className="text-sm text-muted-foreground">
-                        {stats?.cpu.percent}% utilisé
-                     </p>
-                  </CardHeader>
-                  <CardContent>
-                     <ChartContainer config={chartConfig} className="min-h-[180px] w-full">
-                        <PieChart accessibilityLayer>
-                           <Pie
-                              data={cpuData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={70}
-                              paddingAngle={2}
-                           >
-                              {cpuData.map((entry, index) => (
-                                 <Cell key={index} fill={entry.fill} />
-                              ))}
-                           </Pie>
-                           <ChartTooltip
-                              content={
-                                 <ChartTooltipContent
-                                    formatter={tooltipFormatter}
-                                    nameKey="name"
-                                 />
-                              }
-                           />
-                        </PieChart>
-                     </ChartContainer>
-                  </CardContent>
-               </Card>
-
-               <Card>
-                  <CardHeader>
-                     <CardTitle className="text-base">Espace disque</CardTitle>
-                     <p className="text-sm text-muted-foreground">
-                        {stats?.disk.usedFormatted} / {stats?.disk.totalFormatted} ({stats?.disk.percent}%)
-                     </p>
-                  </CardHeader>
-                  <CardContent>
-                     <ChartContainer config={chartConfig} className="min-h-[180px] w-full">
-                        <PieChart accessibilityLayer>
-                           <Pie
-                              data={diskData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={70}
-                              paddingAngle={2}
-                           >
-                              {diskData.map((entry, index) => (
-                                 <Cell key={index} fill={entry.fill} />
-                              ))}
-                           </Pie>
-                           <ChartTooltip
-                              content={
-                                 <ChartTooltipContent
-                                    formatter={tooltipFormatter}
-                                    nameKey="name"
-                                 />
-                              }
-                           />
-                        </PieChart>
-                     </ChartContainer>
-                  </CardContent>
-               </Card>
-            </div>
-
-            <div className="mt-6 space-y-4">
-               <div className="flex flex-wrap items-end gap-4">
-                  <div className="space-y-2 min-w-[180px]">
-                     <Label htmlFor="metrics-date">Période</Label>
-                     <Select
-                        value={selectedDate}
-                        onValueChange={setSelectedDate}
-                        disabled={loadingHistory}
-                     >
-                        <SelectTrigger id="metrics-date">
-                           <SelectValue placeholder="Choisir une date">
-                              {selectedDateLabel}
-                           </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                           {getDateOptions().map((o) => (
-                              <SelectItem key={o.value} value={o.value}>
-                                 {o.label}
-                              </SelectItem>
-                           ))}
-                        </SelectContent>
-                     </Select>
-                  </div>
-               </div>
-               {loadingHistory ? (
+               <div className="grid gap-6 md:grid-cols-3">
                   <Card>
-                     <CardContent className="flex items-center justify-center py-12">
-                        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+                     <CardHeader>
+                        <CardTitle className="text-base">Mémoire RAM</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                           {stats?.memory.usedFormatted} /{" "}
+                           {stats?.memory.totalFormatted} (
+                           {stats?.memory.percent}%)
+                        </p>
+                     </CardHeader>
+                     <CardContent>
+                        <ChartContainer
+                           config={chartConfig}
+                           className="min-h-45 w-full"
+                        >
+                           <PieChart accessibilityLayer>
+                              <Pie
+                                 data={memData}
+                                 dataKey="value"
+                                 nameKey="name"
+                                 cx="50%"
+                                 cy="50%"
+                                 innerRadius={50}
+                                 outerRadius={70}
+                                 paddingAngle={2}
+                              >
+                                 {memData.map((entry, index) => (
+                                    <Cell key={index} fill={entry.fill} />
+                                 ))}
+                              </Pie>
+                              <ChartTooltip
+                                 content={
+                                    <ChartTooltipContent
+                                       formatter={tooltipFormatter}
+                                       nameKey="name"
+                                    />
+                                 }
+                              />
+                           </PieChart>
+                        </ChartContainer>
                      </CardContent>
                   </Card>
-               ) : (
-                  <MetricsHistoryChart data={historyData} loading={loadingHistory} />
+
+                  <Card>
+                     <CardHeader>
+                        <CardTitle className="text-base">CPU</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                           {stats?.cpu.percent}% utilisé
+                        </p>
+                     </CardHeader>
+                     <CardContent>
+                        <ChartContainer
+                           config={chartConfig}
+                           className="min-h-45 w-full"
+                        >
+                           <PieChart accessibilityLayer>
+                              <Pie
+                                 data={cpuData}
+                                 dataKey="value"
+                                 nameKey="name"
+                                 cx="50%"
+                                 cy="50%"
+                                 innerRadius={50}
+                                 outerRadius={70}
+                                 paddingAngle={2}
+                              >
+                                 {cpuData.map((entry, index) => (
+                                    <Cell key={index} fill={entry.fill} />
+                                 ))}
+                              </Pie>
+                              <ChartTooltip
+                                 content={
+                                    <ChartTooltipContent
+                                       formatter={tooltipFormatter}
+                                       nameKey="name"
+                                    />
+                                 }
+                              />
+                           </PieChart>
+                        </ChartContainer>
+                     </CardContent>
+                  </Card>
+
+                  <Card>
+                     <CardHeader>
+                        <CardTitle className="text-base">
+                           Espace disque
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                           {stats?.disk.usedFormatted} /{" "}
+                           {stats?.disk.totalFormatted} ({stats?.disk.percent}%)
+                        </p>
+                     </CardHeader>
+                     <CardContent>
+                        <ChartContainer
+                           config={chartConfig}
+                           className="min-h-45 w-full"
+                        >
+                           <PieChart accessibilityLayer>
+                              <Pie
+                                 data={diskData}
+                                 dataKey="value"
+                                 nameKey="name"
+                                 cx="50%"
+                                 cy="50%"
+                                 innerRadius={50}
+                                 outerRadius={70}
+                                 paddingAngle={2}
+                              >
+                                 {diskData.map((entry, index) => (
+                                    <Cell key={index} fill={entry.fill} />
+                                 ))}
+                              </Pie>
+                              <ChartTooltip
+                                 content={
+                                    <ChartTooltipContent
+                                       formatter={tooltipFormatter}
+                                       nameKey="name"
+                                    />
+                                 }
+                              />
+                           </PieChart>
+                        </ChartContainer>
+                     </CardContent>
+                  </Card>
+               </div>
+
+               {(stats?.topRamProcesses?.length ?? 0) > 0 && (
+                  <Card className="mt-6">
+                     <CardHeader className="pb-2">
+                        <CardTitle className="text-base">
+                           Top 5 process — RAM
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                           Processus qui consomment le plus de mémoire résidente
+                           (RSS) sur le VPS
+                        </p>
+                     </CardHeader>
+                     <CardContent className="pt-0">
+                        <ul className="divide-y divide-border/60">
+                           {stats.topRamProcesses.map((p, i) => (
+                              <li
+                                 key={`${p.pid}-${i}`}
+                                 className="flex items-baseline justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                              >
+                                 <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                       <span className="text-xs tabular-nums text-muted-foreground w-4 shrink-0">
+                                          {i + 1}.
+                                       </span>
+                                       <span className="font-medium text-white truncate">
+                                          {p.name}
+                                       </span>
+                                       <span className="text-xs tabular-nums text-muted-foreground shrink-0">
+                                          pid {p.pid}
+                                       </span>
+                                    </div>
+                                    {p.cmd && p.cmd !== p.name && (
+                                       <p
+                                          className="pl-6 text-xs text-muted-foreground truncate"
+                                          title={p.cmd}
+                                       >
+                                          {p.cmd}
+                                       </p>
+                                    )}
+                                 </div>
+                                 <span className="shrink-0 text-sm font-medium tabular-nums text-white">
+                                    {p.rssFormatted}
+                                 </span>
+                              </li>
+                           ))}
+                        </ul>
+                     </CardContent>
+                  </Card>
                )}
-            </div>
+
+               <div className="mt-6 space-y-4">
+                  <div className="flex flex-wrap items-end gap-4">
+                     <div className="space-y-2 min-w-45">
+                        <Label htmlFor="metrics-date">Période</Label>
+                        <Select
+                           value={selectedDate}
+                           onValueChange={setSelectedDate}
+                           disabled={loadingHistory}
+                        >
+                           <SelectTrigger id="metrics-date">
+                              <SelectValue placeholder="Choisir une date">
+                                 {selectedDateLabel}
+                              </SelectValue>
+                           </SelectTrigger>
+                           <SelectContent>
+                              {getDateOptions().map((o) => (
+                                 <SelectItem key={o.value} value={o.value}>
+                                    {o.label}
+                                 </SelectItem>
+                              ))}
+                           </SelectContent>
+                        </Select>
+                     </div>
+                  </div>
+                  {loadingHistory ? (
+                     <Card>
+                        <CardContent className="flex items-center justify-center py-12">
+                           <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+                        </CardContent>
+                     </Card>
+                  ) : (
+                     <MetricsHistoryChart
+                        data={historyData}
+                        loading={loadingHistory}
+                     />
+                  )}
+               </div>
             </>
          )}
       </div>

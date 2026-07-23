@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
    MoreHorizontalIcon,
    Loader2Icon,
@@ -29,8 +30,8 @@ import {
    SearchIcon,
    PlayIcon,
    SquareIcon,
-   LayersIcon,
    WrenchIcon,
+   DownloadIcon,
    Trash2Icon,
 } from "lucide-react";
 import {
@@ -38,6 +39,7 @@ import {
    dockerContainerStop,
    dockerContainerRemove,
    dockerContainerBuild,
+   dockerContainerPull,
    dockerContainerCompose,
 } from "@/app/actions/docker";
 
@@ -61,6 +63,23 @@ function getContainerName(names) {
    if (!names?.length) return "-";
    return names[0].replace(/^\//, "");
 }
+
+/** Image tirée d'un registry (host/repo:tag) → action Pull plutôt que Build */
+function isRegistryImage(image) {
+   if (!image || typeof image !== "string") return false;
+   const name = image.split("@")[0];
+   const first = name.split("/")[0];
+   return first.includes(".") || /:\d+$/.test(first);
+}
+
+const ACTION_SUCCESS = {
+   start: (name) => `Conteneur « ${name} » démarré`,
+   stop: (name) => `Conteneur « ${name} » arrêté`,
+   compose: (name) => `Conteneur « ${name} » redémarré`,
+   build: (name) => `Build de « ${name} » terminé`,
+   pull: (name) => `Pull de « ${name} » terminé`,
+   remove: (name) => `Conteneur « ${name} » supprimé`,
+};
 
 /** Parse "Up X seconds/minutes/hours/days/weeks" into seconds. Stopped => Infinity. */
 function getUptimeSeconds(status, state) {
@@ -103,28 +122,41 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
    const [search, setSearch] = useState("");
    const [stateFilter, setStateFilter] = useState("all");
    const [actionId, setActionId] = useState(null);
+   const [actionType, setActionType] = useState(null);
 
    async function handleAction(c, action) {
       if (actionId) return;
       const name = getContainerName(c.names);
       setActionId(c.id);
+      setActionType(action);
       try {
-         if (action === "start") await dockerContainerStart(c.id);
-         else if (action === "stop") await dockerContainerStop(c.id);
-         else if (action === "compose") await dockerContainerCompose(c.id);
-         else if (action === "build") await dockerContainerBuild(c.id);
+         let result;
+         if (action === "start") result = await dockerContainerStart(c.id);
+         else if (action === "stop") result = await dockerContainerStop(c.id);
+         else if (action === "compose")
+            result = await dockerContainerCompose(c.id);
+         else if (action === "build") result = await dockerContainerBuild(c.id);
+         else if (action === "pull") result = await dockerContainerPull(c.id);
          else if (action === "remove") {
             if (!confirm(`Supprimer le conteneur ${name} ?`)) {
                setActionId(null);
+               setActionType(null);
                return;
             }
-            await dockerContainerRemove(c.id);
+            result = await dockerContainerRemove(c.id);
          }
+         if (result && !result.success) {
+            toast.error(result.error || "Erreur");
+            return;
+         }
+         const msg = ACTION_SUCCESS[action]?.(name) || "Action réussie";
+         toast.success(msg);
          onRefresh?.();
       } catch (err) {
-         alert(err.message || "Erreur");
+         toast.error(err.message || "Erreur");
       } finally {
          setActionId(null);
+         setActionType(null);
       }
    }
 
@@ -277,6 +309,27 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                                     {formatCreated(c.created)}
                                  </TableCell>
                                  <TableCell className="text-right">
+                                    {actionId === c.id ? (
+                                       <div className="inline-flex items-center gap-1.5 pr-2 text-muted-foreground text-xs">
+                                          <Loader2Icon className="size-4 animate-spin" />
+                                          <span>
+                                             {actionType === "start"
+                                                ? "Démarrage…"
+                                                : actionType === "stop"
+                                                  ? "Arrêt…"
+                                                  : actionType === "build"
+                                                    ? "Build…"
+                                                    : actionType === "pull"
+                                                      ? "Pull…"
+                                                      : actionType === "compose"
+                                                        ? "Redémarrage…"
+                                                        : actionType ===
+                                                            "remove"
+                                                          ? "Suppression…"
+                                                          : "En cours…"}
+                                          </span>
+                                       </div>
+                                    ) : (
                                     <DropdownMenu>
                                        <DropdownMenuTrigger
                                           nativeButton={false}
@@ -302,64 +355,73 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                                           className="pr-2"
                                           align="end"
                                        >
-                                          <DropdownMenuItem
-                                             onClick={() =>
-                                                handleAction(c, "start")
-                                             }
-                                             disabled={
-                                                c.state === "running" ||
-                                                actionId === c.id
-                                             }
-                                          >
-                                             <PlayIcon className="size-4" />
-                                             Démarrer
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                             onClick={() =>
-                                                handleAction(c, "stop")
-                                             }
-                                             disabled={
-                                                c.state !== "running" ||
-                                                actionId === c.id
-                                             }
-                                          >
-                                             <SquareIcon className="size-4" />
-                                             Arrêter
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                             onClick={() =>
-                                                handleAction(c, "compose")
-                                             }
-                                             disabled={
-                                                c.state === "running" ||
-                                                actionId === c.id
-                                             }
-                                          >
-                                             <LayersIcon className="size-4" />
-                                             Compose
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                             onClick={() =>
-                                                handleAction(c, "build")
-                                             }
-                                             disabled={actionId === c.id}
-                                          >
-                                             <WrenchIcon className="size-4" />
-                                             Build
-                                          </DropdownMenuItem>
+                                          {c.state === "running" ? (
+                                             <>
+                                                <DropdownMenuItem
+                                                   onClick={() =>
+                                                      handleAction(c, "compose")
+                                                   }
+                                                   disabled={Boolean(actionId)}
+                                                >
+                                                   <RefreshCwIcon className="size-4" />
+                                                   Redémarrer
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                   onClick={() =>
+                                                      handleAction(c, "stop")
+                                                   }
+                                                   disabled={Boolean(actionId)}
+                                                >
+                                                   <SquareIcon className="size-4" />
+                                                   Arrêter
+                                                </DropdownMenuItem>
+                                             </>
+                                          ) : (
+                                             <DropdownMenuItem
+                                                onClick={() =>
+                                                   handleAction(c, "start")
+                                                }
+                                                disabled={Boolean(actionId)}
+                                             >
+                                                <PlayIcon className="size-4" />
+                                                Démarrer
+                                             </DropdownMenuItem>
+                                          )}
                                           <DropdownMenuSeparator />
+                                          {isRegistryImage(c.image) ? (
+                                             <DropdownMenuItem
+                                                onClick={() =>
+                                                   handleAction(c, "pull")
+                                                }
+                                                disabled={Boolean(actionId)}
+                                             >
+                                                <DownloadIcon className="size-4" />
+                                                Pull
+                                             </DropdownMenuItem>
+                                          ) : (
+                                             <DropdownMenuItem
+                                                onClick={() =>
+                                                   handleAction(c, "build")
+                                                }
+                                                disabled={Boolean(actionId)}
+                                             >
+                                                <WrenchIcon className="size-4" />
+                                                Build
+                                             </DropdownMenuItem>
+                                          )}
                                           <DropdownMenuItem
                                              variant="destructive"
                                              onClick={() =>
                                                 handleAction(c, "remove")
                                              }
-                                             disabled={actionId === c.id}
+                                             disabled={Boolean(actionId)}
                                           >
                                              <Trash2Icon className="size-4" />
                                              Supprimer
                                           </DropdownMenuItem>
                                        </DropdownMenuContent>
                                     </DropdownMenu>
+                                    )}
                                  </TableCell>
                               </TableRow>
                            ))

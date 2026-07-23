@@ -1,3 +1,5 @@
+import { DockerHeader } from "@/components/docker/DockerHeader";
+
 export const metadata = {
     title: "Docker Panel - Graph & Co",
     description:
@@ -22,10 +24,7 @@ export const metadata = {
 export default function Layout({ children }) {
     return (
         <div>
-            <header className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold text-white">Docker</h1>
-                <div id="docker-refresh-portal" />
-            </header>
+            <DockerHeader />
             {children}
         </div>
     )

@@ -91,6 +91,10 @@ const sidebarData = {
                url: "/docker",
             },
             {
+               title: "Registry",
+               url: "/docker/registry",
+            },
+            {
                title: "Logs",
                url: "/docker/logs",
             },

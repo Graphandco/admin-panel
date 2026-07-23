@@ -37,84 +37,81 @@ export async function dockerStatsAll() {
   }
 }
 
+/**
+ * Actions conteneur — ne throw pas (évite le message générique Next en prod).
+ * @returns {{ success: boolean, error?: string }}
+ */
 async function dockerContainerAction(containerId, action) {
   const endpoints = {
     start: 'start',
     stop: 'stop',
     remove: 'remove',
     build: 'build',
+    pull: 'pull',
     restart: 'restart',
+    compose: 'compose',
   }
-  const path = `/api/docker/container/${containerId}/${endpoints[action]}`
-  const res = await adminApiFetch(path, { method: 'POST' })
-  let data
+  if (!endpoints[action]) {
+    return { success: false, error: `Action inconnue: ${action}` }
+  }
   try {
-    data = await res.json()
-  } catch {
-    throw new Error(res.status === 404 ? 'Route API introuvable — redémarrer admin-api' : `Erreur ${res.status}`)
+    const path = `/api/docker/container/${encodeURIComponent(containerId)}/${endpoints[action]}`
+    const res = await adminApiFetch(path, { method: 'POST' })
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      return {
+        success: false,
+        error:
+          res.status === 404
+            ? 'Route API introuvable — redémarrer admin-api'
+            : `Erreur ${res.status}`,
+      }
+    }
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error || `Erreur ${res.status}` }
+    }
+    return { success: true, ...data }
+  } catch (err) {
+    console.error(`dockerContainerAction(${action}):`, err.message)
+    return { success: false, error: err.message || 'Erreur API' }
   }
-  if (!res.ok) throw new Error(data?.error || `Erreur ${res.status}`)
-  if (!data.success) throw new Error(data.error || 'Erreur API')
-  return data
 }
 
 export async function dockerContainerStart(containerId) {
-  try {
-    return await dockerContainerAction(containerId, 'start')
-  } catch (err) {
-    console.error('dockerContainerStart:', err.message)
-    throw err
-  }
+  return dockerContainerAction(containerId, 'start')
 }
 
 export async function dockerContainerStop(containerId) {
-  try {
-    return await dockerContainerAction(containerId, 'stop')
-  } catch (err) {
-    console.error('dockerContainerStop:', err.message)
-    throw err
-  }
+  return dockerContainerAction(containerId, 'stop')
 }
 
 export async function dockerContainerRestart(containerId) {
-  try {
-    return await dockerContainerAction(containerId, 'restart')
-  } catch (err) {
-    console.error('dockerContainerRestart:', err.message)
-    throw err
-  }
+  return dockerContainerAction(containerId, 'restart')
 }
 
 export async function dockerContainerRemove(containerId) {
-  try {
-    return await dockerContainerAction(containerId, 'remove')
-  } catch (err) {
-    console.error('dockerContainerRemove:', err.message)
-    throw err
-  }
+  return dockerContainerAction(containerId, 'remove')
 }
 
 export async function dockerContainerBuild(containerId) {
-  try {
-    return await dockerContainerAction(containerId, 'build')
-  } catch (err) {
-    console.error('dockerContainerBuild:', err.message)
-    throw err
-  }
+  return dockerContainerAction(containerId, 'build')
+}
+
+export async function dockerContainerPull(containerId) {
+  return dockerContainerAction(containerId, 'pull')
 }
 
 export async function dockerContainerCompose(containerId) {
-  try {
-    return await dockerContainerAction(containerId, 'compose')
-  } catch (err) {
-    console.error('dockerContainerCompose:', err.message)
-    throw err
-  }
+  return dockerContainerAction(containerId, 'compose')
 }
 
 export async function dockerContainerStats(containerId) {
   try {
-    const res = await adminApiFetch(`/api/docker/stats/${encodeURIComponent(containerId)}`)
+    const res = await adminApiFetch(
+      `/api/docker/stats/${encodeURIComponent(containerId)}`,
+    )
     const data = await res.json()
     if (!data.success) throw new Error(data.error || 'Erreur API')
     return data.stats || null
@@ -127,7 +124,7 @@ export async function dockerContainerStats(containerId) {
 export async function dockerLogs(containerId, tail = 100) {
   try {
     const res = await adminApiFetch(
-      `/api/docker/logs?container=${encodeURIComponent(containerId)}&tail=${tail}`
+      `/api/docker/logs?container=${encodeURIComponent(containerId)}&tail=${tail}`,
     )
     const data = await res.json()
     if (!data.success) throw new Error(data.error || 'Erreur API')

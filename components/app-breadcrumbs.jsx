@@ -21,6 +21,7 @@ const SEGMENT_LABELS = {
    plugins: "Extensions",
    connexions: "Connexions",
    docker: "Docker",
+   registry: "Registry",
    vps: "VPS",
    stats: "Stats VPS",
    clients: "Clients",

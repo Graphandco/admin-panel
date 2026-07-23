@@ -120,7 +120,7 @@ function StatMiniCard({ title, value, fillUsed, loading }) {
          <CardContent className="px-2 pb-3 pt-0">
             <ChartContainer
                config={chartConfigPie}
-               className="min-h-[110px] w-full"
+               className="min-h-27.5 w-full"
             >
                <PieChart accessibilityLayer>
                   <Pie
@@ -187,17 +187,39 @@ function UptimeCard({ uptime, loading }) {
 }
 
 function RamUsageBarChart({ stats, loading }) {
+   const [narrow, setNarrow] = useState(false);
+
+   useEffect(() => {
+      const mq = window.matchMedia("(max-width: 640px)");
+      const apply = () => setNarrow(mq.matches);
+      apply();
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
+   }, []);
+
    const chartData = useMemo(() => {
       if (!stats?.length) return [];
+      const maxLen = narrow ? 14 : 22;
       return stats
          .sort((a, b) => (b.memory?.used ?? 0) - (a.memory?.used ?? 0))
-         .map((s) => ({
-            name: s.name || s.id?.slice(0, 12),
-            value: s.memory?.used ?? 0,
-            percent: s.memory?.percent ?? 0,
-            fill: getRamBarColor(s.memory?.percent ?? 0),
-         }));
-   }, [stats]);
+         .map((s) => {
+            const raw = s.name || s.id?.slice(0, 12) || "-";
+            const name =
+               raw.length > maxLen ? `${raw.slice(0, maxLen - 1)}…` : raw;
+            return {
+               name,
+               fullName: raw,
+               value: s.memory?.used ?? 0,
+               percent: s.memory?.percent ?? 0,
+               fill: getRamBarColor(s.memory?.percent ?? 0),
+            };
+         });
+   }, [stats, narrow]);
+
+   const totalRam = useMemo(
+      () => (stats || []).reduce((sum, s) => sum + (s.memory?.used ?? 0), 0),
+      [stats],
+   );
 
    if (loading || chartData.length === 0) return null;
 
@@ -205,25 +227,45 @@ function RamUsageBarChart({ stats, loading }) {
       value: { label: "RAM", color: "hsl(var(--chart-1))" },
    };
 
-   const barHeight = 32;
+   const yAxisWidth = narrow ? 96 : 140;
+   const barHeight = narrow ? 28 : 32;
    const chartHeight = Math.max(200, chartData.length * barHeight);
 
    return (
       <Card className="mb-4">
-         <CardContent className="py-4">
+         <CardContent className="py-4 px-3 sm:px-6">
+            <div className="mb-4 rounded-md border border-border/60 bg-muted/30 px-4 py-3 flex flex-wrap items-baseline justify-between gap-2">
+               <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">
+                     RAM totale — tous les conteneurs
+                  </p>
+                  <p className="text-xl font-semibold text-white tabular-nums">
+                     {formatBytes(totalRam)}
+                  </p>
+               </div>
+               <p className="text-xs text-muted-foreground">
+                  {chartData.length} conteneur
+                  {chartData.length > 1 ? "s" : ""} en cours
+               </p>
+            </div>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">
                Utilisation RAM par conteneur
             </h3>
-            <div className="max-w-2xl">
+            <div className="w-full -mx-1">
                <ChartContainer
                   config={chartConfig}
-                  className="w-full min-h-0"
+                  className="w-full min-h-0 aspect-auto"
                   style={{ height: chartHeight }}
                >
                   <BarChart
                      data={chartData}
                      layout="vertical"
-                     margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+                     margin={{
+                        top: 4,
+                        right: 4,
+                        left: 0,
+                        bottom: 4,
+                     }}
                   >
                      <XAxis
                         type="number"
@@ -236,17 +278,21 @@ function RamUsageBarChart({ stats, loading }) {
                      <YAxis
                         type="category"
                         dataKey="name"
-                        width={220}
+                        width={yAxisWidth}
                         interval={0}
                         tick={{
                            fill: "hsl(var(--muted-foreground))",
-                           fontSize: 11,
+                           fontSize: narrow ? 10 : 11,
                         }}
                         tickLine={false}
+                        axisLine={false}
                      />
                      <ChartTooltip
                         content={
                            <ChartTooltipContent
+                              labelFormatter={(_l, payload) =>
+                                 payload?.[0]?.payload?.fullName || _l
+                              }
                               formatter={(v, _n, _i, _idx, payload) =>
                                  `${formatBytes(v)} (${payload?.percent ?? 0}%)`
                               }
@@ -374,7 +420,7 @@ export default function DockerStatsPage() {
 
                <Card>
                   <CardContent className="pt-6 space-y-4">
-                     <div className="space-y-2 min-w-[200px]">
+                     <div className="space-y-2 min-w-50">
                         <Label htmlFor="container">Conteneur</Label>
                         <Select
                            value={selectedId}
@@ -397,7 +443,7 @@ export default function DockerStatsPage() {
                      </div>
 
                      {selectedId && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-[500px]">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-125">
                            <StatMiniCard
                               title="RAM"
                               value={containerStats?.memory}
