@@ -34,6 +34,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import RefreshButton from "@/components/refresh-button";
 
 const BACKUPS_KEY = "backups-snapshots";
 
@@ -383,20 +384,7 @@ export default function BackupsPage() {
               Voir toutes les stats
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={load}
-            disabled={isLoading}
-            className="inline-flex items-center gap-1"
-          >
-            {isLoading ? (
-              <Loader2Icon className="size-4 animate-spin" />
-            ) : (
-              <RefreshCwIcon className="size-4" />
-            )}
-            Actualiser
-          </Button>
+          <RefreshButton onClick={load} loading={isLoading} />
         </div>
       </header>
 

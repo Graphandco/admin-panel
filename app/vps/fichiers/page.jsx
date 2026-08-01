@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import RefreshButton from "@/components/refresh-button";
 
 const ROOT = "/var/www/docker-stack";
 
@@ -190,19 +191,7 @@ export default function FilesPage() {
                   <code className="text-xs">{ROOT}</code>
                </p>
             </div>
-            <Button
-               variant="outline"
-               size="sm"
-               onClick={() => loadDir(path)}
-               disabled={loading}
-            >
-               {loading ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-               ) : (
-                  <RefreshCwIcon className="size-4" />
-               )}
-               Actualiser
-            </Button>
+            <RefreshButton onClick={() => loadDir(path)} loading={loading} />
          </div>
 
          {shortcuts.length > 0 && (

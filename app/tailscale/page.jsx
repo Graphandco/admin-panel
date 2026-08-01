@@ -5,9 +5,7 @@ import { createPortal } from "react-dom";
 import { getTailnetInfo } from "@/app/actions/tailscale";
 import { StatusCards } from "@/components/tailscale/StatusCards";
 import { DevicesTab, isDeviceActive } from "@/components/tailscale/DevicesTab";
-import { buttonVariants } from "@/components/ui/button";
-import { Loader2Icon, RefreshCwIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import RefreshButton from "@/components/refresh-button";
 
 export default function TailscalePage() {
    const [devices, setDevices] = useState([]);
@@ -46,18 +44,7 @@ export default function TailscalePage() {
    const inactive = devices.length - active;
 
    const refreshButton = (
-      <button
-         onClick={load}
-         disabled={loading}
-         className={cn(buttonVariants({}))}
-      >
-         {loading ? (
-            <Loader2Icon className="size-4 mr-1 animate-spin" />
-         ) : (
-            <RefreshCwIcon className="size-4 mr-1" />
-         )}
-         Actualiser
-      </button>
+      <RefreshButton onClick={load} loading={loading} />
    );
 
    return (

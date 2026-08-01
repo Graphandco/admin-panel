@@ -20,6 +20,7 @@ import {
    RotateCcwIcon,
 } from "lucide-react";
 import { prettifyCaddyLogText } from "@/lib/caddy-logs";
+import RefreshButton from "@/components/refresh-button";
 
 function formatPorts(ports) {
    if (!ports?.length) return "—";
@@ -137,20 +138,7 @@ export default function CaddyDashboardPage() {
          <header className="flex flex-wrap justify-between items-center gap-2 mb-4">
             <h2 className="text-xl font-bold text-white">Caddy — Tableau de bord</h2>
             <div className="flex flex-wrap gap-2">
-               <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => loadStatus()}
-                  disabled={loading}
-               >
-                  {loading ? (
-                     <Loader2Icon className="size-4 animate-spin" />
-                  ) : (
-                     <RefreshCwIcon className="size-4" />
-                  )}
-                  <span className="ml-1">Rafraîchir</span>
-               </Button>
+               <RefreshButton onClick={() => loadStatus()} loading={loading} />
                <Button
                   type="button"
                   variant="outline"

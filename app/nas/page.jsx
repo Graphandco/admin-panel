@@ -12,11 +12,11 @@ import { PieChart, Pie, Cell } from "recharts";
 import { getNasStats } from "@/app/actions/nas";
 import {
    Loader2Icon,
-   RefreshCwIcon,
    HardDriveIcon,
    ClockIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import RefreshButton from "@/components/refresh-button";
 
 const chartConfig = {
    used: { label: "Utilisée", color: "#ef4444" },
@@ -307,14 +307,7 @@ export default function NasPage() {
    }, []);
 
    const refreshButton = (
-      <Button onClick={load} disabled={loading} variant="outline" size="sm">
-         {loading ? (
-            <Loader2Icon className="size-4 mr-1 animate-spin" />
-         ) : (
-            <RefreshCwIcon className="size-4 mr-1" />
-         )}
-         Actualiser
-      </Button>
+      <RefreshButton onClick={load} loading={loading} />
    );
 
    const unraidConfigured = data?.unraid?.configured;

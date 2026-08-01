@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "@/components/refresh-button";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,11 +24,7 @@ import { getRegistrySites, redeployRegistrySite } from "@/app/actions/deploy";
 import { getRegistryOverview } from "@/app/actions/registry";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "sonner";
-import {
-   Loader2Icon,
-   RefreshCwIcon,
-   RocketIcon,
-} from "lucide-react";
+import { Loader2Icon, RocketIcon } from "lucide-react";
 
 export default function RegistryDeployPage() {
    const [sites, setSites] = useState([]);
@@ -116,6 +113,10 @@ export default function RegistryDeployPage() {
       setDeployingId(site.id);
       try {
          const res = await redeployRegistrySite(site.id, tag);
+         if (!res?.success) {
+            toast.error(res?.error || "Échec du déploiement");
+            return;
+         }
          toast.success(`Déployé : ${res.image}`);
          await load();
       } catch (err) {
@@ -136,20 +137,11 @@ export default function RegistryDeployPage() {
                {" — "}
                choix du tag, mise à jour du compose, pull et recreate
             </p>
-            <Button
-               variant="outline"
-               size="sm"
+            <RefreshButton
                onClick={load}
-               disabled={loading || !!deployingId}
-               className="inline-flex items-center gap-1"
-            >
-               {loading ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-               ) : (
-                  <RefreshCwIcon className="size-4" />
-               )}
-               Actualiser
-            </Button>
+               loading={loading}
+               disabled={!!deployingId}
+            />
          </div>
 
          {error && (

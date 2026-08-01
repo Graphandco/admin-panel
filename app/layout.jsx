@@ -50,7 +50,9 @@ export const metadata = {
          { url: "/logo192.png", sizes: "192x192", type: "image/png" },
          { url: "/logo512.png", sizes: "512x512", type: "image/png" },
       ],
-      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+      apple: [
+         { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      ],
    },
    openGraph: {
       title: APP_NAME,
@@ -88,7 +90,7 @@ export default function RootLayout({ children }) {
                <SidebarProvider>
                   <AppSidebar />
                   <SidebarInset>
-                     <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                         <div className="flex min-w-0 items-center gap-2 px-4 md:px-8">
                            <SidebarTrigger className="-ml-1" />
                            <Separator orientation="vertical" className="mr-2" />
@@ -98,7 +100,7 @@ export default function RootLayout({ children }) {
                            <NotificationsBell />
                         </div>
                      </header>
-                     <div className="flex flex-1 flex-col gap-4 py-4 px-4 md:px-8 pt-0">
+                     <div className="flex flex-1 flex-col gap-4 py-4 px-4 md:px-8">
                         {children}
                      </div>
                   </SidebarInset>

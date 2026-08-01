@@ -103,7 +103,8 @@ export async function getRegistrySites() {
 }
 
 /**
- * Met à jour le compose, pull le tag, recreate le service
+ * Met à jour le compose, pull le tag, recreate le service.
+ * Ne throw pas : évite l'erreur RSC digest en prod.
  */
 export async function redeployRegistrySite(containerId, tag) {
   try {
@@ -111,13 +112,30 @@ export async function redeployRegistrySite(containerId, tag) {
       method: "POST",
       body: JSON.stringify({ containerId, tag }),
     });
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      throw new Error(data.error || `Erreur ${res.status}`);
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      /* ignore */
     }
-    return data;
+    if (!res.ok || !data.success) {
+      return {
+        success: false,
+        error: data.error || `Erreur ${res.status}`,
+      };
+    }
+    return {
+      success: true,
+      image: data.image,
+      previousImage: data.previousImage,
+      project: data.project,
+      service: data.service,
+    };
   } catch (err) {
     console.error("redeployRegistrySite:", err.message);
-    throw err;
+    return {
+      success: false,
+      error: err.message || "Erreur redeploy",
+    };
   }
 }

@@ -19,14 +19,6 @@ const chartConfig = {
    free: { label: "Libre", color: "#22c55e" },
 };
 
-const PROCESS_COLORS = [
-   "#ef4444",
-   "#f97316",
-   "#eab308",
-   "#84cc16",
-   "#22c55e",
-];
-
 function formatBytes(val) {
    if (val == null || val < 1024) return `${val} B`;
    const k = 1024;
@@ -121,94 +113,6 @@ function StatMiniCard({ title, data, fillUsed, loading, isMobile }) {
    );
 }
 
-function TopProcMiniCard({ processes, loading, isMobile }) {
-   const chartData = (processes || []).map((p, i) => ({
-      name: p.name,
-      value: p.rss,
-      fill: PROCESS_COLORS[i % PROCESS_COLORS.length],
-   }));
-   const total = chartData.reduce((s, p) => s + p.value, 0);
-
-   if (loading || chartData.length === 0) {
-      return (
-         <Card className="h-full min-w-0">
-            <CardHeader className="py-1.5 px-2 md:py-2 md:px-3">
-               <CardTitle className="text-[11px] md:text-xs font-medium text-muted-foreground">
-                  Top process
-               </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center py-3 md:py-4">
-               {loading ? (
-                  <Loader2Icon className="size-5 md:size-6 animate-spin text-muted-foreground" />
-               ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
-               )}
-            </CardContent>
-         </Card>
-      );
-   }
-
-   return (
-      <Card className="h-full min-w-0">
-         <CardHeader className="py-1.5 px-2 md:py-2 md:px-3">
-            <CardTitle className="text-xs md:text-sm font-medium text-white">
-               Top process
-            </CardTitle>
-         </CardHeader>
-         <CardContent className="px-1.5 pb-2 pt-0 md:px-2 md:pb-3 flex flex-col items-center">
-            <ChartContainer
-               config={chartConfig}
-               className={cn(
-                  "mx-auto !aspect-square !min-h-0 w-full p-0",
-                  isMobile ? "max-w-[56px]" : "max-w-[96px]",
-               )}
-            >
-               <PieChart
-                  accessibilityLayer
-                  margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-               >
-                  <Pie
-                     data={chartData}
-                     dataKey="value"
-                     nameKey="name"
-                     cx="50%"
-                     cy="50%"
-                     innerRadius="58%"
-                     outerRadius="88%"
-                     paddingAngle={2}
-                  >
-                     {chartData.map((entry, i) => (
-                        <Cell key={i} fill={entry.fill} />
-                     ))}
-                  </Pie>
-                  <ChartTooltip
-                     content={
-                        <ChartTooltipContent
-                           hideLabel
-                           formatter={(value, name) => (
-                              <div className="flex flex-1 items-center justify-between gap-4 leading-none">
-                                 <span className="text-muted-foreground">
-                                    {name}
-                                 </span>
-                                 <span className="font-mono font-medium text-foreground tabular-nums">
-                                    {formatBytes(value)}
-                                 </span>
-                              </div>
-                           )}
-                           nameKey="name"
-                        />
-                     }
-                  />
-               </PieChart>
-            </ChartContainer>
-            <p className="text-center text-[10px] md:text-xs font-medium text-foreground mt-0.5 md:mt-1 w-full leading-tight break-words">
-               {formatBytes(total)}
-            </p>
-         </CardContent>
-      </Card>
-   );
-}
-
 export default function VpsStatsHomeCards() {
    const isMobile = useIsMobile();
    const [stats, setStats] = useState(null);
@@ -254,7 +158,7 @@ export default function VpsStatsHomeCards() {
    return (
       <Link
          href="/vps/stats"
-         className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-6 min-w-0 w-full cursor-pointer"
+         className="grid grid-cols-3 gap-2 md:gap-6 min-w-0 w-full cursor-pointer"
       >
          <StatMiniCard
             title="RAM"
@@ -282,11 +186,6 @@ export default function VpsStatsHomeCards() {
             title="Disque"
             data={stats?.disk}
             fillUsed="#ef4444"
-            loading={loading}
-            isMobile={isMobile}
-         />
-         <TopProcMiniCard
-            processes={stats?.topRamProcesses}
             loading={loading}
             isMobile={isMobile}
          />

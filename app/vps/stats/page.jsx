@@ -23,6 +23,7 @@ import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import RefreshButton from "@/components/refresh-button";
 
 const chartConfig = {
    used: {
@@ -311,20 +312,7 @@ export default function VpsStatsPage() {
                   </span>
                )}
             </div>
-            <Button
-               variant="outline"
-               size="sm"
-               onClick={load}
-               disabled={loading}
-               className="inline-flex items-center gap-1"
-            >
-               {loading ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-               ) : (
-                  <RefreshCwIcon className="size-4" />
-               )}
-               Actualiser
-            </Button>
+            <RefreshButton onClick={load} loading={loading} />
          </header>
 
          {loading ? (

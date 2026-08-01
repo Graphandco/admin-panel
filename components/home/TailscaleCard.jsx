@@ -46,12 +46,12 @@ export default function TailscaleCard() {
    if (error) {
       return (
          <Card className="h-full">
-            <CardContent className="py-6">
+            <CardContent className="py-4 md:py-6">
                <div className="text-destructive flex items-center gap-3">
-                  <p className="text-sm">{error}</p>
+                  <p className="text-xs md:text-sm">{error}</p>
                   <button
                      onClick={load}
-                     className="inline-flex items-center gap-1 text-sm underline"
+                     className="inline-flex items-center gap-1 text-xs md:text-sm underline"
                   >
                      <RefreshCwIcon className="size-4" />
                      Réessayer
@@ -71,29 +71,32 @@ export default function TailscaleCard() {
       <Link href="/tailscale">
          <Card className="h-full cursor-pointer hover:border-muted-foreground/30 transition-colors">
             <CardHeader>
-               <CardTitle className="flex items-center gap-2">
-                  <div className="size-10 p-2 bg-sky-500/10 border border-sky-500/20 rounded-md flex items-center justify-center">
+               <CardTitle className="flex items-center gap-1.5 md:gap-2 min-w-0">
+                  <div className="size-8 shrink-0 p-1.5 md:p-2 bg-sky-500/10 border border-sky-500/20 rounded-md flex items-center justify-center md:mr-2">
                      <Image
                         src="/tailscale.png"
                         alt="Tailscale"
-                        width={24}
-                        height={24}
+                        width={20}
+                        height={20}
+                        className="size-5"
                      />
                   </div>
-                  <span className="text-lg font-medium text-white">
+                  <span className="text-sm md:text-lg font-medium text-white truncate">
                      Tailscale
                   </span>
                </CardTitle>
                <CardAction>
                   {loading ? (
-                     <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+                     <Loader2Icon className="size-5 md:size-6 animate-spin text-muted-foreground" />
                   ) : (
-                     <span className="text-2xl font-bold">{connected}</span>
+                     <span className="text-xl md:text-2xl font-bold tabular-nums">
+                        {connected}
+                     </span>
                   )}
                </CardAction>
             </CardHeader>
             <CardContent className="space-y-1">
-               <p className="text-muted-foreground text-sm">
+               <p className="text-muted-foreground text-xs md:text-sm">
                   {loading ? (
                      "Chargement..."
                   ) : (

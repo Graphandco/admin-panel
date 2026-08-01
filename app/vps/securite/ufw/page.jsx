@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getUfwStatus } from "@/app/actions/security";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
+import RefreshButton from "@/components/refresh-button";
 
 export default function UfwPage() {
    const [data, setData] = useState(null);
@@ -43,20 +44,7 @@ export default function UfwPage() {
                   Lecture seule — configuration et règles utilisateur
                </p>
             </div>
-            <Button
-               variant="outline"
-               size="sm"
-               onClick={load}
-               disabled={loading}
-               className="inline-flex items-center gap-1"
-            >
-               {loading ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-               ) : (
-                  <RefreshCwIcon className="size-4" />
-               )}
-               Actualiser
-            </Button>
+            <RefreshButton onClick={load} loading={loading} />
          </header>
 
          {error && (

@@ -5,9 +5,7 @@ import { createPortal } from "react-dom";
 import { dockerPs } from "@/app/actions/docker";
 import { StatusCards } from "@/components/docker/StatusCards";
 import { ContainersTab } from "@/components/docker/ContainersTab";
-import { buttonVariants } from "@/components/ui/button";
-import { Loader2Icon, RefreshCwIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import RefreshButton from "@/components/refresh-button";
 
 export default function DockerPage() {
    const [containers, setContainers] = useState([]);
@@ -37,18 +35,7 @@ export default function DockerPage() {
    const stopped = containers.length - running;
 
    const refreshButton = (
-      <button
-         onClick={load}
-         disabled={loading}
-         className={cn(buttonVariants({}))}
-      >
-         {loading ? (
-            <Loader2Icon className="size-4 mr-1 animate-spin" />
-         ) : (
-            <RefreshCwIcon className="size-4 mr-1" />
-         )}
-         Actualiser
-      </button>
+      <RefreshButton onClick={load} loading={loading} />
    );
 
    return (

@@ -20,6 +20,7 @@ import {
    isNavSubItemActive,
 } from "@/lib/nav-matches";
 import { notificationBadgeClassName } from "@/lib/notification-badge";
+import { cn } from "@/lib/utils";
 
 function NavCountBadge({ count }) {
    if (!count || count < 1) return null;
@@ -56,8 +57,15 @@ export function NavCollapsibleItem({ item, triggerClassName }) {
       >
          <SidebarMenuItem>
             <CollapsibleTrigger
-               render={<SidebarMenuButton tooltip={item.title} />}
-               className={triggerClassName}
+               render={
+                  <SidebarMenuButton
+                     tooltip={item.title}
+                     className={cn(
+                        "hover:text-background data-open:hover:text-background",
+                        triggerClassName,
+                     )}
+                  />
+               }
             >
                {item.icon && <item.icon />}
                <span>{item.title}</span>

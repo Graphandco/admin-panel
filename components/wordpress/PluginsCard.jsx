@@ -44,13 +44,13 @@ export default function PluginsCard() {
 
    if (error) {
       return (
-         <Card>
-            <CardContent className="py-6">
+         <Card className="h-full">
+            <CardContent className="py-4 md:py-6">
                <div className="text-destructive flex items-center gap-3">
-                  <p>{error}</p>
+                  <p className="text-xs md:text-sm">{error}</p>
                   <button
                      onClick={load}
-                     className="inline-flex items-center gap-1 text-sm underline"
+                     className="inline-flex items-center gap-1 text-xs md:text-sm underline"
                   >
                      <RefreshCwIcon className="size-4" />
                      Réessayer
@@ -64,36 +64,41 @@ export default function PluginsCard() {
    return (
       <Card className="h-full">
          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-               <div className="size-10 p-2 bg-[#21759b]/10 border border-[#21759b]/20 rounded-md flex items-center justify-center">
-                  <PackageIcon className="size-6 text-[#21759b] opacity-90" />
+            <CardTitle className="flex items-center gap-1.5 md:gap-2 min-w-0">
+               <div className="size-8 shrink-0 p-1.5 md:p-2 bg-[#21759b]/10 border border-[#21759b]/20 rounded-md flex items-center justify-center md:mr-2">
+                  <PackageIcon className="size-5 text-[#21759b] opacity-90" />
                </div>
-               <span className="text-lg font-medium text-white">
+               <span className="text-sm md:text-lg font-medium text-white truncate">
                   Plugins Wordpress
                </span>
             </CardTitle>
             <CardAction>
                {loading ? (
-                  <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+                  <Loader2Icon className="size-5 md:size-6 animate-spin text-muted-foreground" />
                ) : (
-                  <span className="text-2xl font-bold">{total}</span>
+                  <span className="text-xl md:text-2xl font-bold tabular-nums">
+                     {total}
+                  </span>
                )}
             </CardAction>
          </CardHeader>
-         <CardContent>
-            <p className="text-muted-foreground text-sm">
-               {/* {total} extension{total > 1 ? "s" : ""} au total */}
+         <CardContent className="space-y-1">
+            <p className="text-muted-foreground text-xs md:text-sm">
                {updatesCount > 0 ? (
-                  <span className="flex items-center gap-1.5 mt-2 text-amber-500 dark:text-amber-400">
-                     <ArrowUpCircleIcon className="size-4" />
-                     {updatesCount} mise{updatesCount > 1 ? "s" : ""} à jour à
-                     faire
+                  <span className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400">
+                     <ArrowUpCircleIcon className="size-3.5 md:size-4 shrink-0" />
+                     <span className="leading-snug">
+                        {updatesCount} mise{updatesCount > 1 ? "s" : ""} à jour
+                        à faire
+                     </span>
                   </span>
                ) : (
                   total > 0 && (
-                     <span className="flex items-center gap-1.5 mt-2 text-green-600 dark:text-green-400">
-                        <CheckCircle2Icon className="size-4" />
-                        Tous les plugins sont à jour
+                     <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                        <CheckCircle2Icon className="size-3.5 md:size-4 shrink-0" />
+                        <span className="leading-snug">
+                           Tous les plugins sont à jour
+                        </span>
                      </span>
                   )
                )}

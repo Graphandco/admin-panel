@@ -22,6 +22,7 @@ import {
    dockerContainerStats,
 } from "@/app/actions/docker";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
+import RefreshButton from "@/components/refresh-button";
 
 function getContainerName(names) {
    if (!names?.length) return "-";
@@ -385,18 +386,7 @@ export default function DockerStatsPage() {
       <div>
          <header className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-white">Stats</h2>
-            <button
-               onClick={loadContainersAndStats}
-               disabled={loading}
-               className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-            >
-               {loading ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-               ) : (
-                  <RefreshCwIcon className="size-4" />
-               )}
-               Rafraîchir
-            </button>
+            <RefreshButton onClick={loadContainersAndStats} loading={loading} />
          </header>
 
          {error ? (

@@ -125,7 +125,7 @@ function SidebarProvider({
                ...style,
             }}
             className={cn(
-               "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
+               "group/sidebar-wrapper flex min-h-svh w-full",
                className,
             )}
             {...props}
@@ -152,7 +152,7 @@ function Sidebar({
          <div
             data-slot="sidebar"
             className={cn(
-               "bg-linear-to-r from-sidebar-secondary to-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
+               "text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
                className,
             )}
             {...props}
@@ -170,7 +170,7 @@ function Sidebar({
                data-sidebar="sidebar"
                data-slot="sidebar"
                data-mobile="true"
-               className="bg-linear-to-r from-sidebar-secondary to-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+               className="text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden bg-transparent"
                style={{
                   "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
                }}
@@ -223,7 +223,7 @@ function Sidebar({
             <div
                data-sidebar="sidebar"
                data-slot="sidebar-inner"
-               className="bg-sidebar group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 flex size-full flex-col"
+               className="bg-transparent group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 flex size-full flex-col"
             >
                {children}
             </div>
@@ -284,7 +284,7 @@ function SidebarInset({ className, ...props }) {
       <main
          data-slot="sidebar-inset"
          className={cn(
-            "bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ms-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ms-2 relative flex w-full flex-1 flex-col",
+            "bg-transparent md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ms-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ms-2 relative flex w-full flex-1 flex-col",
             className,
          )}
          {...props}
@@ -309,7 +309,7 @@ function SidebarHeader({ className, ...props }) {
          data-slot="sidebar-header"
          data-sidebar="header"
          className={cn(
-            "gap-2 px-2 py-4 flex flex-col border-b border-white/10 bg-background",
+            "h-16 gap-2 px-2 py-4 flex flex-col border-b border-white/10 bg-transparent",
             className,
          )}
          {...props}

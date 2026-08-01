@@ -27,6 +27,7 @@ import {
 } from "@/app/actions/sql";
 import { Loader2Icon, PlayIcon, RefreshCwIcon, DatabaseIcon } from "lucide-react";
 import { toast } from "sonner";
+import RefreshButton from "@/components/refresh-button";
 
 export default function SqlBrowserPage() {
    const [engine, setEngine] = useState("mysql");
@@ -129,19 +130,10 @@ export default function SqlBrowserPage() {
                   <code className="text-xs">dashboard_readonly</code>
                </p>
             </div>
-            <Button
-               variant="outline"
-               size="sm"
+            <RefreshButton
                onClick={() => loadDatabases(engine)}
-               disabled={loadingMeta}
-            >
-               {loadingMeta ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-               ) : (
-                  <RefreshCwIcon className="size-4" />
-               )}
-               Actualiser
-            </Button>
+               loading={loadingMeta}
+            />
          </div>
 
          <div className="grid gap-4 lg:grid-cols-[240px_1fr]">

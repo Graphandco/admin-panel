@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { caddyCertificates } from "@/app/actions/caddy";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
+import RefreshButton from "@/components/refresh-button";
 
 function formatDate(iso) {
    if (!iso) return "—";
@@ -80,20 +81,7 @@ export default function CaddySslPage() {
                   Certificats stockés par Caddy (Let&apos;s Encrypt / ZeroSSL…)
                </p>
             </div>
-            <Button
-               variant="outline"
-               size="sm"
-               onClick={load}
-               disabled={loading}
-               className="inline-flex items-center gap-1"
-            >
-               {loading ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-               ) : (
-                  <RefreshCwIcon className="size-4" />
-               )}
-               Actualiser
-            </Button>
+            <RefreshButton onClick={load} loading={loading} />
          </header>
 
          {error && (

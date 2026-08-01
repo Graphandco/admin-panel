@@ -57,7 +57,7 @@
    --background: hsl(224.3deg 14.39% 7.11%);
    /* --foreground: hsl(209.52deg 30.43% 59.41%); */
    --foreground: hsl(200, 2%, 72%);
-   --card: hsl(226deg 13% 13%);
+   --card: #1d1f2591;
    --card-foreground: hsl(220, 2%, 61%);
    --popover: hsl(216.09deg 14.17% 6.9%);
    --popover-foreground: hsl(220, 2%, 61%);
@@ -66,7 +66,7 @@
    --secondary: oklch(0.274 0.006 286.033);
    --secondary-foreground: oklch(0.985 0 0);
    /* --muted: oklch(0.278 0.033 256.848); */
-   --muted: hsl(223 14% 7% / 1);
+   --muted: hsl(221.25 15.38% 20.39%);
    --muted-foreground: oklch(0.707 0.022 261.325);
    /* --accent: oklch(.79 .16 78.93); */
    --accent: oklch(0.79 0.16 78.93);
@@ -88,7 +88,7 @@
    --sidebar-primary: oklch(0.79 0.16 78.93);
    --sidebar-primary-foreground: hsl(230deg 15.79% 7.45%);
    --sidebar-accent: oklch(0.79 0.16 78.93);
-   --sidebar-accent-foreground: var(--card);
+   --sidebar-accent-foreground: var(--background);
    --sidebar-border: oklch(1 0 0 / 10%);
    --sidebar-ring: oklch(0.551 0.027 264.364);
 }
@@ -98,7 +98,11 @@
       @apply border-border outline-ring/50;
    }
    body {
-      @apply bg-background text-foreground;
+      @apply text-foreground bg-cover bg-fixed bg-center;
+      /* Overlay + image : pas de backdrop-filter (casse position:fixed de la sidebar) */
+      background-image:
+         linear-gradient(rgb(0 0 0 / 0.6), rgb(0 0 0 / 0.6)),
+         url("/bg.svg");
    }
 }
 

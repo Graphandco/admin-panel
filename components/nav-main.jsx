@@ -38,7 +38,7 @@ export function NavSection({ label, items, hideOnIconCollapse = false }) {
                   <NavCollapsibleItem
                      key={item.title}
                      item={item}
-                     triggerClassName="group/trigger text-white hover:text-card"
+                     triggerClassName="group/trigger text-white hover:text-background"
                   />
                ) : (
                   <SidebarMenuItem key={item.title}>

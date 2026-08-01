@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "@/components/refresh-button";
 
 import { useEffect, useState } from "react";
 import {
@@ -13,7 +14,6 @@ import { getFail2banStatus, getSshStatus } from "@/app/actions/security";
 import {
    CheckCircle2Icon,
    Loader2Icon,
-   RefreshCwIcon,
    XCircleIcon,
 } from "lucide-react";
 
@@ -78,20 +78,7 @@ export default function Fail2banPage() {
                   Lecture seule — jails, bans et durcissement SSH
                </p>
             </div>
-            <Button
-               variant="outline"
-               size="sm"
-               onClick={load}
-               disabled={loading}
-               className="inline-flex items-center gap-1"
-            >
-               {loading ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-               ) : (
-                  <RefreshCwIcon className="size-4" />
-               )}
-               Actualiser
-            </Button>
+            <RefreshButton onClick={load} loading={loading} />
          </header>
 
          {error && (

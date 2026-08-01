@@ -19,6 +19,7 @@ import {
    DownloadIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import RefreshButton from "@/components/refresh-button";
 
 function formatDate(iso) {
    if (!iso) return "—";
@@ -131,20 +132,7 @@ export default function UpdatesPage() {
                   )}
                   Tout mettre à jour
                </Button>
-               <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={load}
-                  disabled={loading || busy}
-                  className="inline-flex items-center gap-1"
-               >
-                  {loading ? (
-                     <Loader2Icon className="size-4 animate-spin" />
-                  ) : (
-                     <RefreshCwIcon className="size-4" />
-                  )}
-                  Actualiser
-               </Button>
+               <RefreshButton onClick={load} loading={loading} disabled={busy} />
             </div>
          </header>
 

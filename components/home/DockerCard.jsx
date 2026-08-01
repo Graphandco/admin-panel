@@ -50,12 +50,12 @@ export default function DockerCard() {
    if (error) {
       return (
          <Card className="h-full">
-            <CardContent className="py-6">
+            <CardContent className="py-4 md:py-6">
                <div className="text-destructive flex items-center gap-3">
-                  <p>{error}</p>
+                  <p className="text-xs md:text-sm">{error}</p>
                   <button
                      onClick={load}
-                     className="inline-flex items-center gap-1 text-sm underline"
+                     className="inline-flex items-center gap-1 text-xs md:text-sm underline"
                   >
                      <RefreshCwIcon className="size-4" />
                      Réessayer
@@ -69,23 +69,27 @@ export default function DockerCard() {
    return (
       <Card className="h-full">
          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-1.5 md:gap-2 min-w-0">
                <Container
                   size={32}
-                  className="text-blue-500 p-2 bg-blue-500/10 border border-blue-500/20 rounded-md mr-2"
+                  className="size-8 shrink-0 text-blue-500 p-1.5 md:p-2 bg-blue-500/10 border border-blue-500/20 rounded-md md:mr-2"
                />
-               <span className="text-lg font-medium text-white">Docker</span>
+               <span className="text-sm md:text-lg font-medium text-white truncate">
+                  Docker
+               </span>
             </CardTitle>
             <CardAction>
                {loading ? (
-                  <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+                  <Loader2Icon className="size-5 md:size-6 animate-spin text-muted-foreground" />
                ) : (
-                  <span className="text-2xl font-bold">{total}</span>
+                  <span className="text-xl md:text-2xl font-bold tabular-nums">
+                     {total}
+                  </span>
                )}
             </CardAction>
          </CardHeader>
          <CardContent className="space-y-1">
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-xs md:text-sm">
                <span className="text-green-600 dark:text-green-400 font-medium">
                   {running}
                </span>{" "}
@@ -97,7 +101,7 @@ export default function DockerCard() {
          {stoppedContainers.length > 0 && (
             <CardFooter
                className={cn(
-                  "flex flex-wrap gap-1.5 text-xs text-muted-foreground bg-transparent",
+                  "hidden md:flex flex-wrap gap-1.5 text-xs text-muted-foreground bg-transparent",
                )}
             >
                <span>Arrêté{stoppedContainers.length > 1 ? "s" : ""} :</span>

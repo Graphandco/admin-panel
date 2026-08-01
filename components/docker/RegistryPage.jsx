@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "@/components/refresh-button";
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -38,7 +39,6 @@ import {
    InfoIcon,
    Loader2Icon,
    PackageIcon,
-   RefreshCwIcon,
    SearchIcon,
    Trash2Icon,
    EraserIcon,
@@ -479,18 +479,7 @@ export default function RegistryPage() {
             )}
             Nettoyer le disque
          </button>
-         <button
-            onClick={load}
-            disabled={loading || gcRunning}
-            className={cn(buttonVariants({}))}
-         >
-            {loading ? (
-               <Loader2Icon className="size-4 mr-1 animate-spin" />
-            ) : (
-               <RefreshCwIcon className="size-4 mr-1" />
-            )}
-            Actualiser
-         </button>
+         <RefreshButton onClick={load} loading={loading} disabled={gcRunning} />
       </div>
    );
 

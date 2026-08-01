@@ -39,6 +39,7 @@ import {
    agenceSiteUpdate,
 } from "@/app/actions/agence-sites";
 import { toast } from "sonner";
+import RefreshButton from "@/components/refresh-button";
 
 const AUTO_REFRESH_MS = 60_000;
 
@@ -289,14 +290,7 @@ export default function SitesPage() {
                ) : null}
             </div>
             <div className="flex items-center gap-3">
-               <button
-                  onClick={load}
-                  disabled={loading}
-                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-               >
-                  <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
-                  Rafraîchir
-               </button>
+               <RefreshButton onClick={load} loading={loading} />
                <Button
                   size="sm"
                   variant="outline"
