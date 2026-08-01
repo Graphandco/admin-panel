@@ -19,6 +19,16 @@ import {
    pathnameMatchesNavSection,
    isNavSubItemActive,
 } from "@/lib/nav-matches";
+import { notificationBadgeClassName } from "@/lib/notification-badge";
+
+function NavCountBadge({ count }) {
+   if (!count || count < 1) return null;
+   return (
+      <span className={notificationBadgeClassName}>
+         {count > 99 ? "99+" : count}
+      </span>
+   );
+}
 
 /**
  * Sous-menu sidebar : ouverture au clic sur le trigger,
@@ -33,6 +43,8 @@ export function NavCollapsibleItem({ item, triggerClassName }) {
       if (matches) setOpen(true);
       else setOpen(false);
    }, [matches, pathname]);
+
+   const parentBadge = item.badge || 0;
 
    return (
       <Collapsible
@@ -49,7 +61,10 @@ export function NavCollapsibleItem({ item, triggerClassName }) {
             >
                {item.icon && <item.icon />}
                <span>{item.title}</span>
-               <ChevronRight className="ml-auto transition-transform duration-200 group-data-panel-open/trigger:rotate-90" />
+               <span className="ml-auto flex items-center gap-1">
+                  <NavCountBadge count={parentBadge} />
+                  <ChevronRight className="transition-transform duration-200 group-data-panel-open/trigger:rotate-90" />
+               </span>
             </CollapsibleTrigger>
             <CollapsibleContent>
                <SidebarMenuSub>
@@ -63,7 +78,8 @@ export function NavCollapsibleItem({ item, triggerClassName }) {
                               item.items,
                            )}
                         >
-                           <span>{subItem.title}</span>
+                           <span className="flex-1">{subItem.title}</span>
+                           <NavCountBadge count={subItem.badge} />
                         </SidebarMenuSubButton>
                      </SidebarMenuSubItem>
                   ))}

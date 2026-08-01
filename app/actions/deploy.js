@@ -12,7 +12,7 @@ function adminApiFetch(path, options = {}) {
 }
 
 /**
- * Liste des projets déployables
+ * Liste des projets déployables (deploy.sh / git)
  */
 export async function getDeployProjects() {
   try {
@@ -81,3 +81,43 @@ export async function getDeployRuns(projectId) {
   }
 }
 
+/**
+ * Sites / conteneurs utilisant le registry custom
+ */
+export async function getRegistrySites() {
+  try {
+    const res = await adminApiFetch("/api/deploy/registry-sites");
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `Erreur ${res.status}`);
+    }
+    return {
+      sites: data.sites || [],
+      pullHost: data.pullHost || null,
+      count: data.count ?? 0,
+    };
+  } catch (err) {
+    console.error("getRegistrySites:", err.message);
+    throw err;
+  }
+}
+
+/**
+ * Met à jour le compose, pull le tag, recreate le service
+ */
+export async function redeployRegistrySite(containerId, tag) {
+  try {
+    const res = await adminApiFetch("/api/deploy/registry-redeploy", {
+      method: "POST",
+      body: JSON.stringify({ containerId, tag }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `Erreur ${res.status}`);
+    }
+    return data;
+  } catch (err) {
+    console.error("redeployRegistrySite:", err.message);
+    throw err;
+  }
+}

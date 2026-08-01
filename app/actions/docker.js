@@ -134,3 +134,58 @@ export async function dockerLogs(containerId, tail = 100) {
     throw err
   }
 }
+
+/**
+ * Liste les conteneurs images officielles Docker Hub avec statut de mise à jour
+ */
+export async function dockerImageUpdates() {
+  try {
+    const res = await adminApiFetch('/api/docker/updates')
+    const data = await res.json()
+    if (!data.success) {
+      throw new Error(data.error || 'Erreur API')
+    }
+    return {
+      updates: data.updates || [],
+      updateCount: data.updateCount ?? 0,
+      count: data.count ?? 0,
+      source: data.source || null,
+      checkedAt: data.checkedAt || null,
+    }
+  } catch (err) {
+    console.error('dockerImageUpdates:', err.message)
+    throw err
+  }
+}
+
+/**
+ * Pull + recreate compose pour appliquer la dernière image du tag
+ * @returns {{ success: boolean, error?: string, image?: string }}
+ */
+export async function dockerApplyImageUpdate(containerId) {
+  try {
+    const res = await adminApiFetch(
+      `/api/docker/updates/${encodeURIComponent(containerId)}`,
+      { method: 'POST' },
+    )
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      return {
+        success: false,
+        error:
+          res.status === 404
+            ? 'Route API introuvable — redémarrer admin-api'
+            : `Erreur ${res.status}`,
+      }
+    }
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error || `Erreur ${res.status}` }
+    }
+    return { success: true, ...data }
+  } catch (err) {
+    console.error('dockerApplyImageUpdate:', err.message)
+    return { success: false, error: err.message || 'Erreur API' }
+  }
+}

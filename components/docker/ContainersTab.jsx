@@ -21,6 +21,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
    MoreHorizontalIcon,
    Loader2Icon,
@@ -33,6 +34,7 @@ import {
    WrenchIcon,
    DownloadIcon,
    Trash2Icon,
+   ScrollTextIcon,
 } from "lucide-react";
 import {
    dockerContainerStart,
@@ -123,9 +125,14 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
    const [stateFilter, setStateFilter] = useState("all");
    const [actionId, setActionId] = useState(null);
    const [actionType, setActionType] = useState(null);
+   const [confirmRemove, setConfirmRemove] = useState(null);
 
    async function handleAction(c, action) {
       if (actionId) return;
+      if (action === "remove") {
+         setConfirmRemove(c);
+         return;
+      }
       const name = getContainerName(c.names);
       setActionId(c.id);
       setActionType(action);
@@ -137,20 +144,35 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
             result = await dockerContainerCompose(c.id);
          else if (action === "build") result = await dockerContainerBuild(c.id);
          else if (action === "pull") result = await dockerContainerPull(c.id);
-         else if (action === "remove") {
-            if (!confirm(`Supprimer le conteneur ${name} ?`)) {
-               setActionId(null);
-               setActionType(null);
-               return;
-            }
-            result = await dockerContainerRemove(c.id);
-         }
          if (result && !result.success) {
             toast.error(result.error || "Erreur");
             return;
          }
          const msg = ACTION_SUCCESS[action]?.(name) || "Action réussie";
          toast.success(msg);
+         onRefresh?.();
+      } catch (err) {
+         toast.error(err.message || "Erreur");
+      } finally {
+         setActionId(null);
+         setActionType(null);
+      }
+   }
+
+   async function runRemove() {
+      if (!confirmRemove) return;
+      const c = confirmRemove;
+      setConfirmRemove(null);
+      const name = getContainerName(c.names);
+      setActionId(c.id);
+      setActionType("remove");
+      try {
+         const result = await dockerContainerRemove(c.id);
+         if (result && !result.success) {
+            toast.error(result.error || "Erreur");
+            return;
+         }
+         toast.success(ACTION_SUCCESS.remove?.(name) || "Action réussie");
          onRefresh?.();
       } catch (err) {
          toast.error(err.message || "Erreur");
@@ -388,6 +410,17 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                                              </DropdownMenuItem>
                                           )}
                                           <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                             onClick={() => {
+                                                window.location.assign(
+                                                   `/logs?source=docker&container=${encodeURIComponent(getContainerName(c.names))}`,
+                                                );
+                                             }}
+                                          >
+                                             <ScrollTextIcon className="size-4" />
+                                             Logs
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
                                           {isRegistryImage(c.image) ? (
                                              <DropdownMenuItem
                                                 onClick={() =>
@@ -430,6 +463,20 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                </Table>
             </CardContent>
          </Card>
+
+         <ConfirmDialog
+            open={!!confirmRemove}
+            onOpenChange={(o) => !o && setConfirmRemove(null)}
+            title="Supprimer ce conteneur ?"
+            description={
+               confirmRemove
+                  ? `Supprimer le conteneur ${getContainerName(confirmRemove.names)} ?`
+                  : null
+            }
+            confirmLabel="Supprimer"
+            variant="destructive"
+            onConfirm={runRemove}
+         />
       </div>
    );
 }

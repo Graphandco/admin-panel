@@ -1,5 +1,5 @@
-import SitesPage from "@/components/agence/SitesPage";
+import { redirect } from "next/navigation";
 
-export default function AgenceSitesRoute() {
-   return <SitesPage />;
+export default function AgenceSitesRedirect() {
+   redirect("/monitoring/sites");
 }

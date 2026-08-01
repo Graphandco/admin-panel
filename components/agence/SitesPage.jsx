@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
    Table,
    TableBody,
@@ -10,12 +10,6 @@ import {
    TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-   ChartContainer,
-   ChartTooltip,
-   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { BarChart, Bar, Cell, XAxis, YAxis } from "recharts";
 import { cn } from "@/lib/utils";
 import {
    CheckIcon,
@@ -25,6 +19,10 @@ import {
    ExternalLinkIcon,
    LayoutDashboardIcon,
    PencilIcon,
+   ActivityIcon,
+   TimerIcon,
+   AlertTriangleIcon,
+   CircleHelpIcon,
 } from "lucide-react";
 import {
    Dialog,
@@ -35,121 +33,153 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { agenceSitesList, agenceSiteUpdate } from "@/app/actions/agence-sites";
-import { checkAgenceSitesStatus } from "@/app/actions/sites";
+import {
+   agenceSitesList,
+   agenceSitesCheckNow,
+   agenceSiteUpdate,
+} from "@/app/actions/agence-sites";
 import { toast } from "sonner";
+
+const AUTO_REFRESH_MS = 60_000;
 
 function stripHttps(url) {
    if (!url || typeof url !== "string") return url || "";
    return url.replace(/^https?:\/\//i, "").trim();
 }
 
-const MAX_RESPONSE_MS = 1000;
-
-function getBarColor(ms) {
-   if (ms < 400) return "#22c55e";
-   if (ms < 700) return "#f59e0b";
-   return "#ef4444";
+function formatMs(ms) {
+   if (ms == null) return "—";
+   return `${ms} ms`;
 }
 
-function ResponseTimeBarChart({ sites, statusMap }) {
-   const chartData = useMemo(() => {
-      return sites
-         .filter((s) => statusMap[s.id]?.responseTimeMs != null)
-         .map((s) => ({
-            name: stripHttps(s.address) || `Site #${s.id}`,
-            value: statusMap[s.id].responseTimeMs,
-            fill: getBarColor(statusMap[s.id].responseTimeMs),
-         }));
-   }, [sites, statusMap]);
+function formatUptime(pct) {
+   if (pct == null) return "—";
+   return `${pct}%`;
+}
 
-   if (chartData.length === 0) return null;
+function formatCheckedAt(iso) {
+   if (!iso) return null;
+   try {
+      return new Date(iso).toLocaleString("fr-FR", {
+         day: "2-digit",
+         month: "2-digit",
+         hour: "2-digit",
+         minute: "2-digit",
+      });
+   } catch {
+      return null;
+   }
+}
 
-   const chartConfig = {
-      value: { label: "Temps (ms)", color: "hsl(var(--chart-1))" },
-   };
+function StateBadge({ state, status }) {
+   const cfg = {
+      up: {
+         label: status ?? "OK",
+         className: "bg-green-500/20 text-green-600 dark:text-green-400",
+         Icon: CheckIcon,
+      },
+      slow: {
+         label: status ?? "Lent",
+         className: "bg-amber-500/20 text-amber-600 dark:text-amber-400",
+         Icon: AlertTriangleIcon,
+      },
+      down: {
+         label: status ?? "Down",
+         className: "bg-red-500/20 text-red-600 dark:text-red-400",
+         Icon: Ban,
+      },
+      unknown: {
+         label: "—",
+         className: "bg-muted text-muted-foreground",
+         Icon: CircleHelpIcon,
+      },
+   }[state || "unknown"];
 
-   const barHeight = 32;
-   const chartHeight = Math.max(200, chartData.length * barHeight);
-
+   const Icon = cfg.Icon;
    return (
-      <Card className="mb-4">
-         <CardContent className="py-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">
-               Temps de réponse par site
-            </h3>
-            <div className="max-w-2xl">
-               <ChartContainer
-                  config={chartConfig}
-                  className="w-full min-h-0"
-                  style={{ height: chartHeight }}
-               >
-                  <BarChart
-                     data={chartData}
-                     layout="vertical"
-                     margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
-                  >
-                     <XAxis
-                        type="number"
-                        domain={[0, MAX_RESPONSE_MS]}
-                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                        tickFormatter={(v) => `${v} ms`}
-                     />
-                     <YAxis
-                        type="category"
-                        dataKey="name"
-                        width={220}
-                        interval={0}
-                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                        tickLine={false}
-                     />
-                     <ChartTooltip
-                        content={
-                           <ChartTooltipContent formatter={(v) => `${v} ms`} />
-                        }
-                     />
-                     <Bar
-                        dataKey="value"
-                        radius={[0, 4, 4, 0]}
-                        maxBarSize={20}
-                        barCategoryGap={8}
-                     >
-                        {chartData.map((entry, i) => (
-                           <Cell key={i} fill={entry.fill} />
-                        ))}
-                     </Bar>
-                  </BarChart>
-               </ChartContainer>
-            </div>
+      <span
+         className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+            cfg.className,
+         )}
+      >
+         <Icon className="size-3.5" />
+         {cfg.label}
+      </span>
+   );
+}
+
+function Sparkline({ points }) {
+   if (!points?.length) {
+      return <span className="text-muted-foreground text-xs">—</span>;
+   }
+   const values = points.map((p) => (p.ok ? p.ms ?? 0 : null));
+   const nums = values.filter((v) => v != null);
+   const max = Math.max(...(nums.length ? nums : [1]), 1);
+   const w = 72;
+   const h = 22;
+   const step = points.length > 1 ? w / (points.length - 1) : w;
+
+   const path = points
+      .map((p, i) => {
+         const x = i * step;
+         const y =
+            p.ok && p.ms != null
+               ? h - (p.ms / max) * (h - 2) - 1
+               : h - 1;
+         return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+
+   const lastOk = points[points.length - 1]?.ok;
+   return (
+      <svg
+         width={w}
+         height={h}
+         className="inline-block align-middle"
+         aria-hidden
+      >
+         <path
+            d={path}
+            fill="none"
+            stroke={lastOk ? "#22c55e" : "#ef4444"}
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+         />
+      </svg>
+   );
+}
+
+function KpiCard({ label, value, hint, tone }) {
+   const tones = {
+      green: "text-green-500",
+      red: "text-red-500",
+      amber: "text-amber-500",
+      muted: "text-muted-foreground",
+      white: "text-white",
+   };
+   return (
+      <Card className="p-0">
+         <CardContent className="py-3 px-4">
+            <p className="text-xs text-muted-foreground mb-1">{label}</p>
+            <p className={cn("text-2xl font-bold tabular-nums", tones[tone] || tones.white)}>
+               {value}
+            </p>
+            {hint ? (
+               <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>
+            ) : null}
          </CardContent>
       </Card>
    );
 }
 
-function StatusBadge({ status }) {
-   const isOk = status === 200;
-   const isError = status == null;
-   const label = isError ? "Erreur" : status;
-   return (
-      <span
-         className={cn(
-            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-            isOk
-               ? "bg-green-500/20 text-green-600 dark:text-green-400"
-               : "bg-red-500/20 text-red-600 dark:text-red-400",
-         )}
-      >
-         {isOk && <CheckIcon className="size-3.5" />}
-         {!isOk && <Ban className="size-3.5" />}
-         {label}
-      </span>
-   );
-}
-
 export default function SitesPage() {
    const [sites, setSites] = useState([]);
-   const [statusMap, setStatusMap] = useState({});
+   const [summary, setSummary] = useState(null);
+   const [checkedAt, setCheckedAt] = useState(null);
    const [loading, setLoading] = useState(true);
+   const [checking, setChecking] = useState(false);
    const [error, setError] = useState(null);
    const [editSite, setEditSite] = useState(null);
    const [editForm, setEditForm] = useState({
@@ -158,33 +188,48 @@ export default function SitesPage() {
    });
    const [saving, setSaving] = useState(false);
 
-   async function load() {
+   const applyPayload = useCallback((data) => {
+      setSites(data.sites || []);
+      setSummary(data.summary || null);
+      setCheckedAt(data.checkedAt || null);
+   }, []);
+
+   const load = useCallback(async () => {
       setLoading(true);
       setError(null);
       try {
-         const list = await agenceSitesList();
-         setSites(list);
-
-         const results = await checkAgenceSitesStatus(list);
-         const map = {};
-         results.forEach((r) => {
-            map[r.id] = {
-               status: r.status,
-               responseTimeMs: r.responseTimeMs,
-               backoffice: r.backoffice,
-            };
-         });
-         setStatusMap(map);
+         const data = await agenceSitesList();
+         applyPayload(data);
       } catch (err) {
          setError(err.message || "Erreur lors du chargement");
       } finally {
          setLoading(false);
       }
+   }, [applyPayload]);
+
+   async function runCheck() {
+      setChecking(true);
+      setError(null);
+      try {
+         const data = await agenceSitesCheckNow();
+         applyPayload(data);
+         toast.success("Checks terminés");
+      } catch (err) {
+         toast.error(err.message || "Erreur lors des checks");
+      } finally {
+         setChecking(false);
+      }
    }
 
    useEffect(() => {
       load();
-   }, []);
+      const id = setInterval(() => {
+         agenceSitesList()
+            .then(applyPayload)
+            .catch(() => {});
+      }, AUTO_REFRESH_MS);
+      return () => clearInterval(id);
+   }, [load, applyPayload]);
 
    function openEdit(site) {
       setEditSite(site);
@@ -200,7 +245,7 @@ export default function SitesPage() {
       try {
          await agenceSiteUpdate(editSite.id, editForm);
          setEditSite(null);
-         load();
+         await load();
          toast.success("Le site a été mis à jour");
       } catch (err) {
          toast.error(err.message || "Erreur lors de l'enregistrement");
@@ -209,7 +254,7 @@ export default function SitesPage() {
       }
    }
 
-   if (error) {
+   if (error && !sites.length) {
       return (
          <div>
             <h1 className="text-2xl font-bold text-white mb-4">Sites</h1>
@@ -229,45 +274,112 @@ export default function SitesPage() {
       );
    }
 
+   const reachable = (summary?.up || 0) + (summary?.slow || 0);
+
    return (
       <div>
-         <header className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-white">Sites</h1>
-            <button
-               onClick={load}
-               disabled={loading}
-               className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-            >
-               <RefreshCwIcon className="size-4" />
-               Rafraîchir
-            </button>
+         <header className="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <div>
+               <h1 className="text-2xl font-bold text-white">Sites</h1>
+               {checkedAt ? (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                     Dernière synchro · {formatCheckedAt(checkedAt)}
+                     <span className="opacity-60"> · auto 60s</span>
+                  </p>
+               ) : null}
+            </div>
+            <div className="flex items-center gap-3">
+               <button
+                  onClick={load}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+               >
+                  <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
+                  Rafraîchir
+               </button>
+               <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={runCheck}
+                  disabled={checking || loading}
+               >
+                  {checking ? (
+                     <Loader2Icon className="size-4 mr-1.5 animate-spin" />
+                  ) : (
+                     <ActivityIcon className="size-4 mr-1.5" />
+                  )}
+                  Vérifier maintenant
+               </Button>
+            </div>
          </header>
-         <ResponseTimeBarChart sites={sites} statusMap={statusMap} />
+
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <KpiCard
+               label="En ligne"
+               value={loading && !summary ? "…" : reachable}
+               hint={
+                  summary
+                     ? `${summary.up} OK · ${summary.slow} lents`
+                     : undefined
+               }
+               tone="green"
+            />
+            <KpiCard
+               label="Down"
+               value={loading && !summary ? "…" : summary?.down ?? 0}
+               tone={(summary?.down || 0) > 0 ? "red" : "muted"}
+            />
+            <KpiCard
+               label="Lents"
+               value={loading && !summary ? "…" : summary?.slow ?? 0}
+               hint="≥ 700 ms"
+               tone={(summary?.slow || 0) > 0 ? "amber" : "muted"}
+            />
+            <KpiCard
+               label="Latence moy."
+               value={
+                  loading && !summary
+                     ? "…"
+                     : summary?.avgMs != null
+                       ? `${summary.avgMs} ms`
+                       : "—"
+               }
+               hint={`${summary?.total ?? 0} sites`}
+               tone="white"
+            />
+         </div>
+
          <Card className="mb-6 p-0 md:p-0">
             <CardContent className="px-0">
                <Table>
                   <TableHeader className="bg-muted text-white">
                      <TableRow>
                         <TableHead className="pl-2">Site</TableHead>
-                        <TableHead>Backoffice</TableHead>
+                        <TableHead className="hidden sm:table-cell">Client</TableHead>
                         <TableHead>Statut</TableHead>
+                        <TableHead className="hidden md:table-cell">
+                           <span className="inline-flex items-center gap-1">
+                              <TimerIcon className="size-3.5" />
+                              Latence
+                           </span>
+                        </TableHead>
+                        <TableHead className="hidden lg:table-cell">Uptime 24h</TableHead>
+                        <TableHead className="hidden xl:table-cell">Tendance</TableHead>
+                        <TableHead>BO</TableHead>
                         <TableHead className="w-12 pe-2"></TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {loading ? (
+                     {loading && sites.length === 0 ? (
                         <TableRow>
-                           <TableCell
-                              colSpan={4}
-                              className="text-center py-8"
-                           >
+                           <TableCell colSpan={8} className="text-center py-8">
                               <Loader2Icon className="size-6 animate-spin mx-auto text-muted-foreground" />
                            </TableCell>
                         </TableRow>
                      ) : sites.length === 0 ? (
                         <TableRow>
                            <TableCell
-                              colSpan={4}
+                              colSpan={8}
                               className="text-center py-8 text-muted-foreground"
                            >
                               Aucun site
@@ -279,8 +391,12 @@ export default function SitesPage() {
                               ? site.address
                               : `https://${site.address}`;
                            const displayUrl = stripHttps(site.address);
-                           const statusData = statusMap[site.id];
+                           const m = site.monitor || {};
                            const backofficeUrl = site.backoffice?.trim();
+                           const client =
+                              site.client_company ||
+                              site.client_name ||
+                              "—";
                            return (
                               <TableRow key={site.id}>
                                  <TableCell className="pl-2">
@@ -293,6 +409,29 @@ export default function SitesPage() {
                                        {displayUrl || "—"}
                                        <ExternalLinkIcon className="size-3.5" />
                                     </a>
+                                 </TableCell>
+                                 <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
+                                    {client}
+                                 </TableCell>
+                                 <TableCell>
+                                    <StateBadge
+                                       state={m.state}
+                                       status={m.status}
+                                    />
+                                 </TableCell>
+                                 <TableCell className="hidden md:table-cell tabular-nums text-sm">
+                                    {formatMs(m.responseMs)}
+                                 </TableCell>
+                                 <TableCell className="hidden lg:table-cell tabular-nums text-sm">
+                                    {formatUptime(m.uptime24h)}
+                                    {m.uptime7d != null ? (
+                                       <span className="text-muted-foreground text-xs ml-1">
+                                          · 7j {formatUptime(m.uptime7d)}
+                                       </span>
+                                    ) : null}
+                                 </TableCell>
+                                 <TableCell className="hidden xl:table-cell">
+                                    <Sparkline points={m.sparkline} />
                                  </TableCell>
                                  <TableCell>
                                     {backofficeUrl ? (
@@ -310,11 +449,10 @@ export default function SitesPage() {
                                           >
                                              <LayoutDashboardIcon className="size-4" />
                                           </a>
-                                          {statusData?.backoffice != null ? (
-                                             <StatusBadge
-                                                status={
-                                                   statusData.backoffice.status
-                                                }
+                                          {m.backoffice ? (
+                                             <StateBadge
+                                                state={m.backoffice.state}
+                                                status={m.backoffice.status}
                                              />
                                           ) : (
                                              <span className="text-muted-foreground">
@@ -322,15 +460,6 @@ export default function SitesPage() {
                                              </span>
                                           )}
                                        </span>
-                                    ) : (
-                                       <span className="text-muted-foreground">
-                                          —
-                                       </span>
-                                    )}
-                                 </TableCell>
-                                 <TableCell>
-                                    {statusData ? (
-                                       <StatusBadge status={statusData.status} />
                                     ) : (
                                        <span className="text-muted-foreground">
                                           —
@@ -401,10 +530,7 @@ export default function SitesPage() {
                      >
                         Annuler
                      </Button>
-                     <Button
-                        onClick={handleSaveEdit}
-                        disabled={saving}
-                     >
+                     <Button onClick={handleSaveEdit} disabled={saving}>
                         {saving ? (
                            <Loader2Icon className="size-4 mr-2 animate-spin" />
                         ) : null}

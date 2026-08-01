@@ -26,14 +26,41 @@ export async function agenceSiteCreate(payload) {
    }
 }
 
+/**
+ * Liste des sites MySQL + données monitoring (admin-api)
+ */
 export async function agenceSitesList() {
    try {
       const res = await adminApiFetch("/api/sites");
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Erreur API");
-      return data.sites || [];
+      return {
+         sites: data.sites || [],
+         summary: data.summary || null,
+         checkedAt: data.checkedAt || null,
+      };
    } catch (err) {
       console.error("agenceSitesList:", err.message);
+      throw err;
+   }
+}
+
+/**
+ * Lance un cycle de checks immédiat côté API
+ */
+export async function agenceSitesCheckNow() {
+   try {
+      const res = await adminApiFetch("/api/sites/check", { method: "POST" });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Erreur API");
+      return {
+         sites: data.sites || [],
+         summary: data.summary || null,
+         checkedAt: data.checkedAt || null,
+         checked: data.checked,
+      };
+   } catch (err) {
+      console.error("agenceSitesCheckNow:", err.message);
       throw err;
    }
 }

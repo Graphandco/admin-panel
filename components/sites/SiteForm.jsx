@@ -50,7 +50,7 @@ export default function SiteForm() {
             backoffice: form.backoffice.trim(),
          });
          toast.success("Le site a été créé");
-         router.push("/agence/sites");
+         router.push("/monitoring/sites");
       } catch (err) {
          toast.error(err.message || "Erreur lors de la création");
       } finally {
@@ -59,7 +59,7 @@ export default function SiteForm() {
    }
 
    function handleCancel() {
-      router.push("/agence/sites");
+      router.push("/monitoring/sites");
    }
 
    if (loading) {

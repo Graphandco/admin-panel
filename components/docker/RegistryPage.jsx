@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { OfficialImageUpdatesSection } from "@/components/docker/OfficialImageUpdatesSection";
 import {
    BoxIcon,
    CheckIcon,
@@ -763,6 +764,8 @@ export default function RegistryPage() {
             repository={detail?.repository}
             tagName={detail?.tag}
          />
+
+         <OfficialImageUpdatesSection />
       </>
    );
 }

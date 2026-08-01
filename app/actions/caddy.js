@@ -48,3 +48,10 @@ export async function caddyValidate() {
   if (!data.success) throw new Error(data.error || 'Erreur API')
   return { valid: data.valid, output: data.output || '' }
 }
+
+export async function caddyCertificates() {
+  const res = await adminApiFetch('/api/caddy/certificates')
+  const data = await res.json()
+  if (!data.success) throw new Error(data.error || 'Erreur API Caddy')
+  return data.data
+}

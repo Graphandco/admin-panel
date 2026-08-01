@@ -21,6 +21,8 @@ import { Label } from "@/components/ui/label";
 import { getSystemStats, getSystemStatsHistory } from "@/app/actions/system";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 const chartConfig = {
    used: {
@@ -179,6 +181,11 @@ function MetricsHistoryChart({ data, loading }) {
 }
 
 export default function VpsStatsPage() {
+   const isMobile = useIsMobile();
+   const pieChartClass = cn(
+      "mx-auto !aspect-square !min-h-0 w-full p-0",
+      isMobile ? "max-w-[100px]" : "max-w-[160px]",
+   );
    const [stats, setStats] = useState(null);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
@@ -278,6 +285,21 @@ export default function VpsStatsPage() {
         ]
       : [];
 
+   const PROCESS_COLORS = [
+      "#ef4444", // rouge — plus gourmand
+      "#f97316",
+      "#eab308",
+      "#84cc16",
+      "#22c55e", // vert — le moins gourmand des 5
+   ];
+   const topProcData = (stats?.topRamProcesses || []).map((p, i) => ({
+      name: p.name,
+      value: p.rss,
+      fill: PROCESS_COLORS[i % PROCESS_COLORS.length],
+      pid: p.pid,
+   }));
+   const topProcTotal = topProcData.reduce((s, p) => s + p.value, 0);
+
    return (
       <div>
          <header className="flex flex-wrap justify-between items-center gap-4 mb-4">
@@ -313,30 +335,30 @@ export default function VpsStatsPage() {
             </Card>
          ) : (
             <>
-               <div className="grid gap-6 md:grid-cols-3">
+               <div className="grid gap-3 md:gap-6 grid-cols-2 xl:grid-cols-4">
                   <Card>
-                     <CardHeader>
-                        <CardTitle className="text-base">Mémoire RAM</CardTitle>
-                        <p className="text-sm text-muted-foreground">
+                     <CardHeader className="pb-1 md:pb-0">
+                        <CardTitle className="text-sm md:text-base">Mémoire RAM</CardTitle>
+                        <p className="text-xs md:text-sm text-muted-foreground">
                            {stats?.memory.usedFormatted} /{" "}
                            {stats?.memory.totalFormatted} (
                            {stats?.memory.percent}%)
                         </p>
                      </CardHeader>
-                     <CardContent>
+                     <CardContent className="pt-0 flex flex-col items-center">
                         <ChartContainer
                            config={chartConfig}
-                           className="min-h-45 w-full"
+                           className={pieChartClass}
                         >
-                           <PieChart accessibilityLayer>
+                           <PieChart accessibilityLayer margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                               <Pie
                                  data={memData}
                                  dataKey="value"
                                  nameKey="name"
                                  cx="50%"
                                  cy="50%"
-                                 innerRadius={50}
-                                 outerRadius={70}
+                                 innerRadius="58%"
+                                 outerRadius="88%"
                                  paddingAngle={2}
                               >
                                  {memData.map((entry, index) => (
@@ -357,26 +379,26 @@ export default function VpsStatsPage() {
                   </Card>
 
                   <Card>
-                     <CardHeader>
-                        <CardTitle className="text-base">CPU</CardTitle>
-                        <p className="text-sm text-muted-foreground">
+                     <CardHeader className="pb-1 md:pb-0">
+                        <CardTitle className="text-sm md:text-base">CPU</CardTitle>
+                        <p className="text-xs md:text-sm text-muted-foreground">
                            {stats?.cpu.percent}% utilisé
                         </p>
                      </CardHeader>
-                     <CardContent>
+                     <CardContent className="pt-0 flex flex-col items-center">
                         <ChartContainer
                            config={chartConfig}
-                           className="min-h-45 w-full"
+                           className={pieChartClass}
                         >
-                           <PieChart accessibilityLayer>
+                           <PieChart accessibilityLayer margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                               <Pie
                                  data={cpuData}
                                  dataKey="value"
                                  nameKey="name"
                                  cx="50%"
                                  cy="50%"
-                                 innerRadius={50}
-                                 outerRadius={70}
+                                 innerRadius="58%"
+                                 outerRadius="88%"
                                  paddingAngle={2}
                               >
                                  {cpuData.map((entry, index) => (
@@ -397,29 +419,29 @@ export default function VpsStatsPage() {
                   </Card>
 
                   <Card>
-                     <CardHeader>
-                        <CardTitle className="text-base">
+                     <CardHeader className="pb-1 md:pb-0">
+                        <CardTitle className="text-sm md:text-base">
                            Espace disque
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs md:text-sm text-muted-foreground">
                            {stats?.disk.usedFormatted} /{" "}
                            {stats?.disk.totalFormatted} ({stats?.disk.percent}%)
                         </p>
                      </CardHeader>
-                     <CardContent>
+                     <CardContent className="pt-0 flex flex-col items-center">
                         <ChartContainer
                            config={chartConfig}
-                           className="min-h-45 w-full"
+                           className={pieChartClass}
                         >
-                           <PieChart accessibilityLayer>
+                           <PieChart accessibilityLayer margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                               <Pie
                                  data={diskData}
                                  dataKey="value"
                                  nameKey="name"
                                  cx="50%"
                                  cy="50%"
-                                 innerRadius={50}
-                                 outerRadius={70}
+                                 innerRadius="58%"
+                                 outerRadius="88%"
                                  paddingAngle={2}
                               >
                                  {diskData.map((entry, index) => (
@@ -430,6 +452,60 @@ export default function VpsStatsPage() {
                                  content={
                                     <ChartTooltipContent
                                        formatter={tooltipFormatter}
+                                       nameKey="name"
+                                    />
+                                 }
+                              />
+                           </PieChart>
+                        </ChartContainer>
+                     </CardContent>
+                  </Card>
+
+                  <Card>
+                     <CardHeader className="pb-1 md:pb-0">
+                        <CardTitle className="text-sm md:text-base">
+                           Top process RAM
+                        </CardTitle>
+                        <p className="text-xs md:text-sm text-muted-foreground">
+                           {topProcTotal > 0
+                              ? formatBytes(topProcTotal)
+                              : "—"}
+                        </p>
+                     </CardHeader>
+                     <CardContent className="pt-0 flex flex-col items-center">
+                        <ChartContainer
+                           config={chartConfig}
+                           className={pieChartClass}
+                        >
+                           <PieChart accessibilityLayer margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                              <Pie
+                                 data={topProcData}
+                                 dataKey="value"
+                                 nameKey="name"
+                                 cx="50%"
+                                 cy="50%"
+                                 innerRadius="58%"
+                                 outerRadius="88%"
+                                 paddingAngle={2}
+                              >
+                                 {topProcData.map((entry, index) => (
+                                    <Cell key={index} fill={entry.fill} />
+                                 ))}
+                              </Pie>
+                              <ChartTooltip
+                                 content={
+                                    <ChartTooltipContent
+                                       hideLabel
+                                       formatter={(value, name) => (
+                                          <div className="flex flex-1 items-center justify-between gap-4 leading-none">
+                                             <span className="text-muted-foreground">
+                                                {name}
+                                             </span>
+                                             <span className="font-mono font-medium text-foreground tabular-nums">
+                                                {formatBytes(value)}
+                                             </span>
+                                          </div>
+                                       )}
                                        nameKey="name"
                                     />
                                  }

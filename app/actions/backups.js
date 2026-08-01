@@ -30,3 +30,25 @@ export async function getBackupSnapshots(withStats = false) {
     throw err;
   }
 }
+
+/**
+ * Liste le contenu d'un chemin dans un snapshot
+ */
+export async function getBackupSnapshotLs(snapshotId, dirPath = "") {
+  try {
+    const q = dirPath
+      ? `?path=${encodeURIComponent(dirPath)}`
+      : "";
+    const res = await adminApiFetch(
+      `/api/backups/snapshots/${encodeURIComponent(snapshotId)}/ls${q}`,
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Erreur lors du listing");
+    }
+    return data;
+  } catch (err) {
+    console.error("getBackupSnapshotLs:", err.message);
+    throw err;
+  }
+}

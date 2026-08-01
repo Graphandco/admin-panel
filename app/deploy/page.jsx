@@ -1,5 +1,5 @@
-import DeployPage from "@/components/deploy/DeployPage";
+import RegistryDeployPage from "@/components/deploy/RegistryDeployPage";
 
 export default function DeployRoute() {
-   return <DeployPage />;
+   return <RegistryDeployPage />;
 }
