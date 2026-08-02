@@ -16,6 +16,7 @@ import {
    Home,
    Lock,
    Monitor,
+   PieChart,
    Plus,
    Rocket,
    ScrollText,
@@ -155,6 +156,11 @@ const sidebarData = {
          title: "Cron",
          url: "/vps/cron",
          icon: CalendarClock,
+      },
+      {
+         title: "Stockage",
+         url: "/vps/stockage",
+         icon: PieChart,
       },
       {
          title: "Fichiers",

@@ -51,7 +51,12 @@ export async function caddyValidate() {
 
 export async function caddyCertificates() {
   const res = await adminApiFetch('/api/caddy/certificates')
-  const data = await res.json()
+  let data
+  try {
+    data = await res.json()
+  } catch {
+    throw new Error(res.ok ? 'Réponse API invalide' : `Erreur API Caddy (${res.status})`)
+  }
   if (!data.success) throw new Error(data.error || 'Erreur API Caddy')
   return data.data
 }

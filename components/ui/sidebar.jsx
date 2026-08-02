@@ -170,7 +170,7 @@ function Sidebar({
                data-sidebar="sidebar"
                data-slot="sidebar"
                data-mobile="true"
-               className="text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden bg-transparent"
+               className="text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden bg-[hsl(228deg_13.51%_7.25%/80%)]"
                style={{
                   "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
                }}

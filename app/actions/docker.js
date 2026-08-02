@@ -189,3 +189,84 @@ export async function dockerApplyImageUpdate(containerId) {
     return { success: false, error: err.message || 'Erreur API' }
   }
 }
+
+export async function dockerOrphans() {
+  try {
+    const res = await adminApiFetch('/api/docker/orphans')
+    const data = await res.json()
+    if (!data.success) throw new Error(data.error || 'Erreur API')
+    return data.orphans || []
+  } catch (err) {
+    console.error('dockerOrphans:', err.message)
+    throw err
+  }
+}
+
+/**
+ * @param {{ id?: string, ids?: string[], all?: boolean }} opts
+ * @returns {{ success: boolean, removed?: number, error?: string }}
+ */
+export async function dockerOrphansRemove(opts = {}) {
+  try {
+    const res = await adminApiFetch('/api/docker/orphans/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(opts),
+    })
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      return {
+        success: false,
+        error:
+          res.status === 404
+            ? 'Route API introuvable — redémarrer admin-api'
+            : `Erreur ${res.status}`,
+      }
+    }
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error || `Erreur ${res.status}` }
+    }
+    return { success: true, removed: data.removed ?? 0, ...data }
+  } catch (err) {
+    console.error('dockerOrphansRemove:', err.message)
+    return { success: false, error: err.message || 'Erreur API' }
+  }
+}
+
+/**
+ * Vide le cache de build Docker (buildx prune -af)
+ * @returns {{ success: boolean, spaceReclaimedFormatted?: string, error?: string }}
+ */
+export async function dockerBuilderPrune() {
+  try {
+    const res = await adminApiFetch('/api/docker/builder-prune', {
+      method: 'POST',
+    })
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      return {
+        success: false,
+        error:
+          res.status === 404
+            ? 'Route API introuvable — redémarrer admin-api'
+            : `Erreur ${res.status}`,
+      }
+    }
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error || `Erreur ${res.status}` }
+    }
+    return {
+      success: true,
+      spaceReclaimed: data.spaceReclaimed ?? 0,
+      spaceReclaimedFormatted: data.spaceReclaimedFormatted || '0 B',
+      output: data.output || '',
+    }
+  } catch (err) {
+    console.error('dockerBuilderPrune:', err.message)
+    return { success: false, error: err.message || 'Erreur API' }
+  }
+}

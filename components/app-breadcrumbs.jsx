@@ -47,6 +47,7 @@ const SEGMENT_LABELS = {
    "mises-a-jour": "Mises à jour",
    backups: "Sauvegardes",
    cron: "Cron",
+   stockage: "Stockage",
    fichiers: "Fichiers",
    logs: "Logs",
    deploy: "Déploiements",

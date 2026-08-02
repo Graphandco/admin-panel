@@ -35,3 +35,15 @@ export async function getSystemStatsHistory(date) {
       throw err;
    }
 }
+
+export async function getSystemStorage() {
+   try {
+      const res = await adminApiFetch("/api/system/storage");
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Erreur API");
+      return data.data;
+   } catch (err) {
+      console.error("getSystemStorage:", err.message);
+      throw err;
+   }
+}
