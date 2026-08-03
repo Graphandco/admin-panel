@@ -101,8 +101,7 @@
       @apply text-foreground bg-cover bg-fixed bg-center;
       /* Overlay + image : pas de backdrop-filter (casse position:fixed de la sidebar) */
       background-image:
-         linear-gradient(rgb(0 0 0 / 0.6), rgb(0 0 0 / 0.6)),
-         url("/bg.svg");
+         linear-gradient(rgb(0 0 0 / 0.6), rgb(0 0 0 / 0.6)), url("/bg.svg");
    }
    html[data-density="compact"] {
       --spacing: 0.2rem;

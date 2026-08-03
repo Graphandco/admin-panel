@@ -1,15 +1,20 @@
+# Hot-reload autonome (ne pas merger avec docker-compose.yml — évite tags registry + mem_limit).
+# npm run docker:dev  |  npm run docker:up pour revenir en prod
 services:
   admin-panel:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: admin-panel-dev
+    image: admin-panel-dev:local
+    pull_policy: never
+    container_name: admin-panel
+    restart: unless-stopped
     networks:
       - web-network
     volumes:
       - .:/app
       - admin-node-modules:/app/node_modules
-      - .next:/app/.next
+      - admin-next:/app/.next
       - ./invoices:/app/invoices
       - ./contracts:/app/contracts
       - ./quotes:/app/quotes
@@ -17,12 +22,16 @@ services:
       - .env
     environment:
       NODE_ENV: development
+      PORT: 3010
+      HOSTNAME: 0.0.0.0
       INVOICES_DIR: /app/invoices
       CONTRACTS_DIR: /app/contracts
       QUOTES_DIR: /app/quotes
+    # Pas de mem_limit serré : Next/Turbopack en dépasse facilement 512m
 
 volumes:
   admin-node-modules:
+  admin-next:
 
 networks:
   web-network:

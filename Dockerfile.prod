@@ -3,26 +3,48 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Variables publiques injectées au build Next.js (pas de .env dans le contexte)
+ARG NEXT_PUBLIC_INVOICE_COMPANY_NAME
+ARG NEXT_PUBLIC_INVOICE_COMPANY_USER
+ARG NEXT_PUBLIC_INVOICE_COMPANY_STREET
+ARG NEXT_PUBLIC_INVOICE_COMPANY_TOWN
+ARG NEXT_PUBLIC_INVOICE_COMPANY_PHONE
+ARG NEXT_PUBLIC_INVOICE_COMPANY_EMAIL
+ARG NEXT_PUBLIC_INVOICE_COMPANY_SIRET
+ARG NEXT_PUBLIC_INVOICE_COMPANY_IBAN
+ARG NEXT_PUBLIC_INVOICE_COMPANY_BIC
+
+ENV NEXT_PUBLIC_INVOICE_COMPANY_NAME=$NEXT_PUBLIC_INVOICE_COMPANY_NAME
+ENV NEXT_PUBLIC_INVOICE_COMPANY_USER=$NEXT_PUBLIC_INVOICE_COMPANY_USER
+ENV NEXT_PUBLIC_INVOICE_COMPANY_STREET=$NEXT_PUBLIC_INVOICE_COMPANY_STREET
+ENV NEXT_PUBLIC_INVOICE_COMPANY_TOWN=$NEXT_PUBLIC_INVOICE_COMPANY_TOWN
+ENV NEXT_PUBLIC_INVOICE_COMPANY_PHONE=$NEXT_PUBLIC_INVOICE_COMPANY_PHONE
+ENV NEXT_PUBLIC_INVOICE_COMPANY_EMAIL=$NEXT_PUBLIC_INVOICE_COMPANY_EMAIL
+ENV NEXT_PUBLIC_INVOICE_COMPANY_SIRET=$NEXT_PUBLIC_INVOICE_COMPANY_SIRET
+ENV NEXT_PUBLIC_INVOICE_COMPANY_IBAN=$NEXT_PUBLIC_INVOICE_COMPANY_IBAN
+ENV NEXT_PUBLIC_INVOICE_COMPANY_BIC=$NEXT_PUBLIC_INVOICE_COMPANY_BIC
+
 COPY package*.json ./
-RUN npm ci --only=production=false
+RUN npm ci
 
 COPY . .
 RUN npm run build
 
-# Runtime stage
-FROM node:20-alpine
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+# Runtime — image minimale via output standalone
+FROM node:20-alpine AS runner
 
 WORKDIR /app
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.* ./
 
 ENV NODE_ENV=production
 ENV PORT=3010
 ENV HOSTNAME=0.0.0.0
 
+RUN mkdir -p /app/invoices /app/contracts /app/quotes
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
 EXPOSE 3010
-CMD ["npm", "run", "start"]
+
+CMD ["node", "server.js"]

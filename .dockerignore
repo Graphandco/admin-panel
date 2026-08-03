@@ -1,0 +1,26 @@
+# Dépendances locales et logs
+node_modules
+.next
+npm-debug.log*
+
+# Fichiers de dev Docker
+docker-compose.dev.yml
+Dockerfile.dev
+
+# Git
+.git
+.gitignore
+.github
+
+# Divers
+.DS_Store
+.env*
+README.md
+
+invoices
+contracts
+quotes
+coverage
+.turbo
+*.md
+.cursor

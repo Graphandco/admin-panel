@@ -5,7 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "docker:build": "docker compose build",
+    "docker:push": "docker compose push",
+    "docker:deploy": "docker compose build && docker compose push",
+    "docker:up": "docker compose up -d --pull always",
+    "docker:dev": "docker compose -f docker-compose.dev.yml up -d --build",
+    "docker:dev:down": "docker compose up -d --pull always"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

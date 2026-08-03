@@ -1,17 +1,34 @@
 services:
    admin-panel:
+      platform: linux/amd64
+      container_name: admin-panel
+      image: dockerhub.graphandco.com/admin-panel:latest
+      pull_policy: always
       build:
          context: .
          dockerfile: Dockerfile.prod
-      container_name: admin-panel
+         tags:
+            - dockerhub.graphandco.com/admin-panel:1.0
+            - dockerhub.graphandco.com/admin-panel:latest
+         args:
+            NEXT_PUBLIC_INVOICE_COMPANY_NAME: ${NEXT_PUBLIC_INVOICE_COMPANY_NAME}
+            NEXT_PUBLIC_INVOICE_COMPANY_USER: ${NEXT_PUBLIC_INVOICE_COMPANY_USER}
+            NEXT_PUBLIC_INVOICE_COMPANY_STREET: ${NEXT_PUBLIC_INVOICE_COMPANY_STREET}
+            NEXT_PUBLIC_INVOICE_COMPANY_TOWN: ${NEXT_PUBLIC_INVOICE_COMPANY_TOWN}
+            NEXT_PUBLIC_INVOICE_COMPANY_PHONE: ${NEXT_PUBLIC_INVOICE_COMPANY_PHONE}
+            NEXT_PUBLIC_INVOICE_COMPANY_EMAIL: ${NEXT_PUBLIC_INVOICE_COMPANY_EMAIL}
+            NEXT_PUBLIC_INVOICE_COMPANY_SIRET: ${NEXT_PUBLIC_INVOICE_COMPANY_SIRET}
+            NEXT_PUBLIC_INVOICE_COMPANY_IBAN: ${NEXT_PUBLIC_INVOICE_COMPANY_IBAN}
+            NEXT_PUBLIC_INVOICE_COMPANY_BIC: ${NEXT_PUBLIC_INVOICE_COMPANY_BIC}
       restart: unless-stopped
       env_file:
          - .env
       networks:
          - web-network
-      # Variables .env: ADMIN_API_URL, ADMIN_API_KEY, TAILSCALE_*, etc.
       environment:
          - NODE_ENV=production
+         - HOSTNAME=0.0.0.0
+         - PORT=3010
          - ADMIN_API_URL=${ADMIN_API_URL:-http://admin-api:3000}
          - ADMIN_API_KEY=${ADMIN_API_KEY}
          - INVOICES_DIR=/app/invoices
@@ -21,7 +38,15 @@ services:
          - invoices-data:/app/invoices
          - contracts-data:/app/contracts
          - quotes-data:/app/quotes
-      # mem_limit: 512m
+      cpus: 0.5
+      mem_limit: 512m
+      security_opt:
+         - no-new-privileges:true
+      logging:
+         driver: json-file
+         options:
+            max-size: "10m"
+            max-file: "3"
 
 volumes:
    invoices-data:
