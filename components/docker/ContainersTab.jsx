@@ -35,6 +35,7 @@ import {
    DownloadIcon,
    Trash2Icon,
    ScrollTextIcon,
+   RotateCcwIcon,
 } from "lucide-react";
 import {
    dockerContainerStart,
@@ -43,6 +44,7 @@ import {
    dockerContainerBuild,
    dockerContainerPull,
    dockerContainerCompose,
+   dockerContainerRecreate,
 } from "@/app/actions/docker";
 
 function formatCreated(created) {
@@ -78,6 +80,7 @@ const ACTION_SUCCESS = {
    start: (name) => `Conteneur « ${name} » démarré`,
    stop: (name) => `Conteneur « ${name} » arrêté`,
    compose: (name) => `Conteneur « ${name} » redémarré`,
+   recreate: (name) => `Conteneur « ${name} » recréé (force-recreate)`,
    build: (name) => `Build de « ${name} » terminé`,
    pull: (name) => `Pull de « ${name} » terminé`,
    remove: (name) => `Conteneur « ${name} » supprimé`,
@@ -142,6 +145,8 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
          else if (action === "stop") result = await dockerContainerStop(c.id);
          else if (action === "compose")
             result = await dockerContainerCompose(c.id);
+         else if (action === "recreate")
+            result = await dockerContainerRecreate(c.id);
          else if (action === "build") result = await dockerContainerBuild(c.id);
          else if (action === "pull") result = await dockerContainerPull(c.id);
          if (result && !result.success) {
@@ -346,9 +351,12 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                                                       : actionType === "compose"
                                                         ? "Redémarrage…"
                                                         : actionType ===
-                                                            "remove"
-                                                          ? "Suppression…"
-                                                          : "En cours…"}
+                                                            "recreate"
+                                                          ? "Recréation…"
+                                                          : actionType ===
+                                                              "remove"
+                                                            ? "Suppression…"
+                                                            : "En cours…"}
                                           </span>
                                        </div>
                                     ) : (
@@ -390,6 +398,18 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                    onClick={() =>
+                                                      handleAction(
+                                                         c,
+                                                         "recreate",
+                                                      )
+                                                   }
+                                                   disabled={Boolean(actionId)}
+                                                >
+                                                   <RotateCcwIcon className="size-4" />
+                                                   Recréer (force)
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                   onClick={() =>
                                                       handleAction(c, "stop")
                                                    }
                                                    disabled={Boolean(actionId)}
@@ -399,15 +419,29 @@ export function ContainersTab({ containers = [], loading, error, onRefresh }) {
                                                 </DropdownMenuItem>
                                              </>
                                           ) : (
-                                             <DropdownMenuItem
-                                                onClick={() =>
-                                                   handleAction(c, "start")
-                                                }
-                                                disabled={Boolean(actionId)}
-                                             >
-                                                <PlayIcon className="size-4" />
-                                                Démarrer
-                                             </DropdownMenuItem>
+                                             <>
+                                                <DropdownMenuItem
+                                                   onClick={() =>
+                                                      handleAction(c, "start")
+                                                   }
+                                                   disabled={Boolean(actionId)}
+                                                >
+                                                   <PlayIcon className="size-4" />
+                                                   Démarrer
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                   onClick={() =>
+                                                      handleAction(
+                                                         c,
+                                                         "recreate",
+                                                      )
+                                                   }
+                                                   disabled={Boolean(actionId)}
+                                                >
+                                                   <RotateCcwIcon className="size-4" />
+                                                   Recréer (force)
+                                                </DropdownMenuItem>
+                                             </>
                                           )}
                                           <DropdownMenuSeparator />
                                           <DropdownMenuItem

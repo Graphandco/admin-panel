@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import {
@@ -79,7 +80,7 @@ export function NavCollapsibleItem({ item, triggerClassName }) {
                   {item.items.map((subItem) => (
                      <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
-                           render={<a href={subItem.url} />}
+                           render={<Link href={subItem.url} />}
                            isActive={isNavSubItemActive(
                               pathname,
                               subItem,

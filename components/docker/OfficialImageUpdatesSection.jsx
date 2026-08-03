@@ -46,12 +46,14 @@ export function OfficialImageUpdatesSection() {
    const {
       data,
       error: fetchError,
-      isLoading: loading,
+      isLoading,
+      isValidating,
       mutate,
    } = useCachedSWR("docker-image-updates", () => dockerImageUpdates());
    const error = fetchError?.message || null;
    const [updatingId, setUpdatingId] = useState(null);
    const [confirmItem, setConfirmItem] = useState(null);
+   const checking = isLoading || isValidating;
 
    async function load() {
       await mutate();
@@ -98,10 +100,10 @@ export function OfficialImageUpdatesSection() {
                   variant="outline"
                   size="sm"
                   onClick={load}
-                  disabled={loading || !!updatingId}
+                  disabled={checking || !!updatingId}
                   className="inline-flex items-center gap-1"
                >
-                  {loading ? (
+                  {checking ? (
                      <Loader2Icon className="size-4 animate-spin" />
                   ) : (
                      <RefreshCwIcon className="size-4" />
@@ -114,7 +116,7 @@ export function OfficialImageUpdatesSection() {
                   <p className="text-sm text-destructive mb-3">{error}</p>
                )}
 
-               {loading && !data ? (
+               {isLoading && !data ? (
                   <div className="flex justify-center py-10">
                      <Loader2Icon className="size-7 animate-spin text-muted-foreground" />
                   </div>

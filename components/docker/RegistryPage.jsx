@@ -10,7 +10,7 @@ import {
    runRegistryGarbageCollect,
    getRegistryTagDetail,
 } from "@/app/actions/registry";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -352,6 +352,8 @@ export default function RegistryPage() {
    const [copied, setCopied] = useState(false);
    const [busyKey, setBusyKey] = useState(null);
    const [gcRunning, setGcRunning] = useState(false);
+   const [gcOutput, setGcOutput] = useState(null);
+   const [gcMode, setGcMode] = useState(null); // 'dry-run' | 'run'
    const [detail, setDetail] = useState(null);
 
    async function copyLogin() {
@@ -430,6 +432,8 @@ export default function RegistryPage() {
                   "Manifeste supprimé, mais le garbage collect a échoué",
             );
          } else {
+            setGcOutput(gc.output || "(aucune sortie)");
+            setGcMode("run");
             toast.success("Espace disque nettoyé (garbage collect)");
          }
          await load();
@@ -437,6 +441,24 @@ export default function RegistryPage() {
          toast.error(err.message || "Erreur");
       } finally {
          setBusyKey(null);
+         setGcRunning(false);
+      }
+   }
+
+   async function handleGcPreview() {
+      setGcRunning(true);
+      try {
+         const gc = await runRegistryGarbageCollect({ dryRun: true });
+         if (!gc.success) {
+            toast.error(gc.error || "Aperçu GC échoué");
+            return;
+         }
+         setGcOutput(gc.output || "(aucune couche orpheline détectée)");
+         setGcMode("dry-run");
+         toast.success("Aperçu garbage collect prêt");
+      } catch (err) {
+         toast.error(err.message || "Erreur");
+      } finally {
          setGcRunning(false);
       }
    }
@@ -453,6 +475,8 @@ export default function RegistryPage() {
             toast.error(gc.error || "Garbage collect échoué");
             return;
          }
+         setGcOutput(gc.output || "(aucune sortie)");
+         setGcMode("run");
          toast.success("Garbage collect terminé");
       } catch (err) {
          toast.error(err.message || "Erreur");
@@ -463,6 +487,19 @@ export default function RegistryPage() {
 
    const refreshButton = (
       <div className="flex items-center gap-2">
+         <button
+            onClick={handleGcPreview}
+            disabled={loading || gcRunning || Boolean(busyKey)}
+            className={cn(buttonVariants({ variant: "outline" }))}
+            title="Aperçu dry-run du garbage collector"
+         >
+            {gcRunning ? (
+               <Loader2Icon className="size-4 mr-1 animate-spin" />
+            ) : (
+               <InfoIcon className="size-4 mr-1" />
+            )}
+            Aperçu GC
+         </button>
          <button
             onClick={handleGc}
             disabled={loading || gcRunning || Boolean(busyKey)}
@@ -816,6 +853,38 @@ export default function RegistryPage() {
             repository={detail?.repository}
             tagName={detail?.tag}
          />
+
+         {gcOutput != null ? (
+            <Card className="mt-6">
+               <CardHeader className="pb-2 flex flex-row flex-wrap items-center justify-between gap-2">
+                  <div>
+                     <CardTitle className="text-base">
+                        Garbage collector
+                     </CardTitle>
+                     <p className="text-xs text-muted-foreground mt-1">
+                        {gcMode === "dry-run"
+                           ? "Aperçu (dry-run) — rien n’a été supprimé"
+                           : "Dernière exécution"}
+                     </p>
+                  </div>
+                  <Button
+                     variant="ghost"
+                     size="sm"
+                     onClick={() => {
+                        setGcOutput(null);
+                        setGcMode(null);
+                     }}
+                  >
+                     Fermer
+                  </Button>
+               </CardHeader>
+               <CardContent>
+                  <pre className="max-h-80 overflow-auto rounded-md border border-border bg-black/40 p-3 text-xs font-mono text-muted-foreground whitespace-pre-wrap">
+                     {gcOutput}
+                  </pre>
+               </CardContent>
+            </Card>
+         ) : null}
 
          <DanglingImagesSection />
          <OfficialImageUpdatesSection />

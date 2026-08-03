@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
    SidebarGroup,
@@ -43,7 +44,7 @@ export function NavSection({ label, items, hideOnIconCollapse = false }) {
                ) : (
                   <SidebarMenuItem key={item.title}>
                      <SidebarMenuButton
-                        render={<a href={item.url} />}
+                        render={<Link href={item.url} />}
                         isActive={isNavFlatItemActive(pathname, item, items)}
                      >
                         {item.icon && <item.icon />}

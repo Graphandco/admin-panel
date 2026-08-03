@@ -1,9 +1,15 @@
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
+import { cookies } from "next/headers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaRegister } from "@/components/pwa-register";
 import { SettingsProvider } from "@/components/settings-provider";
 import { SwrProvider } from "@/components/swr-provider";
+import {
+   normalizeUiDensity,
+   UI_DENSITY_BOOTSTRAP_SCRIPT,
+   UI_DENSITY_COOKIE,
+} from "@/lib/ui-density";
 import "./globals.css";
 
 import { AppSidebar } from "@/components/app-sidebar";
@@ -81,9 +87,26 @@ export const viewport = {
    viewportFit: "cover",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+   const cookieStore = await cookies();
+   const density = normalizeUiDensity(
+      cookieStore.get(UI_DENSITY_COOKIE)?.value,
+   );
+
    return (
-      <html lang="fr" className={outfit.variable}>
+      <html
+         lang="fr"
+         className={outfit.variable}
+         data-density={density}
+         suppressHydrationWarning
+      >
+         <head>
+            <script
+               dangerouslySetInnerHTML={{
+                  __html: UI_DENSITY_BOOTSTRAP_SCRIPT,
+               }}
+            />
+         </head>
          <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             suppressHydrationWarning={true}

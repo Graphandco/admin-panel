@@ -8,7 +8,7 @@ services:
          context: .
          dockerfile: Dockerfile.prod
          tags:
-            - dockerhub.graphandco.com/admin-panel:1.0
+            - dockerhub.graphandco.com/admin-panel:1.2
             - dockerhub.graphandco.com/admin-panel:latest
          args:
             NEXT_PUBLIC_INVOICE_COMPANY_NAME: ${NEXT_PUBLIC_INVOICE_COMPANY_NAME}

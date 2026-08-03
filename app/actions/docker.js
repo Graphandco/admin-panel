@@ -50,6 +50,7 @@ async function dockerContainerAction(containerId, action) {
     pull: 'pull',
     restart: 'restart',
     compose: 'compose',
+    recreate: 'recreate',
   }
   if (!endpoints[action]) {
     return { success: false, error: `Action inconnue: ${action}` }
@@ -105,6 +106,10 @@ export async function dockerContainerPull(containerId) {
 
 export async function dockerContainerCompose(containerId) {
   return dockerContainerAction(containerId, 'compose')
+}
+
+export async function dockerContainerRecreate(containerId) {
+  return dockerContainerAction(containerId, 'recreate')
 }
 
 export async function dockerContainerStats(containerId) {
