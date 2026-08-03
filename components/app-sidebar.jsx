@@ -156,7 +156,7 @@ const sidebarData = {
          icon: Lock,
          items: [
             { title: "Fail2Ban", url: "/vps/securite/fail2ban" },
-            { title: "UFW", url: "/vps/securite/ufw" },
+            { title: "Firewall", url: "/vps/securite/firewall" },
             { title: "Mises à jour", url: "/vps/securite/mises-a-jour" },
          ],
       },

@@ -43,7 +43,7 @@ const SEGMENT_LABELS = {
    ssl: "SSL",
    securite: "Sécurité",
    fail2ban: "Fail2Ban",
-   ufw: "UFW",
+   firewall: "Firewall",
    "mises-a-jour": "Mises à jour",
    backups: "Sauvegardes",
    cron: "Cron",

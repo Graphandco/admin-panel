@@ -3,21 +3,10 @@
 import Link from "next/link";
 import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-   ChartContainer,
-   ChartTooltip,
-   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { PieChart, Pie, Cell } from "recharts";
 import { getSystemStats } from "@/app/actions/system";
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
-
-const chartConfig = {
-   used: { label: "Utilisée", color: "#ef4444" },
-   free: { label: "Libre", color: "#22c55e" },
-};
+import { SemiGauge } from "@/components/charts/semi-gauge";
 
 function formatBytes(val) {
    if (val == null || val < 1024) return `${val} B`;
@@ -27,13 +16,13 @@ function formatBytes(val) {
    return `${(val / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-function tooltipFormatter(value) {
-   if (typeof value === "number" && value >= 1024) return formatBytes(value);
-   if (typeof value === "number" && value <= 100) return `${value} %`;
-   return value?.toLocaleString?.() ?? value;
+function gaugeColor(percent) {
+   if (percent >= 90) return "#ef4444";
+   if (percent >= 75) return "#f59e0b";
+   return "#22c55e";
 }
 
-function StatMiniCard({ title, data, fillUsed, loading, isMobile }) {
+function StatMiniCard({ title, data, loading, isMobile }) {
    if (loading || !data) {
       return (
          <Card className="h-full min-w-0">
@@ -50,17 +39,18 @@ function StatMiniCard({ title, data, fillUsed, loading, isMobile }) {
    }
    const used = data.used ?? 0;
    const total = data.total ?? 1;
-   const free = Math.max(0, total - used);
-   const chartData = [
-      { name: "used", value: used, fill: fillUsed },
-      { name: "free", value: free, fill: "#22c55e" },
-   ];
-   const percent = total > 0 ? Math.round((used / total) * 100) : 0;
-   const displayPercent = data.percent ?? percent;
+   const percent =
+      data.percent != null
+         ? Math.round(data.percent)
+         : total > 0
+           ? Math.round((used / total) * 100)
+           : 0;
    const label =
       total >= 1024
-         ? `${formatBytes(used)} / ${formatBytes(total)} (${displayPercent}%)`
-         : `${displayPercent}%`;
+         ? `${formatBytes(used)} / ${formatBytes(total)} (${percent}%)`
+         : `${percent}%`;
+
+   const size = isMobile ? 72 : 100;
 
    return (
       <Card className="h-full min-w-0">
@@ -70,41 +60,14 @@ function StatMiniCard({ title, data, fillUsed, loading, isMobile }) {
             </CardTitle>
          </CardHeader>
          <CardContent className="px-1.5 pb-2 pt-0 md:px-2 md:pb-3 flex flex-col items-center">
-            <ChartContainer
-               config={chartConfig}
-               className={cn(
-                  "mx-auto aspect-square! min-h-0! w-full p-0",
-                  isMobile ? "max-w-14" : "max-w-24",
-               )}
-            >
-               <PieChart
-                  accessibilityLayer
-                  margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-               >
-                  <Pie
-                     data={chartData}
-                     dataKey="value"
-                     nameKey="name"
-                     cx="50%"
-                     cy="50%"
-                     innerRadius="58%"
-                     outerRadius="88%"
-                     paddingAngle={2}
-                  >
-                     {chartData.map((entry, i) => (
-                        <Cell key={i} fill={entry.fill} />
-                     ))}
-                  </Pie>
-                  <ChartTooltip
-                     content={
-                        <ChartTooltipContent
-                           formatter={tooltipFormatter}
-                           nameKey="name"
-                        />
-                     }
-                  />
-               </PieChart>
-            </ChartContainer>
+            <SemiGauge
+               value={percent}
+               width={size}
+               height={Math.round(size * 0.62)}
+               startAngle={-110}
+               endAngle={110}
+               color={gaugeColor(percent)}
+            />
             <p className="text-center text-[10px] md:text-xs font-medium text-foreground mt-0.5 md:mt-1 w-full leading-tight wrap-break-word">
                {label}
             </p>
@@ -154,7 +117,6 @@ export default function VpsStatsHomeCards() {
          <StatMiniCard
             title="RAM"
             data={stats?.memory}
-            fillUsed="#ef4444"
             loading={loading}
             isMobile={isMobile}
          />
@@ -169,14 +131,12 @@ export default function VpsStatsHomeCards() {
                     }
                   : null
             }
-            fillUsed="#3b82f6"
             loading={loading}
             isMobile={isMobile}
          />
          <StatMiniCard
             title="Disque"
             data={stats?.disk}
-            fillUsed="#ef4444"
             loading={loading}
             isMobile={isMobile}
          />

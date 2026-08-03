@@ -79,3 +79,26 @@ export async function agenceSiteUpdate(id, payload) {
       throw err;
    }
 }
+
+/**
+ * Historique latence d'un site (site_checks)
+ * @param {number|string} id
+ * @param {{ hours?: number, kind?: 'site'|'backoffice' }} [opts]
+ */
+export async function agenceSiteHistory(id, opts = {}) {
+   try {
+      const hours = opts.hours ?? 24;
+      const kind = opts.kind === "backoffice" ? "backoffice" : "site";
+      const qs = new URLSearchParams({
+         hours: String(hours),
+         kind,
+      });
+      const res = await adminApiFetch(`/api/sites/${id}/history?${qs}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Erreur API");
+      return data;
+   } catch (err) {
+      console.error("agenceSiteHistory:", err.message);
+      throw err;
+   }
+}

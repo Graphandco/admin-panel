@@ -23,14 +23,14 @@ export async function getFail2banStatus() {
    }
 }
 
-export async function getUfwStatus() {
+export async function getFirewallStatus() {
    try {
-      const res = await adminApiFetch("/api/security/ufw");
+      const res = await adminApiFetch("/api/security/firewall");
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Erreur API");
       return data.data;
    } catch (err) {
-      console.error("getUfwStatus:", err.message);
+      console.error("getFirewallStatus:", err.message);
       throw err;
    }
 }

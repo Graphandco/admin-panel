@@ -24,6 +24,7 @@ import {
    TimerIcon,
    AlertTriangleIcon,
    CircleHelpIcon,
+   LineChartIcon,
 } from "lucide-react";
 import {
    Dialog,
@@ -41,6 +42,7 @@ import {
 } from "@/app/actions/agence-sites";
 import { toast } from "sonner";
 import RefreshButton from "@/components/refresh-button";
+import { SiteLatencyHistory } from "@/components/agence/SiteLatencyHistory";
 
 export const AGENCE_SITES_KEY = "agence-sites";
 
@@ -195,6 +197,7 @@ export default function SitesPage() {
    const error = fetchError?.message || null;
    const [checking, setChecking] = useState(false);
    const [editSite, setEditSite] = useState(null);
+   const [historySite, setHistorySite] = useState(null);
    const [editForm, setEditForm] = useState({
       address: "",
       backoffice: "",
@@ -417,7 +420,15 @@ export default function SitesPage() {
                                     ) : null}
                                  </TableCell>
                                  <TableCell className="hidden xl:table-cell">
-                                    <Sparkline points={m.sparkline} />
+                                    <button
+                                       type="button"
+                                       onClick={() => setHistorySite(site)}
+                                       className="inline-flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-muted/50"
+                                       title="Voir l’historique de latence"
+                                    >
+                                       <Sparkline points={m.sparkline} />
+                                       <LineChartIcon className="size-3.5 text-muted-foreground" />
+                                    </button>
                                  </TableCell>
                                  <TableCell>
                                     {backofficeUrl ? (
@@ -453,17 +464,30 @@ export default function SitesPage() {
                                     )}
                                  </TableCell>
                                  <TableCell className="pe-2">
-                                    <button
-                                       type="button"
-                                       onClick={() => openEdit(site)}
-                                       className={cn(
-                                          "inline-flex items-center justify-center size-8 rounded",
-                                          "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                                       )}
-                                       title="Modifier"
-                                    >
-                                       <PencilIcon className="size-4" />
-                                    </button>
+                                    <div className="flex items-center gap-0.5">
+                                       <button
+                                          type="button"
+                                          onClick={() => setHistorySite(site)}
+                                          className={cn(
+                                             "inline-flex items-center justify-center size-8 rounded xl:hidden",
+                                             "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                                          )}
+                                          title="Historique latence"
+                                       >
+                                          <LineChartIcon className="size-4" />
+                                       </button>
+                                       <button
+                                          type="button"
+                                          onClick={() => openEdit(site)}
+                                          className={cn(
+                                             "inline-flex items-center justify-center size-8 rounded",
+                                             "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                                          )}
+                                          title="Modifier"
+                                       >
+                                          <PencilIcon className="size-4" />
+                                       </button>
+                                    </div>
                                  </TableCell>
                               </TableRow>
                            );
@@ -473,6 +497,29 @@ export default function SitesPage() {
                </Table>
             </CardContent>
          </Card>
+
+         <Dialog
+            open={!!historySite}
+            onOpenChange={(v) => !v && setHistorySite(null)}
+         >
+            <DialogContent className="sm:max-w-3xl">
+               <DialogHeader>
+                  <DialogTitle>
+                     Latence ·{" "}
+                     {historySite
+                        ? stripHttps(historySite.address) || historySite.address
+                        : ""}
+                  </DialogTitle>
+               </DialogHeader>
+               {historySite ? (
+                  <SiteLatencyHistory
+                     websiteId={historySite.id}
+                     kind="site"
+                     className="pt-1"
+                  />
+               ) : null}
+            </DialogContent>
+         </Dialog>
 
          <Dialog
             open={!!editSite}
