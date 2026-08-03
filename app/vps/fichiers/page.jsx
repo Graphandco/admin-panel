@@ -1,12 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import {
-   Card,
-   CardContent,
-   CardHeader,
-   CardTitle,
-} from "@/components/ui/card";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,12 +64,24 @@ function relativeLabel(fullPath) {
 }
 
 export default function FilesPage() {
-   const [path, setPath] = useState(ROOT);
-   const [parent, setParent] = useState(null);
-   const [entries, setEntries] = useState([]);
-   const [shortcuts, setShortcuts] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const [currentPath, setCurrentPath] = useState(ROOT);
+   const {
+      data: dirData,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR(["vps-files", currentPath], () =>
+      filesLs(currentPath || ROOT),
+   );
+   const path = dirData?.path ?? currentPath;
+   const parent = dirData?.parent ?? null;
+   const entries = dirData?.entries ?? [];
+   const error = fetchError?.message || null;
+
+   const { data: shortcuts = [] } = useCachedSWR("vps-files-shortcuts", () =>
+      filesShortcuts().then((d) => d.shortcuts || []),
+   );
 
    const [editorPath, setEditorPath] = useState(null);
    const [editorContent, setEditorContent] = useState("");
@@ -84,28 +92,14 @@ export default function FilesPage() {
 
    const dirty = editorPath != null && editorContent !== editorOriginal;
 
-   const loadDir = useCallback(async (dirPath) => {
-      setLoading(true);
-      setError(null);
-      try {
-         const data = await filesLs(dirPath || ROOT);
-         setPath(data.path);
-         setParent(data.parent);
-         setEntries(data.entries || []);
-      } catch (err) {
-         setError(err.message || "Erreur listing");
-         setEntries([]);
-      } finally {
-         setLoading(false);
+   function loadDir(dirPath) {
+      const next = dirPath || ROOT;
+      if (next === currentPath) {
+         mutate();
+      } else {
+         setCurrentPath(next);
       }
-   }, []);
-
-   useEffect(() => {
-      filesShortcuts()
-         .then((d) => setShortcuts(d.shortcuts || []))
-         .catch(() => {});
-      loadDir(ROOT);
-   }, [loadDir]);
+   }
 
    async function openFile(filePath) {
       if (dirty) {
@@ -154,9 +148,7 @@ export default function FilesPage() {
 
    function closeEditor() {
       if (dirty) {
-         const ok = window.confirm(
-            "Modifications non enregistrées. Fermer ?",
-         );
+         const ok = window.confirm("Modifications non enregistrées. Fermer ?");
          if (!ok) return;
       }
       setEditorPath(null);
@@ -187,11 +179,13 @@ export default function FilesPage() {
                   File manager
                </h1>
                <p className="text-sm text-muted-foreground">
-                  Lecture / édition sous{" "}
-                  <code className="text-xs">{ROOT}</code>
+                  Lecture / édition sous <code className="text-xs">{ROOT}</code>
                </p>
             </div>
-            <RefreshButton onClick={() => loadDir(path)} loading={loading} />
+            <RefreshButton
+               onClick={() => loadDir(path)}
+               loading={loading || isValidating}
+            />
          </div>
 
          {shortcuts.length > 0 && (
@@ -199,7 +193,11 @@ export default function FilesPage() {
                {shortcuts.map((s) => (
                   <Button
                      key={s.id}
-                     variant={path === s.path || path.startsWith(`${s.path}/`) ? "secondary" : "outline"}
+                     variant={
+                        path === s.path || path.startsWith(`${s.path}/`)
+                           ? "secondary"
+                           : "outline"
+                     }
                      size="sm"
                      className="h-8 gap-1.5 text-xs"
                      onClick={() => loadDir(s.path)}
@@ -325,7 +323,7 @@ export default function FilesPage() {
                   <CardHeader className="pb-2 space-y-2">
                      <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
-                           <CardTitle className="text-base truncate font-mono text-sm">
+                           <CardTitle className="text-base truncate font-mono">
                               {relativeLabel(editorPath)}
                            </CardTitle>
                            {editorMeta && (
@@ -373,7 +371,7 @@ export default function FilesPage() {
                            value={editorContent}
                            onChange={(e) => setEditorContent(e.target.value)}
                            spellCheck={false}
-                           className="min-h-[420px] flex-1 font-mono text-xs leading-relaxed resize-y"
+                           className="min-h-105 flex-1 font-mono text-xs leading-relaxed resize-y"
                         />
                      )}
                      <p className="text-[11px] text-muted-foreground mt-2">

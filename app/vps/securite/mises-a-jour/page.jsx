@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Card,
    CardContent,
@@ -38,24 +39,20 @@ function aptUpgradeCmd(packageName) {
 }
 
 export default function UpdatesPage() {
-   const [data, setData] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("vps-apt-updates", () => getAptUpdates());
+   const error = fetchError?.message || null;
    const [upgradingPkg, setUpgradingPkg] = useState(null); // string | "__all__" | null
    const [confirmAllOpen, setConfirmAllOpen] = useState(false);
    const [confirmPkg, setConfirmPkg] = useState(null); // package name | null
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const res = await getAptUpdates();
-         setData(res);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
 
    async function copyUpgradeCmd(packageName) {
@@ -97,10 +94,6 @@ export default function UpdatesPage() {
       }
    }
 
-   useEffect(() => {
-      load();
-   }, []);
-
    const packages = data?.packages || [];
    const busy = upgradingPkg != null;
    const count = data?.count ?? packages.length;
@@ -132,7 +125,11 @@ export default function UpdatesPage() {
                   )}
                   Tout mettre à jour
                </Button>
-               <RefreshButton onClick={load} loading={loading} disabled={busy} />
+               <RefreshButton
+                  onClick={load}
+                  loading={loading || isValidating}
+                  disabled={busy}
+               />
             </div>
          </header>
 

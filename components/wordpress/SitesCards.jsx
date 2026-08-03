@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card } from "@/components/ui/card";
 import { StatusCard } from "@/components/ui/status-card";
 import {
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { wordpressSites, wordpressSiteStats } from "@/app/actions/wordpress";
 import SiteInfos from "@/components/wordpress/SiteInfos";
+import { WORDPRESS_SITES_KEY } from "@/components/wordpress/SitesRecapCard";
 
 const TYPE_LABELS = {
    post: "Articles",
@@ -30,37 +32,27 @@ function typeDisplayName(name, label) {
 }
 
 export default function SitesCards() {
-   const [sites, setSites] = useState([]);
    const [selectedSiteUrl, setSelectedSiteUrl] = useState("");
-   const [stats, setStats] = useState({ content_types: [], disk_used: null });
-   const [loading, setLoading] = useState(true);
-   const [loadingSites, setLoadingSites] = useState(true);
-   const [error, setError] = useState(null);
 
-   useEffect(() => {
-      wordpressSites()
-         .then(setSites)
-         .catch(() => setSites([]))
-         .finally(() => setLoadingSites(false));
-   }, []);
+   const { data: sites = [], isLoading: loadingSites } = useCachedSWR(
+      WORDPRESS_SITES_KEY,
+      () => wordpressSites(),
+   );
+
+   const {
+      data: stats = { content_types: [], disk_used: null },
+      error: fetchError,
+      isLoading: loading,
+      mutate: mutateStats,
+   } = useCachedSWR(["wordpress-site-stats", selectedSiteUrl], () => {
+      const opts = selectedSiteUrl ? { url: selectedSiteUrl } : {};
+      return wordpressSiteStats(opts);
+   });
+   const error = fetchError?.message || null;
 
    async function loadStats() {
-      setLoading(true);
-      setError(null);
-      try {
-         const opts = selectedSiteUrl ? { url: selectedSiteUrl } : {};
-         const data = await wordpressSiteStats(opts);
-         setStats(data);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutateStats();
    }
-
-   useEffect(() => {
-      loadStats();
-   }, [selectedSiteUrl]);
 
    if (error) {
       return (
@@ -97,7 +89,7 @@ export default function SitesCards() {
                onValueChange={(v) => setSelectedSiteUrl(v ?? "")}
                disabled={loadingSites}
             >
-               <SelectTrigger id="site-stats-filter" className="w-[280px]">
+               <SelectTrigger id="site-stats-filter" className="w-70">
                   {selectedSiteUrl ? (
                      sites.find((s) => s.url === selectedSiteUrl)?.site_name ||
                      selectedSiteUrl

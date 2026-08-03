@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
    ChartContainer,
@@ -187,49 +189,31 @@ export default function VpsStatsPage() {
       "mx-auto !aspect-square !min-h-0 w-full p-0",
       isMobile ? "max-w-[100px]" : "max-w-[160px]",
    );
-   const [stats, setStats] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
-   const [historyData, setHistoryData] = useState([]);
-   const [loadingHistory, setLoadingHistory] = useState(false);
    const today = new Date().toISOString().slice(0, 10);
    const [selectedDate, setSelectedDate] = useState(today);
    const selectedDateLabel =
       getDateOptions().find((o) => o.value === selectedDate)?.label ??
       selectedDate;
 
+   const {
+      data: stats,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("vps-stats", () => getSystemStats());
+   const error = fetchError?.message || null;
+
+   const { data: historyData = [], isLoading: loadingHistory } = useCachedSWR(
+      ["vps-stats-history", selectedDate],
+      () => getSystemStatsHistory(selectedDate),
+   );
+
+   useAutoRefresh(mutate);
+
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const data = await getSystemStats();
-         setStats(data);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   async function loadHistory() {
-      setLoadingHistory(true);
-      try {
-         const data = await getSystemStatsHistory(selectedDate);
-         setHistoryData(data);
-      } catch {
-         setHistoryData([]);
-      } finally {
-         setLoadingHistory(false);
-      }
-   }
-
-   useEffect(() => {
-      load();
-   }, []);
-
-   useEffect(() => {
-      loadHistory();
-   }, [selectedDate]);
 
    if (error) {
       return (
@@ -312,7 +296,7 @@ export default function VpsStatsPage() {
                   </span>
                )}
             </div>
-            <RefreshButton onClick={load} loading={loading} />
+            <RefreshButton onClick={load} loading={loading || isValidating} />
          </header>
 
          {loading ? (

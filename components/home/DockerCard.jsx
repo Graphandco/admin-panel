@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Card,
    CardHeader,
@@ -19,26 +19,17 @@ function getContainerName(names) {
 }
 
 export default function DockerCard() {
-   const [containers, setContainers] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: containers = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("docker-ps", () => dockerPs());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await dockerPs();
-         setContainers(list);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    const total = containers.length;
    const running = containers.filter((c) => c.state === "running").length;

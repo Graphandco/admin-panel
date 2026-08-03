@@ -2,11 +2,13 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaRegister } from "@/components/pwa-register";
+import { SettingsProvider } from "@/components/settings-provider";
+import { SwrProvider } from "@/components/swr-provider";
 import "./globals.css";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
-import { NotificationsBell } from "@/components/notifications-bell";
+import { HeaderActions } from "@/components/header-actions";
 import { Separator } from "@/components/ui/separator";
 import {
    SidebarInset,
@@ -87,24 +89,29 @@ export default function RootLayout({ children }) {
             suppressHydrationWarning={true}
          >
             <TooltipProvider>
-               <SidebarProvider>
-                  <AppSidebar />
-                  <SidebarInset>
-                     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                        <div className="flex min-w-0 items-center gap-2 px-4 md:px-8">
-                           <SidebarTrigger className="-ml-1" />
-                           <Separator orientation="vertical" className="mr-2" />
-                           <AppBreadcrumbs />
-                        </div>
-                        <div className="flex shrink-0 items-center pe-4 md:pe-8">
-                           <NotificationsBell />
-                        </div>
-                     </header>
-                     <div className="flex flex-1 flex-col gap-4 py-4 px-4 md:px-8">
-                        {children}
-                     </div>
-                  </SidebarInset>
-               </SidebarProvider>
+               <SettingsProvider>
+                  <SwrProvider>
+                     <SidebarProvider>
+                        <AppSidebar />
+                        <SidebarInset>
+                           <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                              <div className="flex min-w-0 items-center gap-2 px-4 md:px-8">
+                                 <SidebarTrigger className="-ml-1" />
+                                 <Separator
+                                    orientation="vertical"
+                                    className="mr-2"
+                                 />
+                                 <AppBreadcrumbs />
+                              </div>
+                              <HeaderActions />
+                           </header>
+                           <div className="flex flex-1 flex-col gap-4 py-4 px-4 md:px-8">
+                              {children}
+                           </div>
+                        </SidebarInset>
+                     </SidebarProvider>
+                  </SwrProvider>
+               </SettingsProvider>
             </TooltipProvider>
             <Toaster position="bottom-right" richColors />
             <PwaRegister />

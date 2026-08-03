@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Card,
    CardContent,
@@ -14,26 +14,18 @@ import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import RefreshButton from "@/components/refresh-button";
 
 export default function UfwPage() {
-   const [data, setData] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("vps-ufw", () => getUfwStatus());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const res = await getUfwStatus();
-         setData(res);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    return (
       <div>
@@ -44,7 +36,7 @@ export default function UfwPage() {
                   Lecture seule — configuration et règles utilisateur
                </p>
             </div>
-            <RefreshButton onClick={load} loading={loading} />
+            <RefreshButton onClick={load} loading={loading || isValidating} />
          </header>
 
          {error && (

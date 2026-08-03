@@ -1,6 +1,7 @@
 "use client";
 
-import useSWR, { mutate as globalMutate } from "swr";
+import { mutate as globalMutate } from "swr";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    getNotificationCounts,
    refreshNotificationCounts,
@@ -36,18 +37,16 @@ const empty = {
    ],
 };
 
-async function fetchCounts() {
-   return getNotificationCounts();
-}
-
 export function useUpdateCounts() {
-   return useSWR(UPDATE_COUNTS_KEY, fetchCounts, {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      refreshInterval: 0,
+   // Pas de fallbackData : avec revalidateIfStale:false, empty serait
+   // traité comme cache et bloquerait le 1er fetch / écraserait l'UI.
+   const swr = useCachedSWR(UPDATE_COUNTS_KEY, () => getNotificationCounts(), {
       dedupingInterval: 10_000,
-      fallbackData: empty,
    });
+   return {
+      ...swr,
+      data: swr.data ?? empty,
+   };
 }
 
 /** Recharge les compteurs depuis la DB (après upgrade). */
@@ -61,6 +60,6 @@ export function mutateUpdateCounts() {
  */
 export async function refreshAndMutateUpdateCounts(kind = null) {
    const data = await refreshNotificationCounts(kind);
-   await globalMutate(UPDATE_COUNTS_KEY, data, false);
+   await globalMutate(UPDATE_COUNTS_KEY, data, { revalidate: false });
    return data;
 }

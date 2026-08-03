@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,10 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Loader2Icon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
-import {
-   dockerOrphans,
-   dockerOrphansRemove,
-} from "@/app/actions/docker";
+import { dockerOrphans, dockerOrphansRemove } from "@/app/actions/docker";
 
 function formatCreated(created) {
    if (created == null) return "—";
@@ -39,30 +37,21 @@ function formatCreated(created) {
 /**
  * Conteneurs orphelins (hors Compose / projet disparu / service retiré).
  */
-export function OrphansSection({ refreshKey = 0 }) {
-   const [orphans, setOrphans] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+export function OrphansSection() {
+   const {
+      data: orphans = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("docker-orphans", () => dockerOrphans());
+   const error = fetchError?.message || null;
    const [confirmOne, setConfirmOne] = useState(null);
    const [confirmAll, setConfirmAll] = useState(false);
    const [removing, setRemoving] = useState(false);
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await dockerOrphans();
-         setOrphans(list);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, [refreshKey]);
 
    async function runRemoveOne() {
       if (!confirmOne) return;
@@ -175,7 +164,7 @@ export function OrphansSection({ refreshKey = 0 }) {
                                     </p>
                                  ) : null}
                               </TableCell>
-                              <TableCell className="hidden sm:table-cell text-muted-foreground max-w-[200px] truncate">
+                              <TableCell className="hidden sm:table-cell text-muted-foreground max-w-50 truncate">
                                  {o.image}
                               </TableCell>
                               <TableCell>

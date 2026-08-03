@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,28 +53,19 @@ function formatDate(str) {
 }
 
 export function ContractsList() {
-   const [contracts, setContracts] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: contracts = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("contracts-list", () => contractsList());
+   const error = fetchError?.message || null;
    const [actionId, setActionId] = useState(null);
    const [previewFilename, setPreviewFilename] = useState(null);
 
    async function fetchContracts() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await contractsList();
-         setContracts(list);
-      } catch (err) {
-         setError(err.message);
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      fetchContracts();
-   }, []);
 
    async function handleDelete(ct) {
       if (actionId) return;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
    Loader2Icon,
@@ -37,26 +37,17 @@ function formatDate(str) {
 }
 
 export default function Connexions() {
-   const [connexions, setConnexions] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: connexions = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("wordpress-connexions", () => wordpressConnexions());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await wordpressConnexions();
-         setConnexions(list);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    if (error) {
       return (

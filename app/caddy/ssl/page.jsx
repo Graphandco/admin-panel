@@ -1,12 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-   Card,
-   CardContent,
-   CardHeader,
-   CardTitle,
-} from "@/components/ui/card";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { caddyCertificates } from "@/app/actions/caddy";
@@ -30,15 +25,14 @@ function statusBadge(status, daysLeft) {
       return <Badge variant="destructive">Expiré</Badge>;
    }
    if (status === "critical") {
-      return (
-         <Badge variant="destructive">
-            {daysLeft} j
-         </Badge>
-      );
+      return <Badge variant="destructive">{daysLeft} j</Badge>;
    }
    if (status === "warning") {
       return (
-         <Badge variant="outline" className="border-amber-500/50 text-amber-500">
+         <Badge
+            variant="outline"
+            className="border-amber-500/50 text-amber-500"
+         >
             {daysLeft} j
          </Badge>
       );
@@ -51,26 +45,18 @@ function statusBadge(status, daysLeft) {
 }
 
 export default function CaddySslPage() {
-   const [data, setData] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("caddy-ssl", () => caddyCertificates());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const res = await caddyCertificates();
-         setData(res);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    return (
       <div>
@@ -81,12 +67,14 @@ export default function CaddySslPage() {
                   Certificats stockés par Caddy (Let&apos;s Encrypt / ZeroSSL…)
                </p>
             </div>
-            <RefreshButton onClick={load} loading={loading} />
+            <RefreshButton onClick={load} loading={loading || isValidating} />
          </header>
 
          {error && (
             <Card className="mb-4">
-               <CardContent className="py-4 text-destructive">{error}</CardContent>
+               <CardContent className="py-4 text-destructive">
+                  {error}
+               </CardContent>
             </Card>
          )}
 
@@ -176,7 +164,9 @@ export default function CaddySslPage() {
                         <thead>
                            <tr className="border-b border-border/60 text-left text-muted-foreground">
                               <th className="py-2 pr-3 font-medium">Domaine</th>
-                              <th className="py-2 pr-3 font-medium">Émetteur</th>
+                              <th className="py-2 pr-3 font-medium">
+                                 Émetteur
+                              </th>
                               <th className="py-2 pr-3 font-medium">
                                  Valide du
                               </th>
@@ -214,7 +204,7 @@ export default function CaddySslPage() {
                                     {statusBadge(c.status, c.daysLeft)}
                                  </td>
                                  <td
-                                    className="py-2.5 text-xs text-muted-foreground max-w-[220px] truncate"
+                                    className="py-2.5 text-xs text-muted-foreground max-w-55 truncate"
                                     title={(c.sans || []).join(", ")}
                                  >
                                     {(c.sans || []).join(", ") || "—"}

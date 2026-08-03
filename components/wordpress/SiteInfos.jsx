@@ -4,25 +4,19 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2Icon, ExternalLinkIcon } from "lucide-react";
 import { wordpressSiteInfo } from "@/app/actions/wordpress";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import Image from "next/image";
 
 export default function SiteInfos({ selectedSiteUrl }) {
-  const [info, setInfo] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
+  const { data: info, isLoading: loading } = useCachedSWR(
+    selectedSiteUrl ? ["wordpress-site-info", selectedSiteUrl] : null,
+    () => wordpressSiteInfo({ url: selectedSiteUrl }),
+  );
+
   useEffect(() => {
-    if (!selectedSiteUrl) {
-      setInfo(null);
-      setLogoError(false);
-      return;
-    }
-    setLoading(true);
     setLogoError(false);
-    wordpressSiteInfo({ url: selectedSiteUrl })
-      .then(setInfo)
-      .catch(() => setInfo(null))
-      .finally(() => setLoading(false));
   }, [selectedSiteUrl]);
 
   if (!selectedSiteUrl) return null;

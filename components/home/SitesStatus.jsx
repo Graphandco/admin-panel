@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Table,
    TableBody,
@@ -47,28 +47,21 @@ function StatusBadge({ status }) {
 }
 
 export default function SitesStatus() {
-   const [sites, setSites] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: sites = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("sites-status", async () => {
+      const clients = await clientsList();
+      const sitesToCheck = sitesFromClients(clients);
+      return checkSitesStatus(sitesToCheck);
+   });
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const clients = await clientsList();
-         const sitesToCheck = sitesFromClients(clients);
-         const results = await checkSitesStatus(sitesToCheck);
-         setSites(results);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    if (error) {
       return (

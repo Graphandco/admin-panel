@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Table,
    TableBody,
@@ -19,9 +20,14 @@ import {
 } from "@/components/ui/select";
 import { Loader2Icon, RefreshCwIcon, ArrowUpCircle } from "lucide-react";
 import { toast } from "sonner";
-import { wordpressPlugins, wordpressSites, wordpressPluginUpdate } from "@/app/actions/wordpress";
+import {
+   wordpressPlugins,
+   wordpressSites,
+   wordpressPluginUpdate,
+} from "@/app/actions/wordpress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { WORDPRESS_SITES_KEY } from "@/components/wordpress/SitesRecapCard";
 
 function StatusBadge({ status }) {
    const labels = {
@@ -57,40 +63,30 @@ function UpdateBadge({ update, updateVersion }) {
 }
 
 export default function PluginsTab() {
-   const [sites, setSites] = useState([]);
    const [selectedSiteUrl, setSelectedSiteUrl] = useState("");
-   const [plugins, setPlugins] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [loadingSites, setLoadingSites] = useState(true);
-   const [error, setError] = useState(null);
    const [updatingPlugin, setUpdatingPlugin] = useState(null);
 
-   useEffect(() => {
-      wordpressSites()
-         .then(setSites)
-         .catch(() => setSites([]))
-         .finally(() => setLoadingSites(false));
-   }, []);
+   const { data: sites = [], isLoading: loadingSites } = useCachedSWR(
+      WORDPRESS_SITES_KEY,
+      () => wordpressSites(),
+   );
+
+   const {
+      data: plugins = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate: mutatePlugins,
+   } = useCachedSWR(["wordpress-plugins-filtered", selectedSiteUrl], () => {
+      const opts = selectedSiteUrl
+         ? { url: selectedSiteUrl, status: "active" }
+         : {};
+      return wordpressPlugins(opts);
+   });
+   const error = fetchError?.message || null;
 
    async function loadPlugins() {
-      setLoading(true);
-      setError(null);
-      try {
-         const opts = selectedSiteUrl
-            ? { url: selectedSiteUrl, status: "active" }
-            : {};
-         const list = await wordpressPlugins(opts);
-         setPlugins(list);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutatePlugins();
    }
-
-   useEffect(() => {
-      loadPlugins();
-   }, [selectedSiteUrl]);
 
    async function handleUpdate(p) {
       if (!p.name || p.update !== "available") return;
@@ -142,7 +138,7 @@ export default function PluginsTab() {
                onValueChange={(v) => setSelectedSiteUrl(v ?? "")}
                disabled={loadingSites}
             >
-               <SelectTrigger id="site-filter" className="w-[280px]">
+               <SelectTrigger id="site-filter" className="w-70">
                   {selectedSiteUrl ? (
                      sites.find((s) => s.url === selectedSiteUrl)?.site_name ||
                      selectedSiteUrl

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { buttonVariants } from "@/components/ui/button";
 import {
    Table,
@@ -71,9 +72,13 @@ function formatNumber(val) {
 }
 
 export function ClientsTab() {
-   const [clients, setClients] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: clients = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("clients-list", () => clientsList());
+   const error = fetchError?.message || null;
    const [editDialogId, setEditDialogId] = useState(null);
    const [viewDialogId, setViewDialogId] = useState(null);
    const [saving, setSaving] = useState(false);
@@ -86,21 +91,8 @@ export function ClientsTab() {
    }, []);
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await clientsList();
-         setClients(list);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    async function handleSubmitClient(payload, mode, clientId) {
       setSaving(true);
@@ -150,7 +142,7 @@ export function ClientsTab() {
             open={!!viewDialogId}
             onOpenChange={(v) => !v && setViewDialogId(null)}
          >
-            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-125 max-h-[90vh] overflow-y-auto">
                <DialogHeader>
                   <DialogTitle>Fiche client</DialogTitle>
                </DialogHeader>
@@ -224,32 +216,31 @@ export function ClientsTab() {
                                              c.websites?.length > 0
                                                 ? c.websites
                                                 : c.website
-                                                   ? [c.website]
-                                                   : [];
-                                          return urls.length > 0 ? (
-                                             urls.map((url, i) => {
-                                                const href =
-                                                   url.startsWith("http")
-                                                      ? url
-                                                      : `https://${url}`;
-                                                return (
-                                                   <a
-                                                      key={i}
-                                                      href={href}
-                                                      target="_blank"
-                                                      rel="noopener noreferrer"
-                                                      className="text-primary hover:underline block"
-                                                   >
-                                                      {url.replace(
-                                                         /^https?:\/\//i,
-                                                         "",
-                                                      )}
-                                                   </a>
-                                                );
-                                             })
-                                          ) : (
-                                             "—"
-                                          );
+                                                  ? [c.website]
+                                                  : [];
+                                          return urls.length > 0
+                                             ? urls.map((url, i) => {
+                                                  const href = url.startsWith(
+                                                     "http",
+                                                  )
+                                                     ? url
+                                                     : `https://${url}`;
+                                                  return (
+                                                     <a
+                                                        key={i}
+                                                        href={href}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-primary hover:underline block"
+                                                     >
+                                                        {url.replace(
+                                                           /^https?:\/\//i,
+                                                           "",
+                                                        )}
+                                                     </a>
+                                                  );
+                                               })
+                                             : "—";
                                        })()}
                                     </TableCell>
                                     <TableCell>
@@ -292,7 +283,7 @@ export function ClientsTab() {
                                                    </button>
                                                 }
                                              />
-                                             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                                             <DialogContent className="sm:max-w-150 max-h-[90vh] overflow-y-auto">
                                                 <DialogHeader>
                                                    <DialogTitle>
                                                       Modifier le client

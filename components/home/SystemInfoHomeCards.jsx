@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSystemStats } from "@/app/actions/system";
 import {
@@ -31,7 +31,7 @@ function InfoCard({ title, icon: Icon, iconClass, value, sub, loading }) {
                <Loader2Icon className="size-4 md:size-5 animate-spin text-muted-foreground" />
             ) : (
                <>
-                  <p className="text-xs md:text-base font-semibold text-foreground leading-snug break-words line-clamp-3 md:line-clamp-none">
+                  <p className="text-xs md:text-base font-semibold text-foreground leading-snug wrap-break-word line-clamp-3 md:line-clamp-none">
                      {value || "—"}
                   </p>
                   {sub ? (
@@ -47,26 +47,18 @@ function InfoCard({ title, icon: Icon, iconClass, value, sub, loading }) {
 }
 
 export default function SystemInfoHomeCards() {
-   const [host, setHost] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: stats,
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("vps-stats", () => getSystemStats());
+   const host = stats?.host || null;
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const data = await getSystemStats();
-         setHost(data?.host || null);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    if (error) {
       return (
@@ -90,8 +82,7 @@ export default function SystemInfoHomeCards() {
          ? `${host.cores ?? host.cpuCores} cœur${
               (host.cores ?? host.cpuCores) > 1 ? "s" : ""
            }${
-              host.threads &&
-              host.threads !== (host.cores ?? host.cpuCores)
+              host.threads && host.threads !== (host.cores ?? host.cpuCores)
                  ? ` · ${host.threads} threads`
                  : " vCPU"
            }`

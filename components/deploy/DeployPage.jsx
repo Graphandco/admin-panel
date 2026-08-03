@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -202,20 +203,13 @@ function DeployCard({ project, status, runs, onDeploy, loading }) {
 }
 
 export default function DeployPage() {
-   const [projects, setProjects] = useState([]);
+   const { data: projects = [] } = useCachedSWR("deploy-projects", () =>
+      getDeployProjects(),
+   );
    const [statusByProject, setStatusByProject] = useState({});
    const [runsByProject, setRunsByProject] = useState({});
    const [loading, setLoading] = useState(false);
    const [deploying, setDeploying] = useState(null);
-
-   const fetchProjects = useCallback(async () => {
-      try {
-         const list = await getDeployProjects();
-         setProjects(list);
-      } catch (err) {
-         console.error(err);
-      }
-   }, []);
 
    const fetchStatus = useCallback(async (projectId) => {
       try {
@@ -246,10 +240,6 @@ export default function DeployPage() {
          await fetchRuns(p.id);
       }
    }, [projects, fetchRuns]);
-
-   useEffect(() => {
-      fetchProjects();
-   }, [fetchProjects]);
 
    useEffect(() => {
       if (projects.length === 0) return;

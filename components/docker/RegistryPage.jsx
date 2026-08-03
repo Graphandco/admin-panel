@@ -3,16 +3,16 @@ import RefreshButton from "@/components/refresh-button";
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    getRegistryOverview,
    deleteRegistryManifest,
    runRegistryGarbageCollect,
    getRegistryTagDetail,
 } from "@/app/actions/registry";
-import { StatusCard } from "@/components/ui/status-card";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
    Dialog,
    DialogContent,
@@ -30,19 +30,18 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { OfficialImageUpdatesSection } from "@/components/docker/OfficialImageUpdatesSection";
+import { DanglingImagesSection } from "@/components/docker/DanglingImagesSection";
+import { dockerDanglingImages } from "@/app/actions/docker";
 import {
-   BoxIcon,
    CheckIcon,
    ChevronDownIcon,
    ChevronRightIcon,
    CopyIcon,
    InfoIcon,
    Loader2Icon,
-   PackageIcon,
    SearchIcon,
    Trash2Icon,
    EraserIcon,
-   Ban,
 } from "lucide-react";
 
 const LOGIN_CMD = "docker login dockerhub.graphandco.com -u graphandco";
@@ -334,9 +333,19 @@ function TagDetailDialog({ open, onOpenChange, repository, tagName }) {
 }
 
 export default function RegistryPage() {
-   const [data, setData] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("docker-registry", () => getRegistryOverview());
+   const {
+      data: dangling,
+      isLoading: danglingLoading,
+   } = useCachedSWR("docker-dangling-images", () => dockerDanglingImages());
+   const loading = isLoading || isValidating;
+   const error = data?.error || fetchError?.message || null;
    const [mounted, setMounted] = useState(false);
    const [search, setSearch] = useState("");
    const [expanded, setExpanded] = useState({});
@@ -357,23 +366,11 @@ export default function RegistryPage() {
    }
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const overview = await getRegistryOverview();
-         setData(overview);
-         if (overview.error) setError(overview.error);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-         setData(null);
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
 
    useEffect(() => {
       setMounted(true);
-      load();
    }, []);
 
    const repositories = data?.repositories ?? [];
@@ -492,25 +489,83 @@ export default function RegistryPage() {
                document.getElementById("docker-refresh-portal"),
             )}
 
-         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
-            <StatusCard
-               Icon={data?.online ? CheckIcon : Ban}
-               color={data?.online ? "green" : "slate"}
-               label="Statut"
-               value={data?.online ? "Online" : "Offline"}
-            />
-            <StatusCard
-               Icon={BoxIcon}
-               color="blue"
-               label="Repositories"
-               value={data?.repositoryCount ?? 0}
-            />
-            <StatusCard
-               Icon={PackageIcon}
-               color="blue"
-               label="Tags"
-               value={data?.tagCount ?? 0}
-            />
+         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+            <Card>
+               <CardHeader className="pb-1">
+                  <CardTitle className="text-xs text-muted-foreground">
+                     Statut
+                  </CardTitle>
+               </CardHeader>
+               <CardContent>
+                  <p
+                     className={cn(
+                        "text-xl font-semibold tabular-nums",
+                        data?.online ? "text-emerald-400" : "text-slate-400",
+                     )}
+                  >
+                     {data?.online ? "Online" : "Offline"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 font-mono truncate">
+                     {data?.host || "registry"}
+                  </p>
+               </CardContent>
+            </Card>
+            <Card>
+               <CardHeader className="pb-1">
+                  <CardTitle className="text-xs text-muted-foreground">
+                     Repositories
+                  </CardTitle>
+               </CardHeader>
+               <CardContent>
+                  <p className="text-xl font-semibold text-white tabular-nums">
+                     {data?.repositoryCount ?? 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                     Catalogue privé
+                  </p>
+               </CardContent>
+            </Card>
+            <Card>
+               <CardHeader className="pb-1">
+                  <CardTitle className="text-xs text-muted-foreground">
+                     Tags
+                  </CardTitle>
+               </CardHeader>
+               <CardContent>
+                  <p className="text-xl font-semibold text-white tabular-nums">
+                     {data?.tagCount ?? 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                     Versions publiées
+                  </p>
+               </CardContent>
+            </Card>
+            <Card>
+               <CardHeader className="pb-1">
+                  <CardTitle className="text-xs text-muted-foreground">
+                     Dangling
+                  </CardTitle>
+               </CardHeader>
+               <CardContent>
+                  <p
+                     className={cn(
+                        "text-xl font-semibold tabular-nums",
+                        (dangling?.count ?? 0) > 0
+                           ? "text-amber-400"
+                           : "text-white",
+                     )}
+                  >
+                     {danglingLoading && dangling == null
+                        ? "…"
+                        : (dangling?.count ?? 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                     {(dangling?.inUseCount ?? 0) > 0
+                        ? `${dangling.inUseCount} utilisée${dangling.inUseCount > 1 ? "s" : ""} · ${dangling.freeCount ?? 0} libre${(dangling.freeCount ?? 0) > 1 ? "s" : ""}`
+                        : "Images <none> locales"}
+                  </p>
+               </CardContent>
+            </Card>
          </div>
 
          {data?.host && (
@@ -520,7 +575,15 @@ export default function RegistryPage() {
          )}
 
          <Card className="mt-2">
-            <CardContent className="pt-4 space-y-4">
+            <CardHeader className="pb-2">
+               <CardTitle className="text-base">
+                  Registry
+               </CardTitle>
+               <p className="text-xs text-muted-foreground mt-1">
+                  Catalogue dockerhub.graphandco.com
+               </p>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-4">
                <div className="relative max-w-sm">
                   <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
@@ -531,7 +594,7 @@ export default function RegistryPage() {
                   />
                </div>
 
-               {loading && !data ? (
+               {isLoading && !data ? (
                   <div className="flex items-center gap-2 text-muted-foreground py-8 justify-center">
                      <Loader2Icon className="size-5 animate-spin" />
                      Chargement du catalogue…
@@ -754,6 +817,7 @@ export default function RegistryPage() {
             tagName={detail?.tag}
          />
 
+         <DanglingImagesSection />
          <OfficialImageUpdatesSection />
       </>
    );

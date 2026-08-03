@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -13,35 +12,21 @@ import {
 import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { getTailnetInfo } from "@/app/actions/tailscale";
 import { isDeviceActive } from "@/components/tailscale/DevicesTab";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 
 export default function TailscaleCard() {
-   const [info, setInfo] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("tailscale-info", () => getTailnetInfo());
+   const info = data?.error ? null : data;
+   const error = data?.error || fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const data = await getTailnetInfo();
-         if (data.error) {
-            setError(data.error);
-            setInfo(null);
-         } else {
-            setInfo(data);
-            setError(null);
-         }
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-         setInfo(null);
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    if (error) {
       return (

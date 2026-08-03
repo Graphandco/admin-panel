@@ -1,21 +1,12 @@
 "use client";
 import RefreshButton from "@/components/refresh-button";
 
-import { useEffect, useState } from "react";
-import {
-   Card,
-   CardContent,
-   CardHeader,
-   CardTitle,
-} from "@/components/ui/card";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getFail2banStatus, getSshStatus } from "@/app/actions/security";
-import {
-   CheckCircle2Icon,
-   Loader2Icon,
-   XCircleIcon,
-} from "lucide-react";
+import { CheckCircle2Icon, Loader2Icon, XCircleIcon } from "lucide-react";
 
 function formatDate(iso) {
    if (!iso) return "—";
@@ -38,36 +29,30 @@ function StatusIcon({ ok }) {
 }
 
 export default function Fail2banPage() {
-   const [data, setData] = useState(null);
-   const [ssh, setSsh] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
-   const [sshError, setSshError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("vps-fail2ban", async () => {
+      let sshErrorMessage = null;
+      const [f2b, sshRes] = await Promise.all([
+         getFail2banStatus(),
+         getSshStatus().catch((err) => {
+            sshErrorMessage = err.message || "Erreur SSH";
+            return null;
+         }),
+      ]);
+      return { ...f2b, ssh: sshRes, sshErrorMessage };
+   });
+   const error = fetchError?.message || null;
+   const sshError = data?.sshErrorMessage || null;
+   const ssh = data?.ssh || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      setSshError(null);
-      try {
-         const [f2b, sshRes] = await Promise.all([
-            getFail2banStatus(),
-            getSshStatus().catch((err) => {
-               setSshError(err.message || "Erreur SSH");
-               return null;
-            }),
-         ]);
-         setData(f2b);
-         setSsh(sshRes);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    return (
       <div>
@@ -78,12 +63,14 @@ export default function Fail2banPage() {
                   Lecture seule — jails, bans et durcissement SSH
                </p>
             </div>
-            <RefreshButton onClick={load} loading={loading} />
+            <RefreshButton onClick={load} loading={loading || isValidating} />
          </header>
 
          {error && (
             <Card className="mb-4">
-               <CardContent className="py-4 text-destructive">{error}</CardContent>
+               <CardContent className="py-4 text-destructive">
+                  {error}
+               </CardContent>
             </Card>
          )}
 
@@ -201,7 +188,7 @@ export default function Fail2banPage() {
                                     {j.bannedCount}
                                  </td>
                                  <td
-                                    className="py-2.5 text-muted-foreground truncate max-w-[220px]"
+                                    className="py-2.5 text-muted-foreground truncate max-w-55"
                                     title={j.logpath || undefined}
                                  >
                                     {j.logpath || "—"}
@@ -280,9 +267,7 @@ export default function Fail2banPage() {
 
                {/* SSH hardening */}
                <div className="pt-2">
-                  <h2 className="text-lg font-semibold text-white mb-1">
-                     SSH
-                  </h2>
+                  <h2 className="text-lg font-semibold text-white mb-1">SSH</h2>
                   <p className="text-sm text-muted-foreground mb-4">
                      Lecture seule — port, authentification et clés autorisées
                   </p>
@@ -310,7 +295,9 @@ export default function Fail2banPage() {
                                        ssh.running ? "default" : "destructive"
                                     }
                                  >
-                                    {ssh.running ? "sshd actif" : "sshd inactif"}
+                                    {ssh.running
+                                       ? "sshd actif"
+                                       : "sshd inactif"}
                                  </Badge>
                               </CardContent>
                            </Card>

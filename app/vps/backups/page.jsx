@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import useSWR from "swr";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
   Card,
   CardContent,
@@ -295,15 +295,11 @@ function SnapshotExplorer({ snapshot, open, onOpenChange }) {
 }
 
 export default function BackupsPage() {
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, isValidating, mutate } = useCachedSWR(
     BACKUPS_KEY,
     fetchBackups,
     {
-      revalidateOnFocus: false,
-      revalidateOnMount: true,
-      revalidateIfStale: true,
       dedupingInterval: 60000,
-      ...(getBackupCache() && { fallbackData: getBackupCache() }),
     }
   );
 
@@ -317,7 +313,7 @@ export default function BackupsPage() {
     try {
       const res = await getBackupSnapshots(true);
       setBackupCache(res);
-      mutate(res, false);
+      mutate(res, { revalidate: false });
     } catch {
       // ignore
     } finally {
@@ -325,8 +321,8 @@ export default function BackupsPage() {
     }
   }
 
-  function load() {
-    mutate(undefined, true);
+  async function load() {
+    await mutate();
   }
 
   if (error) {
@@ -384,7 +380,7 @@ export default function BackupsPage() {
               Voir toutes les stats
             </Button>
           )}
-          <RefreshButton onClick={load} loading={isLoading} />
+          <RefreshButton onClick={load} loading={isLoading || isValidating} />
         </div>
       </header>
 

@@ -1,12 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-   Card,
-   CardContent,
-   CardHeader,
-   CardTitle,
-} from "@/components/ui/card";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getCronJobs } from "@/app/actions/cron";
@@ -26,14 +21,14 @@ function formatDate(iso) {
 }
 
 const DOW = {
-   "0": "dimanche",
-   "7": "dimanche",
-   "1": "lundi",
-   "2": "mardi",
-   "3": "mercredi",
-   "4": "jeudi",
-   "5": "vendredi",
-   "6": "samedi",
+   0: "dimanche",
+   7: "dimanche",
+   1: "lundi",
+   2: "mardi",
+   3: "mercredi",
+   4: "jeudi",
+   5: "vendredi",
+   6: "samedi",
    sun: "dimanche",
    mon: "lundi",
    tue: "mardi",
@@ -79,7 +74,13 @@ function humanizeCron(schedule) {
    const hourStep = parseStep(hour);
 
    // */15 * * * *
-   if (minStep && isEvery(hour) && isEvery(dom) && isEvery(month) && isEvery(dow)) {
+   if (
+      minStep &&
+      isEvery(hour) &&
+      isEvery(dom) &&
+      isEvery(month) &&
+      isEvery(dow)
+   ) {
       if (minStep === 1) return "Toutes les minutes";
       return `Toutes les ${minStep} minutes`;
    }
@@ -160,26 +161,18 @@ function humanizeCron(schedule) {
 }
 
 export default function CronPage() {
-   const [data, setData] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("vps-cron", () => getCronJobs());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const res = await getCronJobs();
-         setData(res);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    return (
       <div>
@@ -190,12 +183,14 @@ export default function CronPage() {
                   Lecture seule — tâches planifiées de l&apos;hôte
                </p>
             </div>
-            <RefreshButton onClick={load} loading={loading} />
+            <RefreshButton onClick={load} loading={loading || isValidating} />
          </header>
 
          {error && (
             <Card className="mb-4">
-               <CardContent className="py-4 text-destructive">{error}</CardContent>
+               <CardContent className="py-4 text-destructive">
+                  {error}
+               </CardContent>
             </Card>
          )}
 
@@ -270,7 +265,7 @@ export default function CronPage() {
                                     </Badge>
                                  </td>
                                  <td
-                                    className="py-2.5 pr-3 font-mono text-xs text-muted-foreground max-w-[420px] truncate"
+                                    className="py-2.5 pr-3 font-mono text-xs text-muted-foreground max-w-105 truncate"
                                     title={j.command}
                                  >
                                     {j.command}

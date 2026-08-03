@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Card,
    CardHeader,
@@ -17,27 +17,20 @@ import {
 } from "lucide-react";
 import { wordpressPlugins } from "@/app/actions/wordpress";
 
+export const WORDPRESS_PLUGINS_KEY = "wordpress-plugins";
+
 export default function PluginsCard() {
-   const [plugins, setPlugins] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: plugins = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR(WORDPRESS_PLUGINS_KEY, () => wordpressPlugins());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await wordpressPlugins();
-         setPlugins(list);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    const total = plugins.length;
    const updatesCount = plugins.filter((p) => p.update === "available").length;

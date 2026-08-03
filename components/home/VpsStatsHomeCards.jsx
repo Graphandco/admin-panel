@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
    ChartContainer,
@@ -73,8 +73,8 @@ function StatMiniCard({ title, data, fillUsed, loading, isMobile }) {
             <ChartContainer
                config={chartConfig}
                className={cn(
-                  "mx-auto !aspect-square !min-h-0 w-full p-0",
-                  isMobile ? "max-w-[56px]" : "max-w-[96px]",
+                  "mx-auto aspect-square! min-h-0! w-full p-0",
+                  isMobile ? "max-w-14" : "max-w-24",
                )}
             >
                <PieChart
@@ -105,7 +105,7 @@ function StatMiniCard({ title, data, fillUsed, loading, isMobile }) {
                   />
                </PieChart>
             </ChartContainer>
-            <p className="text-center text-[10px] md:text-xs font-medium text-foreground mt-0.5 md:mt-1 w-full leading-tight break-words">
+            <p className="text-center text-[10px] md:text-xs font-medium text-foreground mt-0.5 md:mt-1 w-full leading-tight wrap-break-word">
                {label}
             </p>
          </CardContent>
@@ -115,26 +115,17 @@ function StatMiniCard({ title, data, fillUsed, loading, isMobile }) {
 
 export default function VpsStatsHomeCards() {
    const isMobile = useIsMobile();
-   const [stats, setStats] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: stats,
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("vps-stats", () => getSystemStats());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const data = await getSystemStats();
-         setStats(data);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    if (error) {
       return (

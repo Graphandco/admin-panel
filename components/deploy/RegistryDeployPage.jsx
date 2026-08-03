@@ -1,7 +1,8 @@
 "use client";
 import RefreshButton from "@/components/refresh-button";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,53 +28,55 @@ import { toast } from "sonner";
 import { Loader2Icon, RocketIcon } from "lucide-react";
 
 export default function RegistryDeployPage() {
-   const [sites, setSites] = useState([]);
-   const [pullHost, setPullHost] = useState(null);
-   const [tagsByRepo, setTagsByRepo] = useState({});
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("registry-deploy", async () => {
+      const [sitesRes, registryRes] = await Promise.all([
+         getRegistrySites(),
+         getRegistryOverview(),
+      ]);
+      const tagsByRepo = {};
+      for (const repo of registryRes.repositories || []) {
+         tagsByRepo[repo.name] = (repo.tags || [])
+            .map((t) => (typeof t === "string" ? t : t.name))
+            .filter(Boolean);
+      }
+      return {
+         sites: sitesRes.sites || [],
+         pullHost: sitesRes.pullHost || registryRes.host || null,
+         tagsByRepo,
+      };
+   });
+   const error = fetchError?.message || null;
+   const sites = data?.sites || [];
+   const pullHost = data?.pullHost || null;
+   const tagsByRepo = data?.tagsByRepo || {};
    const [selectedTags, setSelectedTags] = useState({});
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
    const [deployingId, setDeployingId] = useState(null);
    const [confirmDeploy, setConfirmDeploy] = useState(null);
 
-   const load = useCallback(async () => {
-      setLoading(true);
-      setError(null);
-      try {
-         const [sitesRes, registryRes] = await Promise.all([
-            getRegistrySites(),
-            getRegistryOverview(),
-         ]);
-         setSites(sitesRes.sites || []);
-         setPullHost(sitesRes.pullHost || registryRes.host || null);
-
-         const map = {};
-         for (const repo of registryRes.repositories || []) {
-            map[repo.name] = (repo.tags || [])
-               .map((t) => (typeof t === "string" ? t : t.name))
-               .filter(Boolean);
-         }
-         setTagsByRepo(map);
-
-         setSelectedTags((prev) => {
-            const next = { ...prev };
-            for (const site of sitesRes.sites || []) {
-               if (!next[site.id]) {
-                  next[site.id] = site.currentTag || "latest";
-               }
-            }
-            return next;
-         });
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
-   }, []);
-
    useEffect(() => {
-      load();
-   }, [load]);
+      setSelectedTags((prev) => {
+         const next = { ...prev };
+         let changed = false;
+         for (const site of sites) {
+            if (!next[site.id]) {
+               next[site.id] = site.currentTag || "latest";
+               changed = true;
+            }
+         }
+         return changed ? next : prev;
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [sites]);
+
+   async function load() {
+      await mutate();
+   }
 
    const reposMissingTags = useMemo(() => {
       const missing = new Set();
@@ -139,7 +142,7 @@ export default function RegistryDeployPage() {
             </p>
             <RefreshButton
                onClick={load}
-               loading={loading}
+               loading={loading || isValidating}
                disabled={!!deployingId}
             />
          </div>

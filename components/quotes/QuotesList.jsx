@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -60,28 +61,19 @@ function formatCurrency(val) {
 }
 
 export function QuotesList() {
-   const [quotes, setQuotes] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: quotes = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("quotes-list", () => quotesList());
+   const error = fetchError?.message || null;
    const [actionId, setActionId] = useState(null);
    const [previewFilename, setPreviewFilename] = useState(null);
 
    async function fetchQuotes() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await quotesList();
-         setQuotes(list);
-      } catch (err) {
-         setError(err.message);
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      fetchQuotes();
-   }, []);
 
    async function handleDelete(q) {
       if (actionId) return;

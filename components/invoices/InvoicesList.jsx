@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -60,28 +61,19 @@ function formatCurrency(val) {
 }
 
 export function InvoicesList() {
-   const [invoices, setInvoices] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: invoices = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("invoices-list", () => invoicesList());
+   const error = fetchError?.message || null;
    const [actionId, setActionId] = useState(null);
    const [previewFilename, setPreviewFilename] = useState(null);
 
    async function fetchInvoices() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await invoicesList();
-         setInvoices(list);
-      } catch (err) {
-         setError(err.message);
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      fetchInvoices();
-   }, []);
 
    async function handleDelete(inv) {
       if (actionId) return;

@@ -136,7 +136,7 @@ export async function dockerLogs(containerId, tail = 100) {
 }
 
 /**
- * Liste les conteneurs images officielles Docker Hub avec statut de mise à jour
+ * Liste les conteneurs images Docker Hub (officielles + tierces) avec statut de mise à jour
  */
 export async function dockerImageUpdates() {
   try {
@@ -231,6 +231,53 @@ export async function dockerOrphansRemove(opts = {}) {
     return { success: true, removed: data.removed ?? 0, ...data }
   } catch (err) {
     console.error('dockerOrphansRemove:', err.message)
+    return { success: false, error: err.message || 'Erreur API' }
+  }
+}
+
+/**
+ * Images dangling locales + conteneurs qui les référencent
+ */
+export async function dockerDanglingImages() {
+  try {
+    const res = await adminApiFetch('/api/docker/dangling-images')
+    const data = await res.json()
+    if (!data.success) throw new Error(data.error || 'Erreur API')
+    return data
+  } catch (err) {
+    console.error('dockerDanglingImages:', err.message)
+    throw err
+  }
+}
+
+/**
+ * @param {{ id?: string, allFree?: boolean }} opts
+ */
+export async function dockerDanglingImagesRemove(opts = {}) {
+  try {
+    const res = await adminApiFetch('/api/docker/dangling-images/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(opts),
+    })
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      return {
+        success: false,
+        error:
+          res.status === 404
+            ? 'Route API introuvable — redémarrer admin-api'
+            : `Erreur ${res.status}`,
+      }
+    }
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error || `Erreur ${res.status}` }
+    }
+    return { success: true, ...data }
+  } catch (err) {
+    console.error('dockerDanglingImagesRemove:', err.message)
     return { success: false, error: err.message || 'Erreur API' }
   }
 }

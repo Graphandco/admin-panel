@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import {
    Card,
    CardContent,
@@ -74,25 +75,20 @@ function RankList({ rows, empty, nameKey = "name", sizeKey = "sizeFormatted" }) 
 }
 
 export default function StoragePage() {
-   const [data, setData] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("system-storage", () => getSystemStorage());
+   const error = fetchError?.message || null;
+
+   useAutoRefresh(mutate);
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         setData(await getSystemStorage());
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    const disk = data?.disk;
    const docker = data?.docker;
@@ -108,11 +104,7 @@ export default function StoragePage() {
                </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-               <PruneBuildCacheButton
-                  cacheSizeLabel={cacheLabel}
-                  onDone={() => load()}
-               />
-               <RefreshButton onClick={load} loading={loading} />
+               <RefreshButton onClick={load} loading={loading || isValidating} />
             </div>
          </header>
 

@@ -309,7 +309,7 @@ function SidebarHeader({ className, ...props }) {
          data-slot="sidebar-header"
          data-sidebar="header"
          className={cn(
-            "h-16 gap-2 px-2 py-4 flex flex-col border-b border-white/10 bg-transparent",
+            "h-16 gap-2 px-2 py-4 flex flex-col border-b border-white/10 bg-transparent justify-center",
             className,
          )}
          {...props}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
    Loader2Icon,
@@ -31,26 +31,17 @@ function typeLabel(type) {
 }
 
 export default function RecentChangesCard() {
-   const [changes, setChanges] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: changes = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("wordpress-recent-changes", () => wordpressRecentChanges());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await wordpressRecentChanges();
-         setChanges(list);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    if (error) {
       return (

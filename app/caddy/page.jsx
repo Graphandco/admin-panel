@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,9 +35,15 @@ function formatPorts(ports) {
 }
 
 export default function CaddyDashboardPage() {
-   const [status, setStatus] = useState(null);
-   const [error, setError] = useState(null);
-   const [loading, setLoading] = useState(true);
+   const {
+      data: status,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("caddy-status", () => caddyStatus());
+   const [actionError, setActionError] = useState(null);
+   const error = actionError || fetchError?.message || null;
    const [restarting, setRestarting] = useState(false);
    const [logSource, setLogSource] = useState("docker");
    const [logText, setLogText] = useState("");
@@ -46,23 +53,9 @@ export default function CaddyDashboardPage() {
 
    const displayLog = useMemo(() => prettifyCaddyLogText(logText), [logText]);
 
-   const loadStatus = useCallback(async () => {
-      setError(null);
-      setLoading(true);
-      try {
-         const s = await caddyStatus();
-         setStatus(s);
-      } catch (e) {
-         setError(e.message);
-         setStatus(null);
-      } finally {
-         setLoading(false);
-      }
-   }, []);
-
-   useEffect(() => {
-      loadStatus();
-   }, [loadStatus]);
+   async function loadStatus() {
+      await mutate();
+   }
 
    const loadLogs = useCallback(async () => {
       setLogLoading(true);
@@ -94,7 +87,7 @@ export default function CaddyDashboardPage() {
    async function handleValidate() {
       setValidating(true);
       setValidateResult(null);
-      setError(null);
+      setActionError(null);
       try {
          const r = await caddyValidate();
          setValidateResult(r);
@@ -110,13 +103,13 @@ export default function CaddyDashboardPage() {
       if (!c?.id) return;
       if (!window.confirm("Redémarrer le conteneur Caddy ?")) return;
       setRestarting(true);
-      setError(null);
+      setActionError(null);
       try {
          await dockerContainerRestart(c.id);
          await loadStatus();
          setValidateResult(null);
       } catch (e) {
-         setError(e.message);
+         setActionError(e.message);
       } finally {
          setRestarting(false);
       }
@@ -136,9 +129,14 @@ export default function CaddyDashboardPage() {
    return (
       <div className="min-w-0 max-w-full overflow-x-hidden">
          <header className="flex flex-wrap justify-between items-center gap-2 mb-4">
-            <h2 className="text-xl font-bold text-white">Caddy — Tableau de bord</h2>
+            <h2 className="text-xl font-bold text-white">
+               Caddy — Tableau de bord
+            </h2>
             <div className="flex flex-wrap gap-2">
-               <RefreshButton onClick={() => loadStatus()} loading={loading} />
+               <RefreshButton
+                  onClick={() => loadStatus()}
+                  loading={loading || isValidating}
+               />
                <Button
                   type="button"
                   variant="outline"
@@ -181,7 +179,9 @@ export default function CaddyDashboardPage() {
                role="status"
             >
                <p className="font-medium mb-1">
-                  {validateResult.valid ? "Configuration valide" : "Problèmes de configuration"}
+                  {validateResult.valid
+                     ? "Configuration valide"
+                     : "Problèmes de configuration"}
                </p>
                {validateResult.output ? (
                   <pre className="text-xs font-mono whitespace-pre-wrap break-all min-w-0 max-w-full overflow-x-hidden text-foreground/90">
@@ -200,7 +200,9 @@ export default function CaddyDashboardPage() {
          <div className="grid gap-4 md:grid-cols-2 mb-6">
             <Card>
                <CardHeader className="py-3">
-                  <CardTitle className="text-sm">API d&apos;administration</CardTitle>
+                  <CardTitle className="text-sm">
+                     API d&apos;administration
+                  </CardTitle>
                </CardHeader>
                <CardContent className="text-sm space-y-1 text-muted-foreground">
                   <p>
@@ -246,8 +248,9 @@ export default function CaddyDashboardPage() {
                      </>
                   ) : (
                      <p>
-                        Aucun conteneur nommé <code className="text-xs">caddy</code>{" "}
-                        trouvé. Vérifiez CADDY_CONTAINER_NAME.
+                        Aucun conteneur nommé{" "}
+                        <code className="text-xs">caddy</code> trouvé. Vérifiez
+                        CADDY_CONTAINER_NAME.
                      </p>
                   )}
                </CardContent>
@@ -258,18 +261,21 @@ export default function CaddyDashboardPage() {
             <CardHeader className="flex flex-row flex-wrap items-end justify-between gap-2 py-3 min-w-0">
                <CardTitle className="text-sm">Journaux</CardTitle>
                <div className="flex items-center gap-2">
-                  <Label className="text-xs text-muted-foreground">Source</Label>
-                  <Select
-                     value={logSource}
-                     onValueChange={setLogSource}
-                  >
-                     <SelectTrigger className="w-[200px] h-8 text-xs">
+                  <Label className="text-xs text-muted-foreground">
+                     Source
+                  </Label>
+                  <Select value={logSource} onValueChange={setLogSource}>
+                     <SelectTrigger className="w-50 h-8 text-xs">
                         <SelectValue />
                      </SelectTrigger>
                      <SelectContent>
-                        <SelectItem value="docker">Conteneur (stdout)</SelectItem>
+                        <SelectItem value="docker">
+                           Conteneur (stdout)
+                        </SelectItem>
                         <SelectItem value="access.log">access.log</SelectItem>
-                        <SelectItem value="caddy.log">caddy.log (système)</SelectItem>
+                        <SelectItem value="caddy.log">
+                           caddy.log (système)
+                        </SelectItem>
                      </SelectContent>
                   </Select>
                   <Button
@@ -277,10 +283,7 @@ export default function CaddyDashboardPage() {
                      variant="ghost"
                      size="sm"
                      onClick={loadLogs}
-                     disabled={
-                        logLoading ||
-                        (logSource === "docker" && !c?.id)
-                     }
+                     disabled={logLoading || (logSource === "docker" && !c?.id)}
                   >
                      {logLoading ? (
                         <Loader2Icon className="size-4 animate-spin" />
@@ -291,7 +294,7 @@ export default function CaddyDashboardPage() {
                </div>
             </CardHeader>
             <CardContent className="min-w-0">
-               <div className="max-h-[420px] min-w-0 overflow-y-auto overflow-x-hidden rounded-md border border-border/30 bg-muted/30 p-3">
+               <div className="max-h-105 min-w-0 overflow-y-auto overflow-x-hidden rounded-md border border-border/30 bg-muted/30 p-3">
                   <pre className="text-xs font-mono w-full min-w-0 max-w-full whitespace-pre-wrap break-all text-foreground/90 leading-relaxed">
                      {logLoading ? "Chargement…" : displayLog || "—"}
                   </pre>

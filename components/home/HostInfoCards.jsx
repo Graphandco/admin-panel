@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSystemStats } from "@/app/actions/system";
 import {
@@ -26,7 +26,7 @@ function InfoCard({ title, icon: Icon, value, loading, subtitle }) {
             ) : (
                <>
                   <p
-                     className="text-base font-semibold text-white leading-snug break-words"
+                     className="text-base font-semibold text-white leading-snug wrap-break-word"
                      title={value || undefined}
                   >
                      {value || "—"}
@@ -44,26 +44,18 @@ function InfoCard({ title, icon: Icon, value, loading, subtitle }) {
 }
 
 export default function HostInfoCards() {
-   const [host, setHost] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: stats,
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("vps-stats", () => getSystemStats());
+   const host = stats?.host || null;
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const data = await getSystemStats();
-         setHost(data?.host || null);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    if (error) {
       return (
@@ -85,7 +77,9 @@ export default function HostInfoCards() {
    const cpuSubtitle =
       host?.cores || host?.threads
          ? [
-              host.cores ? `${host.cores} cœur${host.cores > 1 ? "s" : ""}` : null,
+              host.cores
+                 ? `${host.cores} cœur${host.cores > 1 ? "s" : ""}`
+                 : null,
               host.threads && host.threads !== host.cores
                  ? `${host.threads} threads`
                  : null,

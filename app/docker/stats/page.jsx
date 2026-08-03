@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -319,14 +320,29 @@ function RamUsageBarChart({ stats, loading }) {
 }
 
 export default function DockerStatsPage() {
-   const [containers, setContainers] = useState([]);
-   const [allStats, setAllStats] = useState([]);
    const [selectedId, setSelectedId] = useState("");
-   const [containerStats, setContainerStats] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [loadingStats, setLoadingStats] = useState(false);
-   const [loadingDetail, setLoadingDetail] = useState(false);
-   const [error, setError] = useState(null);
+
+   const {
+      data: overview,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("docker-stats-overview", async () => {
+      const [list, stats] = await Promise.all([dockerPs(), dockerStatsAll()]);
+      return { containers: list, stats };
+   });
+   const error = fetchError?.message || null;
+   const containers = overview?.containers ?? [];
+   const allStats = overview?.stats ?? [];
+
+   const {
+      data: containerStats,
+      isLoading: loadingDetail,
+   } = useCachedSWR(
+      selectedId ? ["docker-container-stats", selectedId] : null,
+      () => dockerContainerStats(selectedId),
+   );
 
    const runningContainers = containers.filter((c) => c.state === "running");
    const selectedContainer = containers.find((c) => c.id === selectedId);
@@ -335,58 +351,28 @@ export default function DockerStatsPage() {
       : null;
 
    async function loadContainersAndStats() {
-      setLoading(true);
-      setError(null);
-      try {
-         const [list, stats] = await Promise.all([
-            dockerPs(),
-            dockerStatsAll(),
-         ]);
-         setContainers(list);
-         setAllStats(stats);
-         if (
-            !selectedId &&
-            list.filter((c) => c.state === "running").length > 0
-         ) {
-            const firstRunning = list.find((c) => c.state === "running");
-            if (firstRunning) setSelectedId(firstRunning.id);
-         }
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
-   }
-
-   async function loadContainerStats() {
-      if (!selectedId) {
-         setContainerStats(null);
-         return;
-      }
-      setLoadingDetail(true);
-      try {
-         const stats = await dockerContainerStats(selectedId);
-         setContainerStats(stats);
-      } catch {
-         setContainerStats(null);
-      } finally {
-         setLoadingDetail(false);
-      }
+      await mutate();
    }
 
    useEffect(() => {
-      loadContainersAndStats();
-   }, []);
-
-   useEffect(() => {
-      loadContainerStats();
-   }, [selectedId]);
+      if (
+         !selectedId &&
+         containers.filter((c) => c.state === "running").length > 0
+      ) {
+         const firstRunning = containers.find((c) => c.state === "running");
+         if (firstRunning) setSelectedId(firstRunning.id);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [containers]);
 
    return (
       <div>
          <header className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-white">Stats</h2>
-            <RefreshButton onClick={loadContainersAndStats} loading={loading} />
+            <RefreshButton
+               onClick={loadContainersAndStats}
+               loading={loading || isValidating}
+            />
          </header>
 
          {error ? (

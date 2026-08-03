@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Card,
    CardHeader,
@@ -12,27 +12,20 @@ import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { wordpressSites } from "@/app/actions/wordpress";
 import Image from "next/image";
 
+export const WORDPRESS_SITES_KEY = "wordpress-sites";
+
 export default function SitesRecapCard() {
-   const [sites, setSites] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data: sites = [],
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR(WORDPRESS_SITES_KEY, () => wordpressSites());
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const list = await wordpressSites();
-         setSites(list);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    const count = sites.length;
 

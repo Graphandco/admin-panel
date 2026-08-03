@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Table,
    TableBody,
@@ -41,7 +42,7 @@ import {
 import { toast } from "sonner";
 import RefreshButton from "@/components/refresh-button";
 
-const AUTO_REFRESH_MS = 60_000;
+export const AGENCE_SITES_KEY = "agence-sites";
 
 function stripHttps(url) {
    if (!url || typeof url !== "string") return url || "";
@@ -114,7 +115,7 @@ function Sparkline({ points }) {
    if (!points?.length) {
       return <span className="text-muted-foreground text-xs">—</span>;
    }
-   const values = points.map((p) => (p.ok ? p.ms ?? 0 : null));
+   const values = points.map((p) => (p.ok ? (p.ms ?? 0) : null));
    const nums = values.filter((v) => v != null);
    const max = Math.max(...(nums.length ? nums : [1]), 1);
    const w = 72;
@@ -125,9 +126,7 @@ function Sparkline({ points }) {
       .map((p, i) => {
          const x = i * step;
          const y =
-            p.ok && p.ms != null
-               ? h - (p.ms / max) * (h - 2) - 1
-               : h - 1;
+            p.ok && p.ms != null ? h - (p.ms / max) * (h - 2) - 1 : h - 1;
          return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
       })
       .join(" ");
@@ -164,11 +163,18 @@ function KpiCard({ label, value, hint, tone }) {
       <Card className="p-0">
          <CardContent className="py-3 px-4">
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
-            <p className={cn("text-2xl font-bold tabular-nums", tones[tone] || tones.white)}>
+            <p
+               className={cn(
+                  "text-2xl font-bold tabular-nums",
+                  tones[tone] || tones.white,
+               )}
+            >
                {value}
             </p>
             {hint ? (
-               <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>
+               <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {hint}
+               </p>
             ) : null}
          </CardContent>
       </Card>
@@ -176,12 +182,18 @@ function KpiCard({ label, value, hint, tone }) {
 }
 
 export default function SitesPage() {
-   const [sites, setSites] = useState([]);
-   const [summary, setSummary] = useState(null);
-   const [checkedAt, setCheckedAt] = useState(null);
-   const [loading, setLoading] = useState(true);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR(AGENCE_SITES_KEY, () => agenceSitesList());
+   const sites = data?.sites || [];
+   const summary = data?.summary || null;
+   const checkedAt = data?.checkedAt || null;
+   const error = fetchError?.message || null;
    const [checking, setChecking] = useState(false);
-   const [error, setError] = useState(null);
    const [editSite, setEditSite] = useState(null);
    const [editForm, setEditForm] = useState({
       address: "",
@@ -189,31 +201,15 @@ export default function SitesPage() {
    });
    const [saving, setSaving] = useState(false);
 
-   const applyPayload = useCallback((data) => {
-      setSites(data.sites || []);
-      setSummary(data.summary || null);
-      setCheckedAt(data.checkedAt || null);
-   }, []);
-
-   const load = useCallback(async () => {
-      setLoading(true);
-      setError(null);
-      try {
-         const data = await agenceSitesList();
-         applyPayload(data);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
-   }, [applyPayload]);
+   async function load() {
+      await mutate();
+   }
 
    async function runCheck() {
       setChecking(true);
-      setError(null);
       try {
-         const data = await agenceSitesCheckNow();
-         applyPayload(data);
+         const res = await agenceSitesCheckNow();
+         await mutate(res, false);
          toast.success("Checks terminés");
       } catch (err) {
          toast.error(err.message || "Erreur lors des checks");
@@ -221,16 +217,6 @@ export default function SitesPage() {
          setChecking(false);
       }
    }
-
-   useEffect(() => {
-      load();
-      const id = setInterval(() => {
-         agenceSitesList()
-            .then(applyPayload)
-            .catch(() => {});
-      }, AUTO_REFRESH_MS);
-      return () => clearInterval(id);
-   }, [load, applyPayload]);
 
    function openEdit(site) {
       setEditSite(site);
@@ -285,12 +271,14 @@ export default function SitesPage() {
                {checkedAt ? (
                   <p className="text-xs text-muted-foreground mt-0.5">
                      Dernière synchro · {formatCheckedAt(checkedAt)}
-                     <span className="opacity-60"> · auto 60s</span>
                   </p>
                ) : null}
             </div>
             <div className="flex items-center gap-3">
-               <RefreshButton onClick={load} loading={loading} />
+               <RefreshButton
+                  onClick={load}
+                  loading={loading || isValidating}
+               />
                <Button
                   size="sm"
                   variant="outline"
@@ -320,12 +308,12 @@ export default function SitesPage() {
             />
             <KpiCard
                label="Down"
-               value={loading && !summary ? "…" : summary?.down ?? 0}
+               value={loading && !summary ? "…" : (summary?.down ?? 0)}
                tone={(summary?.down || 0) > 0 ? "red" : "muted"}
             />
             <KpiCard
                label="Lents"
-               value={loading && !summary ? "…" : summary?.slow ?? 0}
+               value={loading && !summary ? "…" : (summary?.slow ?? 0)}
                hint="≥ 700 ms"
                tone={(summary?.slow || 0) > 0 ? "amber" : "muted"}
             />
@@ -349,7 +337,9 @@ export default function SitesPage() {
                   <TableHeader className="bg-muted text-white">
                      <TableRow>
                         <TableHead className="pl-2">Site</TableHead>
-                        <TableHead className="hidden sm:table-cell">Client</TableHead>
+                        <TableHead className="hidden sm:table-cell">
+                           Client
+                        </TableHead>
                         <TableHead>Statut</TableHead>
                         <TableHead className="hidden md:table-cell">
                            <span className="inline-flex items-center gap-1">
@@ -357,8 +347,12 @@ export default function SitesPage() {
                               Latence
                            </span>
                         </TableHead>
-                        <TableHead className="hidden lg:table-cell">Uptime 24h</TableHead>
-                        <TableHead className="hidden xl:table-cell">Tendance</TableHead>
+                        <TableHead className="hidden lg:table-cell">
+                           Uptime 24h
+                        </TableHead>
+                        <TableHead className="hidden xl:table-cell">
+                           Tendance
+                        </TableHead>
                         <TableHead>BO</TableHead>
                         <TableHead className="w-12 pe-2"></TableHead>
                      </TableRow>
@@ -388,9 +382,7 @@ export default function SitesPage() {
                            const m = site.monitor || {};
                            const backofficeUrl = site.backoffice?.trim();
                            const client =
-                              site.client_company ||
-                              site.client_name ||
-                              "—";
+                              site.client_company || site.client_name || "—";
                            return (
                               <TableRow key={site.id}>
                                  <TableCell className="pl-2">
@@ -482,8 +474,11 @@ export default function SitesPage() {
             </CardContent>
          </Card>
 
-         <Dialog open={!!editSite} onOpenChange={(v) => !v && setEditSite(null)}>
-            <DialogContent className="sm:max-w-[500px]">
+         <Dialog
+            open={!!editSite}
+            onOpenChange={(v) => !v && setEditSite(null)}
+         >
+            <DialogContent className="sm:max-w-125">
                <DialogHeader>
                   <DialogTitle>Modifier le site</DialogTitle>
                </DialogHeader>

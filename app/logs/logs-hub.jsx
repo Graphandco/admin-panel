@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,9 +64,13 @@ function parseSseChunk(buffer, onEvent) {
 export default function LogsHubPage() {
    const searchParams = useSearchParams();
    const router = useRouter();
-   const [sources, setSources] = useState(null);
-   const [loadingSources, setLoadingSources] = useState(true);
-   const [sourcesError, setSourcesError] = useState(null);
+   const {
+      data: sources,
+      error: sourcesFetchError,
+      isLoading: loadingSources,
+      mutate: mutateSources,
+   } = useCachedSWR("log-sources", () => getLogSources());
+   const sourcesError = sourcesFetchError?.message || null;
 
    const [tab, setTab] = useState(
       searchParams.get("source") === "caddy" ? "caddy" : "docker",
@@ -95,44 +100,36 @@ export default function LogsHubPage() {
 
    const activeId = tab === "docker" ? dockerId : caddyId;
 
-   const loadSources = useCallback(async () => {
-      setLoadingSources(true);
-      setSourcesError(null);
-      try {
-         const data = await getLogSources();
-         setSources(data);
-
-         const qSource = searchParams.get("source");
-         if (qSource === "caddy" || qSource === "docker") {
-            setTab(qSource);
-         }
-
-         const fromQuery = resolveDockerContainerId(
-            data.docker,
-            searchParams.get("container"),
-         );
-         if (fromQuery) {
-            setTab("docker");
-            setDockerId(fromQuery);
-         } else {
-            setDockerId((prev) => prev || data.docker?.[0]?.id || "");
-         }
-
-         const qFile = searchParams.get("file");
-         if (qFile && data.caddy?.some((c) => c.id === qFile)) {
-            setTab("caddy");
-            setCaddyId(qFile);
-         }
-      } catch (err) {
-         setSourcesError(err.message || "Erreur sources");
-      } finally {
-         setLoadingSources(false);
-      }
-   }, [searchParams]);
+   async function loadSources() {
+      await mutateSources();
+   }
 
    useEffect(() => {
-      loadSources();
-   }, [loadSources]);
+      if (!sources) return;
+
+      const qSource = searchParams.get("source");
+      if (qSource === "caddy" || qSource === "docker") {
+         setTab(qSource);
+      }
+
+      const fromQuery = resolveDockerContainerId(
+         sources.docker,
+         searchParams.get("container"),
+      );
+      if (fromQuery) {
+         setTab("docker");
+         setDockerId(fromQuery);
+      } else {
+         setDockerId((prev) => prev || sources.docker?.[0]?.id || "");
+      }
+
+      const qFile = searchParams.get("file");
+      if (qFile && sources.caddy?.some((c) => c.id === qFile)) {
+         setTab("caddy");
+         setCaddyId(qFile);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [sources]);
 
    const containerParam = searchParams.get("container");
    const fileParam = searchParams.get("file");

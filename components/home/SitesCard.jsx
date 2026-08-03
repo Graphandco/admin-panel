@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
    Card,
@@ -12,30 +11,23 @@ import {
 } from "@/components/ui/card";
 import { Globe, Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { agenceSitesList } from "@/app/actions/agence-sites";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
+import { AGENCE_SITES_KEY } from "@/components/agence/SitesPage";
 
 export default function SitesCard() {
-   const [summary, setSummary] = useState(null);
-   const [sites, setSites] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR(AGENCE_SITES_KEY, () => agenceSitesList());
+   const summary = data?.summary;
+   const sites = data?.sites || [];
+   const error = fetchError?.message || null;
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const data = await agenceSitesList();
-         setSummary(data.summary);
-         setSites(data.sites || []);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
-
-   useEffect(() => {
-      load();
-   }, []);
 
    if (error) {
       return (

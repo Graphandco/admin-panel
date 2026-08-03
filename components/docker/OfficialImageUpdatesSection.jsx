@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,31 +40,22 @@ function formatCheckedAt(iso) {
 }
 
 /**
- * Bloc mises à jour images officielles Docker Hub (affiché sous le catalogue registry).
+ * Bloc mises à jour images Docker Hub (officielles + tierces).
  */
 export function OfficialImageUpdatesSection() {
-   const [data, setData] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      mutate,
+   } = useCachedSWR("docker-image-updates", () => dockerImageUpdates());
+   const error = fetchError?.message || null;
    const [updatingId, setUpdatingId] = useState(null);
    const [confirmItem, setConfirmItem] = useState(null);
 
-   const load = useCallback(async () => {
-      setLoading(true);
-      setError(null);
-      try {
-         const res = await dockerImageUpdates();
-         setData(res);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
-   }, []);
-
-   useEffect(() => {
-      load();
-   }, [load]);
+   async function load() {
+      await mutate();
+   }
 
    async function runUpdate() {
       if (!confirmItem) return;
@@ -94,13 +86,12 @@ export function OfficialImageUpdatesSection() {
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-2">
                <div>
                   <CardTitle className="text-base">
-                     Mises à jour officielles
+                     Mises à jour Docker Hub
                   </CardTitle>
                   <p className="text-xs text-muted-foreground mt-1">
-                     Images Docker Hub{" "}
-                     <code className="text-[11px]">library/*</code> (mysql,
-                     redis, caddy…) — digest local vs distant. Dernière vérif :{" "}
-                     {formatCheckedAt(data?.checkedAt)}
+                     Images Docker Hub (officielles + tierces : mysql,
+                     vaultwarden, watchtower…) — digest local vs distant.
+                     Dernière vérif : {formatCheckedAt(data?.checkedAt)}
                   </p>
                </div>
                <Button
@@ -129,7 +120,7 @@ export function OfficialImageUpdatesSection() {
                   </div>
                ) : updates.length === 0 ? (
                   <p className="py-6 text-center text-sm text-muted-foreground">
-                     Aucune image officielle en cours d&apos;exécution
+                     Aucune image Docker Hub détectée sur les conteneurs
                   </p>
                ) : (
                   <>

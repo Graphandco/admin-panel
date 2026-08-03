@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
    ChartContainer,
@@ -283,31 +284,26 @@ function NasStatsCards({ data, loading, name }) {
 }
 
 export default function NasPage() {
-   const [data, setData] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
+   const {
+      data,
+      error: fetchError,
+      isLoading: loading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("nas-stats", () => getNasStats());
+   const error = fetchError?.message || null;
    const [mounted, setMounted] = useState(false);
 
    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-         const res = await getNasStats();
-         setData(res);
-      } catch (err) {
-         setError(err.message || "Erreur lors du chargement");
-      } finally {
-         setLoading(false);
-      }
+      await mutate();
    }
 
    useEffect(() => {
       setMounted(true);
-      load();
    }, []);
 
    const refreshButton = (
-      <RefreshButton onClick={load} loading={loading} />
+      <RefreshButton onClick={load} loading={loading || isValidating} />
    );
 
    const unraidConfigured = data?.unraid?.configured;

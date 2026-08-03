@@ -1,3 +1,6 @@
+"use client";
+
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Table,
    TableBody,
@@ -8,25 +11,34 @@ import {
 } from "@/components/ui/table";
 import { caddyRedirects } from "@/app/actions/caddy";
 import { HostsList } from "@/components/caddy/HostsList";
+import RefreshButton from "@/components/refresh-button";
 
-export const dynamic = "force-dynamic";
+export default function CaddyRedirectsPage() {
+   const {
+      data: rows = [],
+      error: fetchError,
+      isLoading,
+      isValidating,
+      mutate,
+   } = useCachedSWR("caddy-redirects", () => caddyRedirects());
+   const error = fetchError?.message || null;
 
-export default async function CaddyRedirectsPage() {
-   let rows = [];
-   let error = null;
-   try {
-      rows = await caddyRedirects();
-   } catch (e) {
-      error = e.message;
+   async function load() {
+      await mutate();
    }
 
    return (
       <div>
-         <h2 className="text-xl font-bold text-white mb-4">Caddy — Redirections</h2>
-         <p className="text-sm text-muted-foreground mb-4 max-w-3xl">
-            Redirections issues de la config JSON active (ex. <code>redir</code>, réponses
-            3xx, etc.).
-         </p>
+         <header className="flex flex-wrap justify-between items-center gap-4 mb-4">
+            <div>
+               <h2 className="text-xl font-bold text-white">Caddy — Redirections</h2>
+               <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
+                  Redirections issues de la config JSON active (ex. <code>redir</code>,
+                  réponses 3xx, etc.).
+               </p>
+            </div>
+            <RefreshButton onClick={load} loading={isLoading || isValidating} />
+         </header>
          {error && (
             <p className="text-destructive text-sm mb-4" role="alert">
                {error}

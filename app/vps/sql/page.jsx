@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -25,60 +26,63 @@ import {
    sqlListTables,
    sqlRunQuery,
 } from "@/app/actions/sql";
-import { Loader2Icon, PlayIcon, RefreshCwIcon, DatabaseIcon } from "lucide-react";
+import {
+   Loader2Icon,
+   PlayIcon,
+   RefreshCwIcon,
+   DatabaseIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import RefreshButton from "@/components/refresh-button";
 
 export default function SqlBrowserPage() {
    const [engine, setEngine] = useState("mysql");
-   const [databases, setDatabases] = useState([]);
    const [database, setDatabase] = useState("");
-   const [tables, setTables] = useState([]);
    const [sql, setSql] = useState("SELECT 1 AS ok");
-   const [loadingMeta, setLoadingMeta] = useState(false);
    const [running, setRunning] = useState(false);
    const [result, setResult] = useState(null);
    const [error, setError] = useState(null);
 
-   const loadDatabases = useCallback(async (eng) => {
-      setLoadingMeta(true);
-      setError(null);
-      try {
-         const list = await sqlListDatabases(eng);
-         setDatabases(list);
-         setDatabase((prev) => (list.includes(prev) ? prev : list[0] || ""));
-         setTables([]);
-         setResult(null);
-      } catch (err) {
-         setDatabases([]);
-         setDatabase("");
-         toast.error(err.message || "Impossible de lister les bases");
-      } finally {
-         setLoadingMeta(false);
-      }
-   }, []);
+   const {
+      data: databases = [],
+      error: databasesError,
+      isLoading: loadingMeta,
+      isValidating: validatingDatabases,
+      mutate: mutateDatabases,
+   } = useCachedSWR(["sql-databases", engine], () => sqlListDatabases(engine));
 
-   const loadTables = useCallback(async (eng, db) => {
-      if (!db) {
-         setTables([]);
-         return;
-      }
-      try {
-         const list = await sqlListTables(eng, db);
-         setTables(list);
-      } catch (err) {
-         setTables([]);
-         toast.error(err.message || "Impossible de lister les tables");
-      }
-   }, []);
+   const { data: tables = [], error: tablesError } = useCachedSWR(
+      database ? ["sql-tables", engine, database] : null,
+      () => sqlListTables(engine, database),
+   );
 
    useEffect(() => {
-      loadDatabases(engine);
-   }, [engine, loadDatabases]);
+      if (databasesError) {
+         toast.error(
+            databasesError.message || "Impossible de lister les bases",
+         );
+      }
+   }, [databasesError]);
 
    useEffect(() => {
-      if (database) loadTables(engine, database);
-   }, [engine, database, loadTables]);
+      if (tablesError) {
+         toast.error(tablesError.message || "Impossible de lister les tables");
+      }
+   }, [tablesError]);
+
+   useEffect(() => {
+      setDatabase((prev) =>
+         databases.includes(prev) ? prev : databases[0] || "",
+      );
+   }, [databases]);
+
+   useEffect(() => {
+      setResult(null);
+   }, [engine, database]);
+
+   async function loadDatabases() {
+      await mutateDatabases();
+   }
 
    async function onRun() {
       if (!database || !sql.trim()) return;
@@ -131,8 +135,8 @@ export default function SqlBrowserPage() {
                </p>
             </div>
             <RefreshButton
-               onClick={() => loadDatabases(engine)}
-               loading={loadingMeta}
+               onClick={loadDatabases}
+               loading={loadingMeta || validatingDatabases}
             />
          </div>
 
@@ -144,10 +148,7 @@ export default function SqlBrowserPage() {
                <CardContent className="space-y-3">
                   <div className="space-y-1.5">
                      <Label>Moteur</Label>
-                     <Select
-                        value={engine}
-                        onValueChange={(v) => setEngine(v)}
-                     >
+                     <Select value={engine} onValueChange={(v) => setEngine(v)}>
                         <SelectTrigger className="w-full">
                            <SelectValue />
                         </SelectTrigger>
@@ -217,7 +218,7 @@ export default function SqlBrowserPage() {
                      <Textarea
                         value={sql}
                         onChange={(e) => setSql(e.target.value)}
-                        className="min-h-[140px] font-mono text-sm"
+                        className="min-h-35 font-mono text-sm"
                         spellCheck={false}
                         onKeyDown={(e) => {
                            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -291,7 +292,7 @@ export default function SqlBrowserPage() {
                                           {result.columns.map((col) => (
                                              <TableCell
                                                 key={col}
-                                                className="max-w-[280px] truncate font-mono text-xs"
+                                                className="max-w-70 truncate font-mono text-xs"
                                                 title={
                                                    row[col] == null
                                                       ? "NULL"

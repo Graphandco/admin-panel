@@ -49,6 +49,7 @@ const SEGMENT_LABELS = {
    cron: "Cron",
    stockage: "Stockage",
    fichiers: "Fichiers",
+   settings: "Réglages",
    logs: "Logs",
    deploy: "Déploiements",
    git: "Git",
