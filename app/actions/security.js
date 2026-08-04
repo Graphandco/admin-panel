@@ -23,6 +23,71 @@ export async function getFail2banStatus() {
    }
 }
 
+/**
+ * @param {{ jail: string, ip: string }} opts
+ */
+export async function unbanFail2banIp(opts) {
+   try {
+      const res = await adminApiFetch("/api/security/fail2ban/unban", {
+         method: "POST",
+         body: JSON.stringify(opts),
+      });
+      let data;
+      try {
+         data = await res.json();
+      } catch {
+         return {
+            success: false,
+            error:
+               res.status === 404
+                  ? "Route API introuvable — redémarrer admin-api"
+                  : `Réponse API invalide (${res.status})`,
+         };
+      }
+      if (!data.success) {
+         return { success: false, error: data.error || "Échec unban" };
+      }
+      return { success: true, ...data.data };
+   } catch (err) {
+      console.error("unbanFail2banIp:", err.message);
+      return {
+         success: false,
+         error: err.message || "Erreur réseau vers admin-api",
+      };
+   }
+}
+
+export async function unbanAllFail2ban() {
+   try {
+      const res = await adminApiFetch("/api/security/fail2ban/unban-all", {
+         method: "POST",
+         body: JSON.stringify({}),
+      });
+      let data;
+      try {
+         data = await res.json();
+      } catch {
+         return {
+            success: false,
+            error:
+               res.status === 404
+                  ? "Route API introuvable — redémarrer admin-api"
+                  : `Réponse API invalide (${res.status})`,
+         };
+      }
+      if (!data.success) {
+         return { success: false, error: data.error || "Échec unban-all" };
+      }
+      return { success: true, ...data.data };
+   } catch (err) {
+      console.error("unbanAllFail2ban:", err.message);
+      return {
+         success: false,
+         error: err.message || "Erreur réseau vers admin-api",
+      };
+   }
+}
+
 export async function getFirewallStatus() {
    try {
       const res = await adminApiFetch("/api/security/firewall");

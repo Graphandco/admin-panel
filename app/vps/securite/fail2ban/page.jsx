@@ -1,11 +1,27 @@
 "use client";
 import RefreshButton from "@/components/refresh-button";
+import { useState } from "react";
 
 import { useCachedSWR } from "@/hooks/use-cached-swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getFail2banStatus, getSshStatus } from "@/app/actions/security";
+import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+   getFail2banStatus,
+   getSshStatus,
+   unbanAllFail2ban,
+   unbanFail2banIp,
+} from "@/app/actions/security";
 import { CheckCircle2Icon, Loader2Icon, XCircleIcon } from "lucide-react";
 
 function formatDate(iso) {
@@ -50,9 +66,38 @@ export default function Fail2banPage() {
    const sshError = data?.sshErrorMessage || null;
    const ssh = data?.ssh || null;
 
+   const [unbanTarget, setUnbanTarget] = useState(null);
+   const [unbanBusy, setUnbanBusy] = useState(false);
+   const [unbanError, setUnbanError] = useState(null);
+
    async function load() {
       await mutate();
    }
+
+   async function confirmUnban() {
+      if (!unbanTarget) return;
+      setUnbanBusy(true);
+      setUnbanError(null);
+      try {
+         const res =
+            unbanTarget.type === "all"
+               ? await unbanAllFail2ban()
+               : await unbanFail2banIp({
+                    jail: unbanTarget.jail,
+                    ip: unbanTarget.ip,
+                 });
+         if (!res.success) {
+            setUnbanError(res.error || "Échec unban");
+            return;
+         }
+         setUnbanTarget(null);
+         await mutate();
+      } finally {
+         setUnbanBusy(false);
+      }
+   }
+
+   const activeBans = data?.activeBans || [];
 
    return (
       <div>
@@ -60,7 +105,7 @@ export default function Fail2banPage() {
             <div>
                <h1 className="text-2xl font-bold text-white">Fail2Ban</h1>
                <p className="text-sm text-muted-foreground mt-1">
-                  Lecture seule — jails, bans et durcissement SSH
+                  Jails, bans actifs et durcissement SSH — unban possible
                </p>
             </div>
             <RefreshButton onClick={load} loading={loading || isValidating} />
@@ -74,6 +119,14 @@ export default function Fail2banPage() {
             </Card>
          )}
 
+         {unbanError && (
+            <Card className="mb-4">
+               <CardContent className="py-3 text-sm text-destructive">
+                  {unbanError}
+               </CardContent>
+            </Card>
+         )}
+
          {loading && !data ? (
             <Card>
                <CardContent className="flex items-center justify-center py-16">
@@ -82,7 +135,7 @@ export default function Fail2banPage() {
             </Card>
          ) : data ? (
             <div className="space-y-6">
-               <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+               <div className="grid gap-3 grid-cols-3">
                   <Card>
                      <CardHeader className="pb-2">
                         <CardTitle className="text-sm text-muted-foreground">
@@ -211,10 +264,26 @@ export default function Fail2banPage() {
                </Card>
 
                <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
                      <CardTitle className="text-base">
                         IPs actuellement bannies
                      </CardTitle>
+                     {activeBans.length > 0 && (
+                        <Button
+                           type="button"
+                           variant="destructive"
+                           size="sm"
+                           disabled={unbanBusy}
+                           onClick={() =>
+                              setUnbanTarget({
+                                 type: "all",
+                                 count: activeBans.length,
+                              })
+                           }
+                        >
+                           Tout unban
+                        </Button>
+                     )}
                   </CardHeader>
                   <CardContent className="overflow-x-auto">
                      <table className="w-full text-sm">
@@ -224,11 +293,14 @@ export default function Fail2banPage() {
                               <th className="py-2 pr-3 font-medium">Jail</th>
                               <th className="py-2 pr-3 font-medium">Depuis</th>
                               <th className="py-2 pr-3 font-medium">Durée</th>
-                              <th className="py-2 font-medium">Expire</th>
+                              <th className="py-2 pr-3 font-medium">Expire</th>
+                              <th className="py-2 font-medium text-right">
+                                 Action
+                              </th>
                            </tr>
                         </thead>
                         <tbody>
-                           {(data.activeBans || []).map((b) => (
+                           {activeBans.map((b) => (
                               <tr
                                  key={`${b.jail}-${b.ip}-${b.timeofban}`}
                                  className="border-b border-border/40"
@@ -243,17 +315,34 @@ export default function Fail2banPage() {
                                  <td className="py-2.5 pr-3">
                                     {b.bantimeLabel}
                                  </td>
-                                 <td className="py-2.5 whitespace-nowrap">
+                                 <td className="py-2.5 pr-3 whitespace-nowrap">
                                     {b.expiresIso
                                        ? formatDate(b.expiresIso)
                                        : "—"}
                                  </td>
+                                 <td className="py-2.5 text-right">
+                                    <Button
+                                       type="button"
+                                       variant="destructive"
+                                       size="sm"
+                                       disabled={unbanBusy}
+                                       onClick={() =>
+                                          setUnbanTarget({
+                                             type: "one",
+                                             jail: b.jail,
+                                             ip: b.ip,
+                                          })
+                                       }
+                                    >
+                                       Unban
+                                    </Button>
+                                 </td>
                               </tr>
                            ))}
-                           {(data.activeBans || []).length === 0 && (
+                           {activeBans.length === 0 && (
                               <tr>
                                  <td
-                                    colSpan={5}
+                                    colSpan={6}
                                     className="py-6 text-center text-muted-foreground"
                                  >
                                     Aucun ban actif
@@ -485,6 +574,66 @@ export default function Fail2banPage() {
                </div>
             </div>
          ) : null}
+
+         <AlertDialog
+            open={!!unbanTarget}
+            onOpenChange={(open) => {
+               if (!open && !unbanBusy) {
+                  setUnbanTarget(null);
+                  setUnbanError(null);
+               }
+            }}
+         >
+            <AlertDialogContent>
+               <AlertDialogHeader>
+                  <AlertDialogTitle>
+                     {unbanTarget?.type === "all"
+                        ? "Tout unban ?"
+                        : "Unban cette IP ?"}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                     {unbanTarget?.type === "all" ? (
+                        <>
+                           Retirer le ban de{" "}
+                           <strong>{unbanTarget.count}</strong> IP(s) sur toutes
+                           les jails concernées. L&apos;attaquant pourra se
+                           reconnecter immédiatement.
+                        </>
+                     ) : (
+                        <>
+                           Retirer{" "}
+                           <code className="text-foreground">
+                              {unbanTarget?.ip}
+                           </code>{" "}
+                           de la jail{" "}
+                           <code className="text-foreground">
+                              {unbanTarget?.jail}
+                           </code>
+                           .
+                        </>
+                     )}
+                  </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+                  <AlertDialogCancel disabled={unbanBusy}>
+                     Annuler
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                     onClick={(e) => {
+                        e.preventDefault();
+                        confirmUnban();
+                     }}
+                     disabled={unbanBusy}
+                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                     {unbanBusy ? (
+                        <Loader2Icon className="size-4 animate-spin" />
+                     ) : null}{" "}
+                     Confirmer unban
+                  </AlertDialogAction>
+               </AlertDialogFooter>
+            </AlertDialogContent>
+         </AlertDialog>
       </div>
    );
 }

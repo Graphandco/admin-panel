@@ -15,6 +15,7 @@ import {
    SidebarMenuSub,
    SidebarMenuSubButton,
    SidebarMenuSubItem,
+   useSidebar,
 } from "@/components/ui/sidebar";
 import {
    pathnameMatchesNavSection,
@@ -38,6 +39,7 @@ function NavCountBadge({ count }) {
  */
 export function NavCollapsibleItem({ item, triggerClassName }) {
    const pathname = usePathname();
+   const { isMobile, setOpenMobile } = useSidebar();
    const matches = pathnameMatchesNavSection(pathname, item);
    const [open, setOpen] = useState(matches);
 
@@ -47,6 +49,9 @@ export function NavCollapsibleItem({ item, triggerClassName }) {
    }, [matches, pathname]);
 
    const parentBadge = item.badge || 0;
+   const closeMobile = () => {
+      if (isMobile) setOpenMobile(false);
+   };
 
    return (
       <Collapsible
@@ -80,7 +85,9 @@ export function NavCollapsibleItem({ item, triggerClassName }) {
                   {item.items.map((subItem) => (
                      <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
-                           render={<Link href={subItem.url} />}
+                           render={
+                              <Link href={subItem.url} onClick={closeMobile} />
+                           }
                            isActive={isNavSubItemActive(
                               pathname,
                               subItem,

@@ -276,13 +276,21 @@ export function AppSidebar({ ...props }) {
    const pathname = usePathname();
    const { data: counts } = useUpdateCounts();
 
+   React.useEffect(() => {
+      if (isMobile) setOpenMobile(false);
+   }, [pathname, isMobile, setOpenMobile]);
+
    const stack = withUpdateBadges(sidebarData.stack, counts);
    const systeme = withUpdateBadges(sidebarData.systeme, counts);
 
    return (
       <Sidebar collapsible="icon" {...props}>
          <SidebarHeader>
-            <Link href="/" className="flex items-center px-2 gap-4">
+            <Link
+               href="/"
+               className="flex items-center px-2 gap-4"
+               onClick={() => isMobile && setOpenMobile(false)}
+            >
                <Image
                   src="/logo.svg"
                   alt="Graph and Co"

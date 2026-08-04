@@ -50,25 +50,28 @@ function StatMiniCard({ title, data, loading, isMobile }) {
          ? `${formatBytes(used)} / ${formatBytes(total)} (${percent}%)`
          : `${percent}%`;
 
-   const size = isMobile ? 72 : 100;
+   const size = isMobile ? 88 : 128;
+   const gaugeH = Math.round(size * 0.62);
 
    return (
-      <Card className="h-full min-w-0">
-         <CardHeader className="py-1.5 px-2 md:py-2 md:px-3">
+      <Card className="h-full min-w-0 overflow-visible">
+         <CardHeader className="py-1 px-2 md:py-1.5 md:px-3">
             <CardTitle className="text-xs md:text-sm font-medium text-white">
                {title}
             </CardTitle>
          </CardHeader>
-         <CardContent className="px-1.5 pb-2 pt-0 md:px-2 md:pb-3 flex flex-col items-center">
-            <SemiGauge
-               value={percent}
-               width={size}
-               height={Math.round(size * 0.62)}
-               startAngle={-110}
-               endAngle={110}
-               color={gaugeColor(percent)}
-            />
-            <p className="text-center text-[10px] md:text-xs font-medium text-foreground mt-0.5 md:mt-1 w-full leading-tight wrap-break-word">
+         <CardContent className="px-1 pb-2 pt-0 md:px-2 md:pb-2.5 flex flex-col items-center overflow-visible">
+            <div className="w-full flex justify-center">
+               <SemiGauge
+                  value={percent}
+                  width={size}
+                  height={gaugeH}
+                  startAngle={-110}
+                  endAngle={110}
+                  color={gaugeColor(percent)}
+               />
+            </div>
+            <p className="text-center text-[10px] md:text-xs font-medium text-foreground mt-1 w-full leading-tight wrap-break-word">
                {label}
             </p>
          </CardContent>

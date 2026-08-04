@@ -8,6 +8,7 @@ import {
    SidebarMenu,
    SidebarMenuButton,
    SidebarMenuItem,
+   useSidebar,
 } from "@/components/ui/sidebar";
 import { NavCollapsibleItem } from "@/components/nav-collapsible-item";
 import { isNavFlatItemActive } from "@/lib/nav-matches";
@@ -24,6 +25,11 @@ function NavCountBadge({ count }) {
 
 export function NavSection({ label, items, hideOnIconCollapse = false }) {
    const pathname = usePathname();
+   const { isMobile, setOpenMobile } = useSidebar();
+   const closeMobile = () => {
+      if (isMobile) setOpenMobile(false);
+   };
+
    return (
       <SidebarGroup
          className={
@@ -44,7 +50,9 @@ export function NavSection({ label, items, hideOnIconCollapse = false }) {
                ) : (
                   <SidebarMenuItem key={item.title}>
                      <SidebarMenuButton
-                        render={<Link href={item.url} />}
+                        render={
+                           <Link href={item.url} onClick={closeMobile} />
+                        }
                         isActive={isNavFlatItemActive(pathname, item, items)}
                      >
                         {item.icon && <item.icon />}

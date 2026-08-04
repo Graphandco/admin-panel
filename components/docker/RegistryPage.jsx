@@ -486,11 +486,11 @@ export default function RegistryPage() {
    }
 
    const refreshButton = (
-      <div className="flex items-center gap-2">
+      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
          <button
             onClick={handleGcPreview}
             disabled={loading || gcRunning || Boolean(busyKey)}
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             title="Aperçu dry-run du garbage collector"
          >
             {gcRunning ? (
@@ -503,7 +503,7 @@ export default function RegistryPage() {
          <button
             onClick={handleGc}
             disabled={loading || gcRunning || Boolean(busyKey)}
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             title="Libérer l'espace disque (garbage collect)"
          >
             {gcRunning ? (
@@ -528,15 +528,15 @@ export default function RegistryPage() {
 
          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
             <Card>
-               <CardHeader className="pb-1">
-                  <CardTitle className="text-xs text-muted-foreground">
+               <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-muted-foreground">
                      Statut
                   </CardTitle>
                </CardHeader>
                <CardContent>
                   <p
                      className={cn(
-                        "text-xl font-semibold tabular-nums",
+                        "text-2xl font-semibold tabular-nums",
                         data?.online ? "text-emerald-400" : "text-slate-400",
                      )}
                   >
@@ -548,13 +548,13 @@ export default function RegistryPage() {
                </CardContent>
             </Card>
             <Card>
-               <CardHeader className="pb-1">
-                  <CardTitle className="text-xs text-muted-foreground">
+               <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-muted-foreground">
                      Repositories
                   </CardTitle>
                </CardHeader>
                <CardContent>
-                  <p className="text-xl font-semibold text-white tabular-nums">
+                  <p className="text-2xl font-semibold text-white tabular-nums">
                      {data?.repositoryCount ?? 0}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -563,13 +563,13 @@ export default function RegistryPage() {
                </CardContent>
             </Card>
             <Card>
-               <CardHeader className="pb-1">
-                  <CardTitle className="text-xs text-muted-foreground">
+               <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-muted-foreground">
                      Tags
                   </CardTitle>
                </CardHeader>
                <CardContent>
-                  <p className="text-xl font-semibold text-white tabular-nums">
+                  <p className="text-2xl font-semibold text-white tabular-nums">
                      {data?.tagCount ?? 0}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -578,15 +578,15 @@ export default function RegistryPage() {
                </CardContent>
             </Card>
             <Card>
-               <CardHeader className="pb-1">
-                  <CardTitle className="text-xs text-muted-foreground">
+               <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-muted-foreground">
                      Dangling
                   </CardTitle>
                </CardHeader>
                <CardContent>
                   <p
                      className={cn(
-                        "text-xl font-semibold tabular-nums",
+                        "text-2xl font-semibold tabular-nums",
                         (dangling?.count ?? 0) > 0
                            ? "text-amber-400"
                            : "text-white",

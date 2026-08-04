@@ -1,6 +1,5 @@
 "use client";
 
-import { StatusCard } from "@/components/ui/status-card";
 import {
    Card,
    CardContent,
@@ -8,13 +7,7 @@ import {
    CardTitle,
 } from "@/components/ui/card";
 import { PruneBuildCacheButton } from "@/components/docker/PruneBuildCacheButton";
-import { Container, Clock, Ban } from "lucide-react";
-
-const CARDS = [
-   { id: "total", Icon: Container, color: "blue", label: "Containers" },
-   { id: "running", Icon: Clock, color: "green", label: "En cours" },
-   { id: "stopped", Icon: Ban, color: "slate", label: "Arrêtés" },
-];
+import { cn } from "@/lib/utils";
 
 export function StatusCards({
    total = 0,
@@ -23,28 +16,67 @@ export function StatusCards({
    buildCacheSize = null,
    onBuildCachePruned,
 }) {
-   const values = { total, running, stopped };
    const cacheLabel = buildCacheSize || "—";
 
    return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-         {CARDS.map(({ id, Icon, color, label }) => (
-            <StatusCard
-               key={id}
-               Icon={Icon}
-               color={color}
-               label={label}
-               value={values[id]}
-            />
-         ))}
-         <Card className="border-primary/20">
-            <CardHeader className="pb-1">
-               <CardTitle className="text-xs text-muted-foreground">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+         <Card>
+            <CardHeader className="pb-2">
+               <CardTitle className="text-lg text-muted-foreground">
+                  Containers
+               </CardTitle>
+            </CardHeader>
+            <CardContent>
+               <p className="text-2xl font-semibold text-white tabular-nums">
+                  {total}
+               </p>
+               <p className="text-xs text-muted-foreground mt-1">Total</p>
+            </CardContent>
+         </Card>
+         <Card>
+            <CardHeader className="pb-2">
+               <CardTitle className="text-lg text-muted-foreground">
+                  En cours
+               </CardTitle>
+            </CardHeader>
+            <CardContent>
+               <p
+                  className={cn(
+                     "text-2xl font-semibold tabular-nums",
+                     running > 0 ? "text-emerald-400" : "text-white",
+                  )}
+               >
+                  {running}
+               </p>
+               <p className="text-xs text-muted-foreground mt-1">Running</p>
+            </CardContent>
+         </Card>
+         <Card>
+            <CardHeader className="pb-2">
+               <CardTitle className="text-lg text-muted-foreground">
+                  Arrêtés
+               </CardTitle>
+            </CardHeader>
+            <CardContent>
+               <p
+                  className={cn(
+                     "text-2xl font-semibold tabular-nums",
+                     stopped > 0 ? "text-amber-400" : "text-white",
+                  )}
+               >
+                  {stopped}
+               </p>
+               <p className="text-xs text-muted-foreground mt-1">Stopped</p>
+            </CardContent>
+         </Card>
+         <Card>
+            <CardHeader className="pb-2">
+               <CardTitle className="text-lg text-muted-foreground">
                   Build cache
                </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-               <p className="text-xl md:text-2xl lg:text-3xl font-bold text-white tabular-nums">
+               <p className="text-2xl font-semibold text-white tabular-nums">
                   {cacheLabel}
                </p>
                <p className="text-xs text-muted-foreground">

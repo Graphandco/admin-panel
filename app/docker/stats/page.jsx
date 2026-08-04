@@ -419,7 +419,7 @@ export default function DockerStatsPage() {
                      </div>
 
                      {selectedId && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-125">
+                        <div className="grid grid-cols-3 gap-3 max-w-125">
                            <StatMiniCard
                               title="RAM"
                               value={containerStats?.memory}

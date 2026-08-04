@@ -3,13 +3,13 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Demi-jauge avec aiguille (inspiré MUI Gauge + GaugePointer).
- * Angles en degrés, 0° = haut, sens horaire positif comme d3/MUI.
+ * Demi-jauge avec aiguille.
+ * ViewBox compacte : l’arc utilise toute la largeur, peu de vide sous le pivot.
  */
 export function SemiGauge({
    value = 0,
-   width = 100,
-   height = 64,
+   width = 120,
+   height = 58,
    startAngle = -110,
    endAngle = 110,
    color,
@@ -18,8 +18,15 @@ export function SemiGauge({
 }) {
    const clamped = Math.max(0, Math.min(100, Number(value) || 0));
    const cx = width / 2;
-   const cy = height * 0.92;
-   const outerRadius = Math.min(width * 0.42, height * 0.85);
+   // L’arc monte à cy - r ; les extrémités (-110°/110°) descendent à ~cy + 0.34 r.
+   // On dimensionne r pour que tout tienne dans [topPad, height].
+   const topPad = 2;
+   const hubPad = 5;
+   const outerRadius = Math.min(
+      width * 0.48,
+      (height - topPad - hubPad) / 1.4,
+   );
+   const cy = topPad + outerRadius;
    const innerRadius = outerRadius * 0.62;
 
    const startRad = (startAngle * Math.PI) / 180;
@@ -66,7 +73,7 @@ export function SemiGauge({
          width={width}
          height={height}
          viewBox={`0 0 ${width} ${height}`}
-         className={cn("overflow-visible", className)}
+         className={cn("block shrink-0", className)}
          aria-hidden
       >
          <path
@@ -81,10 +88,10 @@ export function SemiGauge({
          ) : null}
          <path
             d={`M ${needleBaseL.x} ${needleBaseL.y} L ${needleTip.x} ${needleTip.y} L ${needleBaseR.x} ${needleBaseR.y} Z`}
-            fill="hsl(0deg 0% 92%)"
+            fill="var(--primary)"
          />
-         <circle cx={cx} cy={cy} r={4} fill="hsl(0deg 0% 92%)" />
-         <circle cx={cx} cy={cy} r={2} fill={fill} />
+         <circle cx={cx} cy={cy} r={4} fill="var(--primary)" />
+         <circle cx={cx} cy={cy} r={2} fill="var(--primary-foreground)" />
       </svg>
    );
 }
