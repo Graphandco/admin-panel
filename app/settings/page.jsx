@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/components/settings-provider";
 import RefreshButton from "@/components/refresh-button";
+import { PanelDevSettingsCard } from "@/components/panel-dev-settings-card";
 import { Loader2Icon, SaveIcon } from "lucide-react";
 
 function FieldRow({ label, hint, children }) {
@@ -240,6 +241,8 @@ export default function SettingsPage() {
                </CardContent>
             </Card>
 
+            <PanelDevSettingsCard />
+
             <Card>
                <CardHeader className="pb-2">
                   <CardTitle className="text-base text-primary">Intervalles & stockage</CardTitle>
@@ -255,6 +258,18 @@ export default function SettingsPage() {
                         max={120}
                         suffix="min"
                         onChange={(v) => set("siteMonitorIntervalMinutes", v)}
+                     />
+                  </FieldRow>
+                  <FieldRow
+                     label="Seuil latence site « lent »"
+                     hint="Au-delà de ce délai, le site apparaît comme lent (si le monitoring vitesse est activé sur le site)."
+                  >
+                     <NumberInput
+                        value={draft.siteSlowMs}
+                        min={100}
+                        max={30000}
+                        suffix="ms"
+                        onChange={(v) => set("siteSlowMs", v)}
                      />
                   </FieldRow>
                   <FieldRow

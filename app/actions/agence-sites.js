@@ -37,6 +37,7 @@ export async function agenceSitesList() {
       return {
          sites: data.sites || [],
          summary: data.summary || null,
+         slowThresholdMs: data.slowThresholdMs ?? 700,
          checkedAt: data.checkedAt || null,
       };
    } catch (err) {
@@ -56,6 +57,7 @@ export async function agenceSitesCheckNow() {
       return {
          sites: data.sites || [],
          summary: data.summary || null,
+         slowThresholdMs: data.slowThresholdMs ?? 700,
          checkedAt: data.checkedAt || null,
          checked: data.checked,
       };

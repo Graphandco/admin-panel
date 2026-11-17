@@ -12,6 +12,8 @@ import {
 } from "@/lib/ui-density";
 import "./globals.css";
 
+import { DevModeBanner } from "@/components/dev-mode-banner";
+import { AppAuraBg } from "@/components/app-aura-bg";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
 import { HeaderActions } from "@/components/header-actions";
@@ -80,7 +82,7 @@ export const metadata = {
 };
 
 export const viewport = {
-   themeColor: "#0f1219",
+   themeColor: "#070b12",
    colorScheme: "dark",
    width: "device-width",
    initialScale: 1,
@@ -111,6 +113,7 @@ export default async function RootLayout({ children }) {
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             suppressHydrationWarning={true}
          >
+            <AppAuraBg />
             <TooltipProvider>
                <SettingsProvider>
                   <SwrProvider>
@@ -128,6 +131,7 @@ export default async function RootLayout({ children }) {
                               </div>
                               <HeaderActions />
                            </header>
+                           <DevModeBanner />
                            <div className="flex flex-1 flex-col gap-4 py-4 px-4 md:px-8">
                               {children}
                            </div>

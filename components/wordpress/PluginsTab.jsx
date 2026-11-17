@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Table,
@@ -10,44 +10,53 @@ import {
    TableHeader,
    TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
 import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-} from "@/components/ui/select";
-import { Loader2Icon, RefreshCwIcon, ArrowUpCircle } from "lucide-react";
+   Card,
+   CardContent,
+   CardHeader,
+   CardTitle,
+   CardAction,
+} from "@/components/ui/card";
+import RefreshButton from "@/components/refresh-button";
+import {
+   Loader2Icon,
+   ArrowUpCircle,
+   PackageIcon,
+   PowerIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
    wordpressPlugins,
-   wordpressSites,
    wordpressPluginUpdate,
 } from "@/app/actions/wordpress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { WORDPRESS_SITES_KEY } from "@/components/wordpress/SitesRecapCard";
+import {
+   mutateUpdateCounts,
+   refreshAndMutateUpdateCounts,
+} from "@/hooks/use-update-counts";
+import { WORDPRESS_PLUGINS_KEY } from "@/components/wordpress/PluginsCard";
 
-function StatusBadge({ status }) {
-   const labels = {
-      active: "Actif",
-      inactive: "Inactif",
-      "must-use": "Must-use",
-      "drop-in": "Drop-in",
-   };
-   const label = labels[status] || status;
-   const isActive = status === "active";
+function StatusBadge({ plugin }) {
+   if (plugin.active) {
+      return (
+         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400">
+            Actif
+            {plugin.active_count > 0 ? ` · ${plugin.active_count}` : ""}
+         </span>
+      );
+   }
    return (
-      <span
-         className={cn(
-            "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-            isActive
-               ? "bg-green-500/20 text-green-600 dark:text-green-400"
-               : "bg-slate-500/20 text-slate-600 dark:text-slate-400",
-         )}
-      >
-         {label}
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/20 text-slate-600 dark:text-slate-400">
+         Inactif
+      </span>
+   );
+}
+
+function ProBadge() {
+   return (
+      <span className="inline-flex items-center px-1.5 py-0 rounded text-[10px] font-semibold uppercase tracking-wide bg-violet-500/20 text-violet-600 dark:text-violet-400">
+         Pro
       </span>
    );
 }
@@ -57,49 +66,125 @@ function UpdateBadge({ update, updateVersion }) {
    return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400">
          <ArrowUpCircle className="size-3.5" />
-         Mise à jour {updateVersion ? `v${updateVersion}` : "disponible"}
+         {updateVersion ? `v${updateVersion}` : "Update"}
       </span>
    );
 }
 
-export default function PluginsTab() {
-   const [selectedSiteUrl, setSelectedSiteUrl] = useState("");
-   const [updatingPlugin, setUpdatingPlugin] = useState(null);
-
-   const { data: sites = [], isLoading: loadingSites } = useCachedSWR(
-      WORDPRESS_SITES_KEY,
-      () => wordpressSites(),
+function MiniStat({ icon: Icon, iconClass, label, value, loading, tone }) {
+   return (
+      <Card className="h-min">
+         <CardHeader>
+            <CardTitle className="flex items-center gap-2 min-w-0">
+               <div
+                  className={cn(
+                     "size-10 p-2 rounded-md flex items-center justify-center border",
+                     iconClass,
+                  )}
+               >
+                  <Icon className="size-5 opacity-90" />
+               </div>
+               <span className="text-sm md:text-base font-medium text-white truncate">
+                  {label}
+               </span>
+            </CardTitle>
+            <CardAction>
+               {loading ? (
+                  <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
+               ) : (
+                  <span
+                     className={cn(
+                        "text-xl md:text-2xl font-bold tabular-nums",
+                        tone,
+                     )}
+                  >
+                     {value}
+                  </span>
+               )}
+            </CardAction>
+         </CardHeader>
+      </Card>
    );
+}
+
+export default function PluginsTab() {
+   const [updatingPlugin, setUpdatingPlugin] = useState(null);
+   const [filter, setFilter] = useState("updates");
 
    const {
-      data: plugins = [],
+      data,
       error: fetchError,
       isLoading: loading,
-      mutate: mutatePlugins,
-   } = useCachedSWR(["wordpress-plugins-filtered", selectedSiteUrl], () => {
-      const opts = selectedSiteUrl
-         ? { url: selectedSiteUrl, status: "active" }
-         : {};
-      return wordpressPlugins(opts);
-   });
+      isValidating,
+      mutate,
+   } = useCachedSWR(WORDPRESS_PLUGINS_KEY, () => wordpressPlugins());
+
+   const plugins = data?.plugins || [];
+   const summary = data?.summary || {
+      total: plugins.length,
+      active: plugins.filter((p) => p.active).length,
+      updates: plugins.filter((p) => p.update === "available").length,
+   };
    const error = fetchError?.message || null;
 
+   const filtered = useMemo(() => {
+      if (filter === "updates") {
+         return plugins.filter((p) => p.update === "available");
+      }
+      if (filter === "active") {
+         return plugins.filter((p) => p.active);
+      }
+      if (filter === "inactive") {
+         return plugins.filter((p) => !p.active);
+      }
+      return plugins;
+   }, [plugins, filter]);
+
    async function loadPlugins() {
-      await mutatePlugins();
+      await mutate();
    }
 
    async function handleUpdate(p) {
-      if (!p.name || p.update !== "available") return;
+      if (!p.name || p.update !== "available" || p.is_pro) return;
       setUpdatingPlugin(p.name);
       try {
-         await wordpressPluginUpdate({
-            plugin: p.name,
-            url: selectedSiteUrl || undefined,
-         });
-         await loadPlugins();
+         await wordpressPluginUpdate({ plugin: p.name });
+         // Optimistic : retire le flag update tout de suite
+         await mutate(
+            (current) => {
+               if (!current?.plugins) return current;
+               const nextPlugins = current.plugins.map((row) =>
+                  row.name === p.name
+                     ? { ...row, update: "none", update_version: null }
+                     : row,
+               );
+               const updates = nextPlugins.filter(
+                  (row) => row.update === "available",
+               ).length;
+               return {
+                  ...current,
+                  plugins: nextPlugins,
+                  summary: {
+                     ...(current.summary || {}),
+                     total: nextPlugins.length,
+                     active: nextPlugins.filter((row) => row.active).length,
+                     updates,
+                  },
+               };
+            },
+            { revalidate: false },
+         );
          toast.success(`${p.title || p.name} mis à jour`);
+         // Rescan compteurs notifications (badge) + refresh liste
+         try {
+            await refreshAndMutateUpdateCounts("wordpress");
+         } catch {
+            await mutateUpdateCounts();
+         }
+         await mutate();
       } catch (err) {
          toast.error(err.message || "Erreur lors de la mise à jour");
+         await mutate();
       } finally {
          setUpdatingPlugin(null);
       }
@@ -107,67 +192,79 @@ export default function PluginsTab() {
 
    if (error) {
       return (
-         <Card className="my-6 p-6">
+         <Card className="p-6">
             <div className="text-destructive flex items-center gap-3">
                <p>{error}</p>
-               <button
-                  onClick={loadPlugins}
-                  className={cn(
-                     buttonVariants({ variant: "outline", size: "sm" }),
-                  )}
-               >
-                  <RefreshCwIcon className="size-4 mr-1" />
+               <Button variant="outline" size="sm" onClick={loadPlugins}>
                   Réessayer
-               </button>
+               </Button>
             </div>
          </Card>
       );
    }
 
    return (
-      <div className="my-6">
-         <div className="flex items-center gap-4 mb-4">
-            <label
-               htmlFor="site-filter"
-               className="text-sm text-muted-foreground"
-            >
-               Filtrer par site
-            </label>
-            <Select
-               value={selectedSiteUrl}
-               onValueChange={(v) => setSelectedSiteUrl(v ?? "")}
-               disabled={loadingSites}
-            >
-               <SelectTrigger id="site-filter" className="w-70">
-                  {selectedSiteUrl ? (
-                     sites.find((s) => s.url === selectedSiteUrl)?.site_name ||
-                     selectedSiteUrl
-                  ) : (
-                     <span className="text-muted-foreground">
-                        Tous les plugins
-                     </span>
-                  )}
-               </SelectTrigger>
-               <SelectContent>
-                  <SelectItem value="">Tous les plugins</SelectItem>
-                  {[...sites]
-                     .sort((a, b) =>
-                        (a.site_name || a.url).localeCompare(
-                           b.site_name || b.url,
-                        ),
-                     )
-                     .map((site) => (
-                        <SelectItem
-                           key={site.blog_id ?? site.url}
-                           value={site.url}
-                        >
-                           {site.site_name || site.url}
-                        </SelectItem>
-                     ))}
-               </SelectContent>
-            </Select>
+      <div className="space-y-6">
+         <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+               Extensions du réseau — Actif = activé sur au moins un site.
+            </p>
+            <RefreshButton
+               onClick={loadPlugins}
+               loading={loading || isValidating}
+            />
          </div>
-         <Card className="mb-6 p-0 md:p-0">
+
+         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+            <MiniStat
+               icon={PackageIcon}
+               iconClass="bg-[#21759b]/10 border-[#21759b]/20 text-[#21759b]"
+               label="Extensions"
+               value={summary.total}
+               loading={loading}
+            />
+            <MiniStat
+               icon={PowerIcon}
+               iconClass="bg-green-500/10 border-green-500/20 text-green-500"
+               label="Actives"
+               value={summary.active}
+               loading={loading}
+               tone="text-green-500"
+            />
+            <MiniStat
+               icon={ArrowUpCircle}
+               iconClass="bg-amber-500/10 border-amber-500/20 text-amber-500"
+               label="Mises à jour"
+               value={summary.updates}
+               loading={loading}
+               tone="text-amber-500"
+            />
+         </div>
+
+         <div className="flex flex-wrap gap-2">
+            {[
+               { id: "updates", label: "À mettre à jour" },
+               { id: "active", label: "Actives" },
+               { id: "inactive", label: "Inactives" },
+               { id: "all", label: "Toutes" },
+            ].map((f) => (
+               <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilter(f.id)}
+                  className={cn(
+                     "px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors",
+                     filter === f.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted",
+                  )}
+               >
+                  {f.label}
+               </button>
+            ))}
+         </div>
+
+         <Card className="p-0 md:p-0">
             <CardContent className="px-0">
                <Table>
                   <TableHeader className="bg-muted text-white">
@@ -187,7 +284,7 @@ export default function PluginsTab() {
                               <Loader2Icon className="size-6 animate-spin mx-auto text-muted-foreground" />
                            </TableCell>
                         </TableRow>
-                     ) : plugins.length === 0 ? (
+                     ) : filtered.length === 0 ? (
                         <TableRow>
                            <TableCell
                               colSpan={4}
@@ -197,21 +294,35 @@ export default function PluginsTab() {
                            </TableCell>
                         </TableRow>
                      ) : (
-                        plugins.map((p) => (
+                        filtered.map((p) => (
                            <TableRow key={p.name}>
                               <TableCell className="text-sm">
-                                 <span className="pl-2 font-medium">
-                                    {p.title || p.name}
-                                 </span>
+                                 <div className="pl-2">
+                                    <span className="inline-flex items-center gap-1.5 flex-wrap font-medium">
+                                       {p.title || p.name}
+                                       {p.is_pro ? <ProBadge /> : null}
+                                    </span>
+                                    {p.active_sites?.length > 0 ? (
+                                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                                          {p.active_sites
+                                             .slice(0, 3)
+                                             .map((s) => s.name || s.url)
+                                             .join(" · ")}
+                                          {p.active_sites.length > 3
+                                             ? ` +${p.active_sites.length - 3}`
+                                             : ""}
+                                       </p>
+                                    ) : null}
+                                 </div>
                               </TableCell>
                               <TableCell className="text-sm font-mono text-muted-foreground">
-                                 {p.version || "-"}
+                                 {p.version || "—"}
                               </TableCell>
                               <TableCell>
-                                 <StatusBadge status={p.status} />
+                                 <StatusBadge plugin={p} />
                               </TableCell>
                               <TableCell>
-                                 <div className="flex items-center gap-2">
+                                 <div className="flex flex-wrap items-center gap-2">
                                     <UpdateBadge
                                        update={p.update}
                                        updateVersion={p.update_version}
@@ -221,8 +332,16 @@ export default function PluginsTab() {
                                           variant="outline"
                                           size="sm"
                                           onClick={() => handleUpdate(p)}
-                                          disabled={updatingPlugin != null}
+                                          disabled={
+                                             p.is_pro ||
+                                             updatingPlugin != null
+                                          }
                                           className="shrink-0"
+                                          title={
+                                             p.is_pro
+                                                ? "Mise à jour manuelle requise (extension Pro)"
+                                                : undefined
+                                          }
                                        >
                                           {updatingPlugin === p.name ? (
                                              <Loader2Icon className="size-4 animate-spin" />

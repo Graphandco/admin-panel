@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { BellIcon, Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
+import { mutate as globalMutate } from "swr";
 import { buttonVariants } from "@/components/ui/button";
 import {
    Popover,
@@ -16,6 +17,8 @@ import {
    refreshAndMutateUpdateCounts,
    useUpdateCounts,
 } from "@/hooks/use-update-counts";
+import { useAlertsOverview } from "@/hooks/use-alerts";
+import { ALERTS_OVERVIEW_KEY } from "@/components/monitoring/AlertsPage";
 import { notificationBadgeClassName } from "@/lib/notification-badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -34,11 +37,15 @@ function formatCheckedAt(iso) {
 
 export function NotificationsBell() {
    const { data, isValidating } = useUpdateCounts();
+   const { data: alerts } = useAlertsOverview();
    const [refreshing, setRefreshing] = useState(false);
    const [open, setOpen] = useState(false);
 
-   const total = data?.total ?? 0;
-   const items = data?.items ?? [];
+   const updateTotal = data?.total ?? 0;
+   const updateItems = data?.items ?? [];
+   const alertTotal = alerts?.total ?? 0;
+   const alertCritical = alerts?.critical ?? 0;
+   const badgeTotal = updateTotal + alertTotal;
    const checkedLabel = formatCheckedAt(data?.checkedAt);
 
    async function onRefresh(e) {
@@ -46,8 +53,20 @@ export function NotificationsBell() {
       e?.stopPropagation?.();
       setRefreshing(true);
       try {
-         await refreshAndMutateUpdateCounts(null);
-         toast.success("Compteurs actualisés");
+         const result = await refreshAndMutateUpdateCounts(null);
+         await globalMutate(ALERTS_OVERVIEW_KEY);
+         const ok = result?.ok?.length ?? 0;
+         const failed = result?.failed ?? [];
+         if (ok > 0 && failed.length === 0) {
+            toast.success("Compteurs actualisés");
+         } else if (ok > 0) {
+            toast.message(
+               `Partiel : ${ok} OK, ${failed.length} échec${failed.length > 1 ? "s" : ""}`,
+            );
+         } else {
+            const detail = failed[0]?.error || "Aucun scan réussi";
+            toast.error(detail);
+         }
       } catch (err) {
          toast.error(err.message || "Échec de l’actualisation");
       } finally {
@@ -68,32 +87,37 @@ export function NotificationsBell() {
                      "relative size-9 shrink-0",
                   )}
                   aria-label={
-                     total > 0
-                        ? `Notifications, ${total} mise${total > 1 ? "s" : ""} à jour`
+                     badgeTotal > 0
+                        ? `Notifications, ${badgeTotal} élément${badgeTotal > 1 ? "s" : ""}`
                         : "Notifications"
                   }
                />
             }
          >
             <BellIcon className="size-5" />
-            {total > 0 ? (
+            {badgeTotal > 0 ? (
                <span
                   className={cn(
                      notificationBadgeClassName,
+                     alertCritical > 0 && "bg-red-500 text-white",
                      "absolute -top-0.5 -right-0.5",
                   )}
                >
-                  {total > 99 ? "99+" : total}
+                  {badgeTotal > 99 ? "99+" : badgeTotal}
                </span>
             ) : null}
          </PopoverTrigger>
-         <PopoverContent align="end" sideOffset={8} className="w-[min(20rem,calc(100vw-2rem))] p-0">
+         <PopoverContent
+            align="end"
+            sideOffset={8}
+            className="w-[min(20rem,calc(100vw-2rem))] p-0"
+         >
             <div className="flex items-start justify-between gap-2 border-b border-border/60 px-3 py-2.5">
                <PopoverHeader className="gap-0.5 p-0">
                   <PopoverTitle>Notifications</PopoverTitle>
                   <PopoverDescription className="text-xs">
                      {checkedLabel
-                        ? `Dernière vérif. ${checkedLabel}`
+                        ? `Mises à jour · ${checkedLabel}`
                         : "En attente du premier scan"}
                   </PopoverDescription>
                </PopoverHeader>
@@ -114,31 +138,61 @@ export function NotificationsBell() {
                   )}
                </button>
             </div>
-            <ul className="py-1">
-               {items.map((item) => (
-                  <li key={item.id}>
-                     <Link
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm hover:bg-muted/60 transition-colors"
-                     >
-                        <span className="text-foreground">{item.label}</span>
-                        {item.count > 0 ? (
-                           <span className={notificationBadgeClassName}>
-                              {item.count}
-                           </span>
-                        ) : (
-                           <span className="text-xs text-muted-foreground">
-                              OK
-                           </span>
+
+            {alertTotal > 0 ? (
+               <div className="border-b border-border/60">
+                  <p className="px-3 pt-2.5 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                     Alertes
+                  </p>
+                  <Link
+                     href="/monitoring/alertes"
+                     onClick={() => setOpen(false)}
+                     className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm hover:bg-muted/60 transition-colors"
+                  >
+                     <span className="text-foreground">Incidents actifs</span>
+                     <span
+                        className={cn(
+                           notificationBadgeClassName,
+                           alertCritical > 0 && "bg-red-500 text-white",
                         )}
-                     </Link>
-                  </li>
-               ))}
-            </ul>
-            {total === 0 ? (
+                     >
+                        {alertTotal}
+                     </span>
+                  </Link>
+               </div>
+            ) : null}
+
+            <div>
+               <p className="px-3 pt-2.5 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Mises à jour
+               </p>
+               <ul className="py-1">
+                  {updateItems.map((item) => (
+                     <li key={item.id}>
+                        <Link
+                           href={item.href}
+                           onClick={() => setOpen(false)}
+                           className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm hover:bg-muted/60 transition-colors"
+                        >
+                           <span className="text-foreground">{item.label}</span>
+                           {item.count > 0 ? (
+                              <span className={notificationBadgeClassName}>
+                                 {item.count}
+                              </span>
+                           ) : (
+                              <span className="text-xs text-muted-foreground">
+                                 OK
+                              </span>
+                           )}
+                        </Link>
+                     </li>
+                  ))}
+               </ul>
+            </div>
+
+            {badgeTotal === 0 ? (
                <p className="border-t border-border/60 px-3 py-2.5 text-xs text-muted-foreground">
-                  Aucune mise à jour en attente
+                  Rien à signaler
                </p>
             ) : null}
          </PopoverContent>

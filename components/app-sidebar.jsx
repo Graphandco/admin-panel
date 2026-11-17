@@ -12,15 +12,19 @@ import {
    FileText,
    FolderOpen,
    HardDrive,
+   HistoryIcon,
    Home,
    Lock,
+   ShieldAlertIcon,
    Globe,
+   Monitor,
    PieChart,
    Plus,
    Rocket,
    ScrollText,
    ShoppingCart,
    Users,
+   LayoutGrid,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -41,6 +45,7 @@ import {
 } from "@/components/ui/sidebar";
 import { isNavLinkActive } from "@/lib/nav-matches";
 import { useUpdateCounts } from "@/hooks/use-update-counts";
+import { useAlertsOverview } from "@/hooks/use-alerts";
 import { cn } from "@/lib/utils";
 
 function WordPressIcon({ className, ...props }) {
@@ -94,6 +99,16 @@ const sidebarData = {
    },
    monitoring: [
       {
+         title: "Alertes",
+         url: "/monitoring/alertes",
+         icon: ShieldAlertIcon,
+      },
+      {
+         title: "Activité",
+         url: "/monitoring/activite",
+         icon: HistoryIcon,
+      },
+      {
          title: "Stats VPS",
          url: "/vps/stats",
          icon: ChartColumnIncreasing,
@@ -115,9 +130,10 @@ const sidebarData = {
          url: "/docker",
          icon: DockerIcon,
          items: [
-            { title: "Stats", url: "/docker/stats" },
             { title: "Containers", url: "/docker" },
             { title: "Images", url: "/docker/registry" },
+            { title: "Volumes", url: "/docker/volumes" },
+            { title: "Stats", url: "/docker/stats" },
             { title: "Cheatsheet", url: "/docker/cheatsheet" },
          ],
       },
@@ -138,15 +154,18 @@ const sidebarData = {
          icon: WordPressIcon,
          items: [
             { title: "Tableau de bord", url: "/wordpress/dashboard" },
-            { title: "Stats", url: "/wordpress/sites" },
             { title: "Extensions", url: "/wordpress/plugins" },
-            { title: "Connexions", url: "/wordpress/connexions" },
          ],
       },
       {
          title: "Déploiements",
          url: "/deploy",
          icon: Rocket,
+      },
+      {
+         title: "SeaweedFS",
+         url: "/seaweedfs",
+         icon: HardDrive,
       },
    ],
    systeme: [
@@ -184,6 +203,16 @@ const sidebarData = {
          title: "Fichiers",
          url: "/vps/fichiers",
          icon: FolderOpen,
+      },
+      {
+         title: "Système",
+         url: "/vps/systeme",
+         icon: Monitor,
+      },
+      {
+         title: "Apps",
+         url: "/vps/apps",
+         icon: LayoutGrid,
       },
    ],
    agence: [
@@ -232,6 +261,14 @@ const sidebarData = {
    ],
 };
 
+function withMonitoringBadges(items, alertCount) {
+   return items.map((item) =>
+      item.url === "/monitoring/alertes"
+         ? { ...item, badge: alertCount || 0 }
+         : item,
+   );
+}
+
 function withUpdateBadges(items, counts) {
    return items.map((item) => {
       if (item.title === "Sécurité") {
@@ -275,6 +312,7 @@ export function AppSidebar({ ...props }) {
    const { isMobile, setOpenMobile } = useSidebar();
    const pathname = usePathname();
    const { data: counts } = useUpdateCounts();
+   const { data: alerts } = useAlertsOverview();
 
    React.useEffect(() => {
       if (isMobile) setOpenMobile(false);
@@ -282,6 +320,10 @@ export function AppSidebar({ ...props }) {
 
    const stack = withUpdateBadges(sidebarData.stack, counts);
    const systeme = withUpdateBadges(sidebarData.systeme, counts);
+   const monitoring = withMonitoringBadges(
+      sidebarData.monitoring,
+      alerts?.total ?? 0,
+   );
 
    return (
       <Sidebar collapsible="icon" {...props}>
@@ -327,7 +369,7 @@ export function AppSidebar({ ...props }) {
                   </SidebarMenuItem>
                </SidebarMenu>
             </SidebarGroup>
-            <NavSection label="Monitoring" items={sidebarData.monitoring} />
+            <NavSection label="Monitoring" items={monitoring} />
             <NavSection label="Stack" items={stack} />
             <NavSection label="Système" items={systeme} />
             <NavAgence items={sidebarData.agence} />

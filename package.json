@@ -10,8 +10,10 @@
       "docker:push": "docker compose push",
       "docker:deploy": "docker compose build && docker compose push && docker compose up -d --force-recreate",
       "docker:up": "docker compose up -d --pull always",
+      "docker:prod": "docker compose up -d --pull always",
       "docker:dev": "docker compose -f docker-compose.dev.yml up -d --build",
-      "docker:dev:down": "docker compose up -d --pull always"
+      "docker:dev:stop": "docker compose -f docker-compose.dev.yml down",
+      "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f --tail=100"
    },
    "dependencies": {
       "@base-ui/react": "^1.2.0",

@@ -288,6 +288,83 @@ export async function dockerDanglingImagesRemove(opts = {}) {
 }
 
 /**
+ * Volumes Docker nommés + bind mounts
+ */
+export async function dockerVolumes() {
+  try {
+    const res = await adminApiFetch('/api/docker/volumes')
+    const data = await res.json()
+    if (!data.success) throw new Error(data.error || 'Erreur API')
+    return data
+  } catch (err) {
+    console.error('dockerVolumes:', err.message)
+    throw err
+  }
+}
+
+/**
+ * @param {{ name: string }} opts
+ */
+export async function dockerVolumesRemove(opts = {}) {
+  try {
+    const res = await adminApiFetch('/api/docker/volumes/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(opts),
+    })
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      return {
+        success: false,
+        error:
+          res.status === 404
+            ? 'Route API introuvable — redémarrer admin-api'
+            : `Erreur ${res.status}`,
+      }
+    }
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error || `Erreur ${res.status}` }
+    }
+    return { success: true, ...data }
+  } catch (err) {
+    console.error('dockerVolumesRemove:', err.message)
+    return { success: false, error: err.message || 'Erreur API' }
+  }
+}
+
+/**
+ * Prune des volumes non utilisés
+ */
+export async function dockerVolumesPrune() {
+  try {
+    const res = await adminApiFetch('/api/docker/volumes/prune', {
+      method: 'POST',
+    })
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      return {
+        success: false,
+        error:
+          res.status === 404
+            ? 'Route API introuvable — redémarrer admin-api'
+            : `Erreur ${res.status}`,
+      }
+    }
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error || `Erreur ${res.status}` }
+    }
+    return { success: true, ...data }
+  } catch (err) {
+    console.error('dockerVolumesPrune:', err.message)
+    return { success: false, error: err.message || 'Erreur API' }
+  }
+}
+
+/**
  * Vide le cache de build Docker (buildx prune -af)
  * @returns {{ success: boolean, spaceReclaimedFormatted?: string, error?: string }}
  */

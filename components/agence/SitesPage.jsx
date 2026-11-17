@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
    agenceSitesList,
@@ -49,6 +50,43 @@ export const AGENCE_SITES_KEY = "agence-sites";
 function stripHttps(url) {
    if (!url || typeof url !== "string") return url || "";
    return url.replace(/^https?:\/\//i, "").trim();
+}
+
+function siteHostname(address) {
+   if (!address || typeof address !== "string") return "";
+   try {
+      const u = new URL(
+         address.startsWith("http") ? address : `https://${address}`,
+      );
+      return u.hostname;
+   } catch {
+      return address.replace(/^https?:\/\//i, "").split("/")[0] || "";
+   }
+}
+
+function SiteFavicon({ address }) {
+   const [failed, setFailed] = useState(false);
+   const host = siteHostname(address);
+   if (!host || failed) {
+      return (
+         <span
+            className="size-4 shrink-0 rounded-sm bg-muted/50"
+            aria-hidden
+         />
+      );
+   }
+   return (
+      <img
+         src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`}
+         alt=""
+         width={16}
+         height={16}
+         className="size-4 shrink-0 rounded-sm"
+         loading="lazy"
+         decoding="async"
+         onError={() => setFailed(true)}
+      />
+   );
 }
 
 function formatMs(ms) {
@@ -193,6 +231,7 @@ export default function SitesPage() {
    } = useCachedSWR(AGENCE_SITES_KEY, () => agenceSitesList());
    const sites = data?.sites || [];
    const summary = data?.summary || null;
+   const slowThresholdMs = data?.slowThresholdMs ?? 700;
    const checkedAt = data?.checkedAt || null;
    const error = fetchError?.message || null;
    const [checking, setChecking] = useState(false);
@@ -201,6 +240,7 @@ export default function SitesPage() {
    const [editForm, setEditForm] = useState({
       address: "",
       backoffice: "",
+      monitor_speed: true,
    });
    const [saving, setSaving] = useState(false);
 
@@ -226,6 +266,7 @@ export default function SitesPage() {
       setEditForm({
          address: site.address ?? "",
          backoffice: site.backoffice ?? "",
+         monitor_speed: site.monitor_speed !== false,
       });
    }
 
@@ -317,7 +358,7 @@ export default function SitesPage() {
             <KpiCard
                label="Lents"
                value={loading && !summary ? "…" : (summary?.slow ?? 0)}
-               hint="≥ 700 ms"
+               hint={`≥ ${slowThresholdMs} ms`}
                tone={(summary?.slow || 0) > 0 ? "amber" : "muted"}
             />
             <KpiCard
@@ -393,8 +434,9 @@ export default function SitesPage() {
                                        href={fullUrl}
                                        target="_blank"
                                        rel="noopener noreferrer"
-                                       className="inline-flex items-center gap-1 text-white hover:underline"
+                                       className="inline-flex items-center gap-1.5 text-white hover:underline"
                                     >
+                                       <SiteFavicon address={site.address} />
                                        {displayUrl || "—"}
                                        <ExternalLinkIcon className="size-3.5" />
                                     </a>
@@ -556,6 +598,27 @@ export default function SitesPage() {
                            }))
                         }
                         placeholder="exemple.com/wp-admin"
+                     />
+                  </div>
+                  <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+                     <div className="space-y-0.5">
+                        <Label htmlFor="edit-monitor-speed">
+                           Monitorer la vitesse du site
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                           Désactiver pour ne plus compter ce site comme lent
+                           dans les alertes.
+                        </p>
+                     </div>
+                     <Switch
+                        id="edit-monitor-speed"
+                        checked={editForm.monitor_speed}
+                        onCheckedChange={(v) =>
+                           setEditForm((f) => ({
+                              ...f,
+                              monitor_speed: v,
+                           }))
+                        }
                      />
                   </div>
                   <div className="flex gap-2 pt-2">

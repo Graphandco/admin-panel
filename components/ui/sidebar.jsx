@@ -24,13 +24,14 @@ import {
    TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PanelLeftIcon } from "lucide-react";
+import { AppAuraBg } from "@/components/app-aura-bg";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
-const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+// const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 const SidebarContext = React.createContext(null);
 
@@ -77,20 +78,20 @@ function SidebarProvider({
          : setOpen((open) => !open);
    }, [isMobile, setOpen, setOpenMobile]);
 
-   React.useEffect(() => {
-      const handleKeyDown = (event) => {
-         if (
-            event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-            (event.metaKey || event.ctrlKey)
-         ) {
-            event.preventDefault();
-            toggleSidebar();
-         }
-      };
+   //    React.useEffect(() => {
+   //       const handleKeyDown = (event) => {
+   //          if (
+   //             event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+   //             (event.metaKey || event.ctrlKey)
+   //          ) {
+   //             event.preventDefault();
+   //             toggleSidebar();
+   //          }
+   //       };
 
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-   }, [toggleSidebar]);
+   //       window.addEventListener("keydown", handleKeyDown);
+   //       return () => window.removeEventListener("keydown", handleKeyDown);
+   //    }, [toggleSidebar]);
 
    const state = open ? "expanded" : "collapsed";
 
@@ -170,19 +171,22 @@ function Sidebar({
                data-sidebar="sidebar"
                data-slot="sidebar"
                data-mobile="true"
-               className="text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden bg-[hsl(228deg_13.51%_7.25%/80%)]"
+               className="bg-sidebar text-sidebar-foreground w-(--sidebar-width)! max-w-(--sidebar-width) overflow-hidden p-0 [&>button]:hidden"
                style={{
                   "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
                }}
                side={side}
             >
+               <AppAuraBg contained />
                <SheetHeader className="sr-only">
                   <SheetTitle>Sidebar</SheetTitle>
                   <SheetDescription>
                      Displays the mobile sidebar.
                   </SheetDescription>
                </SheetHeader>
-               <div className="flex h-full w-full flex-col">{children}</div>
+               <div className="relative z-10 flex h-full w-full flex-col">
+                  {children}
+               </div>
             </SheetContent>
          </Sheet>
       );
@@ -223,7 +227,7 @@ function Sidebar({
             <div
                data-sidebar="sidebar"
                data-slot="sidebar-inner"
-               className="bg-transparent group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 flex size-full flex-col"
+               className="app-bg group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 flex size-full flex-col"
             >
                {children}
             </div>

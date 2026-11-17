@@ -18,9 +18,10 @@ const SEGMENT_LABELS = {
    dashboard: "Tableau de bord",
    sites: "Sites",
    monitoring: "Monitoring",
+   alertes: "Alertes",
+   activite: "Activité",
    agence: "Agence",
    plugins: "Extensions",
-   connexions: "Connexions",
    docker: "Docker",
    registry: "Images",
    cheatsheet: "Cheatsheet",
@@ -49,10 +50,12 @@ const SEGMENT_LABELS = {
    cron: "Cron",
    stockage: "Stockage",
    fichiers: "Fichiers",
+   systeme: "Système",
+   apps: "Apps",
    settings: "Réglages",
    logs: "Logs",
    deploy: "Déploiements",
-   git: "Git",
+   seaweedfs: "SeaweedFS",
 };
 
 function segmentLabel(segment, segments) {

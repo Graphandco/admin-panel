@@ -30,6 +30,7 @@ const FALLBACK = {
    telegramDocker: true,
    telegramBuildCache: true,
    siteMonitorIntervalMinutes: 5,
+   siteSlowMs: 700,
    updateChecksIntervalHours: 6,
    autoRefreshEnabled: false,
    autoRefreshSeconds: 60,

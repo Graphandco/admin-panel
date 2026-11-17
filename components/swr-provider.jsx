@@ -2,20 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { SWRConfig } from "swr";
-import { manualSWRConfig } from "@/lib/swr";
+import { manualSWRConfig, mobileSWRConfig } from "@/lib/swr";
 import { useSettingsOptional } from "@/components/settings-provider";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const STORAGE_KEY = "admin-panel-swr-cache-v1";
 
-const liveSWRConfig = {
-   revalidateOnFocus: true,
-   revalidateOnReconnect: true,
-   revalidateIfStale: true,
-   refreshInterval: 0,
-   dedupingInterval: 2_000,
-   shouldRetryOnError: false,
-   keepPreviousData: true,
-};
+/** Clés trop volatiles pour le cache session (badges / alertes). */
+const NEVER_PERSIST_KEYS = new Set(["notification-counts", "alerts-overview"]);
 
 function createPersistedMap() {
    let entries = [];
@@ -23,7 +17,9 @@ function createPersistedMap() {
       try {
          const raw = sessionStorage.getItem(STORAGE_KEY);
          const parsed = raw ? JSON.parse(raw) : [];
-         if (Array.isArray(parsed)) entries = parsed;
+         if (Array.isArray(parsed)) {
+            entries = parsed.filter(([key]) => !NEVER_PERSIST_KEYS.has(key));
+         }
       } catch {
          entries = [];
       }
@@ -36,6 +32,7 @@ function createPersistedMap() {
       try {
          const serializable = [];
          for (const [key, value] of map.entries()) {
+            if (NEVER_PERSIST_KEYS.has(key)) continue;
             if (!value || typeof value !== "object") continue;
             serializable.push([
                key,
@@ -85,16 +82,30 @@ function clearPersistedCache() {
 
 export function SwrProvider({ children }) {
    const ctx = useSettingsOptional();
-   const cacheEnabled = ctx?.settings?.swrCacheEnabled !== false;
+   const isMobile = useIsMobile();
+   const settingsCache = ctx?.settings?.swrCacheEnabled !== false;
    const [provider] = useState(() => () => createPersistedMap());
 
    const value = useMemo(() => {
-      if (cacheEnabled) {
-         return { ...manualSWRConfig, provider };
+      // Cache désactivé dans les réglages → mode live sans sessionStorage
+      if (!settingsCache) {
+         clearPersistedCache();
+         return {
+            ...mobileSWRConfig,
+            // desktop live: un peu plus agressif sur le focus
+            revalidateOnFocus: !isMobile,
+         };
       }
-      clearPersistedCache();
-      return { ...liveSWRConfig };
-   }, [cacheEnabled, provider]);
+
+      // Mobile / PWA : garder le cache session (évite fail-to-fetch à froid),
+      // mais revalider en arrière-plan + retries réseau.
+      if (isMobile) {
+         return { ...mobileSWRConfig, provider };
+      }
+
+      // Desktop : cache manuel (pas de refetch auto)
+      return { ...manualSWRConfig, provider };
+   }, [settingsCache, isMobile, provider]);
 
    return <SWRConfig value={value}>{children}</SWRConfig>;
 }

@@ -73,6 +73,8 @@ export function SiteLatencyHistory({ websiteId, kind = "site", className }) {
       }));
    }, [data, hoursNum]);
 
+   const slowThresholdMs = data?.slowThresholdMs ?? 700;
+
    return (
       <div className={cn("space-y-3", className)}>
          <div className="flex flex-wrap items-end justify-between gap-3">
@@ -155,7 +157,7 @@ export function SiteLatencyHistory({ websiteId, kind = "site", className }) {
                      width={40}
                   />
                   <ReferenceLine
-                     y={700}
+                     y={slowThresholdMs}
                      stroke="#f59e0b"
                      strokeDasharray="4 4"
                      strokeOpacity={0.7}
@@ -185,7 +187,7 @@ export function SiteLatencyHistory({ websiteId, kind = "site", className }) {
             </ChartContainer>
          )}
          <p className="text-[10px] text-muted-foreground">
-            Ligne ambre = seuil « lent » (700 ms)
+            Ligne ambre = seuil « lent » ({slowThresholdMs} ms)
          </p>
       </div>
    );

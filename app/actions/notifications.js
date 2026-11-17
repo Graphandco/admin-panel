@@ -8,7 +8,11 @@ function adminApiFetch(path, options = {}) {
    if (ADMIN_API_KEY) {
       headers["X-API-Key"] = ADMIN_API_KEY;
    }
-   return fetch(`${ADMIN_API_URL}${path}`, { ...options, headers });
+   return fetch(`${ADMIN_API_URL}${path}`, {
+      ...options,
+      headers,
+      cache: "no-store",
+   });
 }
 
 /**
@@ -30,13 +34,45 @@ export async function getNotificationCounts() {
 
 /**
  * @param {'apt'|'docker'|'wordpress'|null} [kind]
+ * @returns {Promise<{
+ *   data: object,
+ *   refreshed: object,
+ *   ok: string[],
+ *   failed: Array<{ kind: string, error: string }>
+ * }>}
  */
 export async function refreshNotificationCounts(kind = null) {
    const res = await adminApiFetch("/api/notifications/refresh", {
       method: "POST",
       body: JSON.stringify(kind ? { kind } : {}),
    });
-   const data = await res.json();
-   if (!data.success) throw new Error(data.error || "Erreur refresh");
-   return data.data;
+   const payload = await res.json();
+   if (!payload.success) throw new Error(payload.error || "Erreur refresh");
+
+   const refreshed = payload.refreshed || {};
+   const ok = [];
+   const failed = [];
+
+   if (kind) {
+      // single-kind: refreshed = { kind, count, checkedAt } ou { kind, error }
+      if (refreshed.error) {
+         failed.push({ kind, error: refreshed.error });
+      } else {
+         ok.push(kind);
+      }
+   } else {
+      for (const k of ["apt", "docker", "wordpress"]) {
+         const entry = refreshed[k];
+         if (entry?.error) failed.push({ kind: k, error: entry.error });
+         else if (entry && entry.count != null) ok.push(k);
+         else failed.push({ kind: k, error: entry?.error || "Aucun résultat" });
+      }
+   }
+
+   return {
+      data: payload.data,
+      refreshed,
+      ok,
+      failed,
+   };
 }

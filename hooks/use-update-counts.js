@@ -38,10 +38,18 @@ const empty = {
 };
 
 export function useUpdateCounts() {
-   // Pas de fallbackData : avec revalidateIfStale:false, empty serait
-   // traité comme cache et bloquerait le 1er fetch / écraserait l'UI.
+   // Pas de sessionStorage (NEVER_PERSIST), mais revalidate soft au mount.
+   // Pas de revalidateOnFocus : trop agressif en PWA (bascule d’app).
    const swr = useCachedSWR(UPDATE_COUNTS_KEY, () => getNotificationCounts(), {
-      dedupingInterval: 10_000,
+      dedupingInterval: 30_000,
+      revalidateIfStale: true,
+      revalidateOnMount: true,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      shouldRetryOnError: true,
+      errorRetryCount: 3,
+      errorRetryInterval: 2_000,
+      keepPreviousData: true,
    });
    return {
       ...swr,
@@ -59,7 +67,7 @@ export function mutateUpdateCounts() {
  * @param {'apt'|'docker'|'wordpress'|null} [kind]
  */
 export async function refreshAndMutateUpdateCounts(kind = null) {
-   const data = await refreshNotificationCounts(kind);
-   await globalMutate(UPDATE_COUNTS_KEY, data, { revalidate: false });
-   return data;
+   const result = await refreshNotificationCounts(kind);
+   await globalMutate(UPDATE_COUNTS_KEY, result.data, { revalidate: false });
+   return result;
 }

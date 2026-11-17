@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCachedSWR } from "@/hooks/use-cached-swr";
 import {
    Card,
@@ -17,23 +18,29 @@ import {
 } from "lucide-react";
 import { wordpressPlugins } from "@/app/actions/wordpress";
 
-export const WORDPRESS_PLUGINS_KEY = "wordpress-plugins";
+export const WORDPRESS_PLUGINS_KEY = "wordpress-plugins-network";
 
 export default function PluginsCard() {
    const {
-      data: plugins = [],
+      data,
       error: fetchError,
       isLoading: loading,
       mutate,
    } = useCachedSWR(WORDPRESS_PLUGINS_KEY, () => wordpressPlugins());
    const error = fetchError?.message || null;
 
+   const summary = data?.summary;
+   const plugins = data?.plugins || [];
+   const total = summary?.total ?? plugins.length;
+   const updatesCount =
+      summary?.updates ??
+      plugins.filter((p) => p.update === "available").length;
+   const activeCount =
+      summary?.active ?? plugins.filter((p) => p.active).length;
+
    async function load() {
       await mutate();
    }
-
-   const total = plugins.length;
-   const updatesCount = plugins.filter((p) => p.update === "available").length;
 
    if (error) {
       return (
@@ -62,7 +69,7 @@ export default function PluginsCard() {
                   <PackageIcon className="size-5 text-[#21759b] opacity-90" />
                </div>
                <span className="text-sm md:text-lg font-medium text-white truncate">
-                  Plugins Wordpress
+                  Extensions
                </span>
             </CardTitle>
             <CardAction>
@@ -75,27 +82,28 @@ export default function PluginsCard() {
                )}
             </CardAction>
          </CardHeader>
-         <CardContent className="space-y-1">
+         <CardContent className="space-y-2">
             <p className="text-muted-foreground text-xs md:text-sm">
-               {updatesCount > 0 ? (
-                  <span className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400">
-                     <ArrowUpCircleIcon className="size-3.5 md:size-4 shrink-0" />
-                     <span className="leading-snug">
-                        {updatesCount} mise{updatesCount > 1 ? "s" : ""} à jour
-                        à faire
-                     </span>
-                  </span>
-               ) : (
-                  total > 0 && (
-                     <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
-                        <CheckCircle2Icon className="size-3.5 md:size-4 shrink-0" />
-                        <span className="leading-snug">
-                           Tous les plugins sont à jour
-                        </span>
-                     </span>
-                  )
-               )}
+               {activeCount} actif{activeCount > 1 ? "s" : ""} sur le réseau
             </p>
+            {updatesCount > 0 ? (
+               <Link
+                  href="/wordpress/plugins"
+                  className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400 text-xs md:text-sm hover:underline"
+               >
+                  <ArrowUpCircleIcon className="size-3.5 md:size-4 shrink-0" />
+                  <span>
+                     {updatesCount} mise{updatesCount > 1 ? "s" : ""} à jour
+                  </span>
+               </Link>
+            ) : (
+               total > 0 && (
+                  <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-xs md:text-sm">
+                     <CheckCircle2Icon className="size-3.5 md:size-4 shrink-0" />
+                     Toutes à jour
+                  </span>
+               )
+            )}
          </CardContent>
       </Card>
    );

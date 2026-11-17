@@ -14,6 +14,7 @@ import Image from "next/image";
 
 export const WORDPRESS_SITES_KEY = "wordpress-sites";
 
+/** Carte récap sites — aussi source de WORDPRESS_SITES_KEY */
 export default function SitesRecapCard() {
    const {
       data: sites = [],
@@ -22,11 +23,6 @@ export default function SitesRecapCard() {
       mutate,
    } = useCachedSWR(WORDPRESS_SITES_KEY, () => wordpressSites());
    const error = fetchError?.message || null;
-
-   async function load() {
-      await mutate();
-   }
-
    const count = sites.length;
 
    if (error) {
@@ -36,7 +32,7 @@ export default function SitesRecapCard() {
                <div className="text-destructive flex items-center gap-3">
                   <p>{error}</p>
                   <button
-                     onClick={load}
+                     onClick={() => mutate()}
                      className="inline-flex items-center gap-1 text-sm underline"
                   >
                      <RefreshCwIcon className="size-4" />

@@ -1,6 +1,6 @@
 export const metadata = {
   title: "Déploiements - Graph & Co",
-  description: "Lance les déploiements (deploy.sh) des projets",
+  description: "Redeploy des images depuis le registry privé",
 };
 
 export default function Layout({ children }) {

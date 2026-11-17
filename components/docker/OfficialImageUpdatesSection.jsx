@@ -91,9 +91,9 @@ export function OfficialImageUpdatesSection() {
                      Mises à jour Docker Hub
                   </CardTitle>
                   <p className="text-xs text-muted-foreground mt-1">
-                     Images Docker Hub (officielles + tierces : mysql,
-                     vaultwarden, watchtower…) — digest local vs distant.
-                     Dernière vérif : {formatCheckedAt(data?.checkedAt)}
+                     Images Docker Hub (officielles + tierces) — versions
+                     lisibles quand disponibles. Dernière vérif :{" "}
+                     {formatCheckedAt(data?.checkedAt)}
                   </p>
                </div>
                <Button
@@ -138,8 +138,8 @@ export function OfficialImageUpdatesSection() {
                            <TableRow>
                               <TableHead>Conteneur</TableHead>
                               <TableHead>Image</TableHead>
-                              <TableHead>Local</TableHead>
-                              <TableHead>Docker Hub</TableHead>
+                              <TableHead>Actuelle</TableHead>
+                              <TableHead>Mise à jour</TableHead>
                               <TableHead>État</TableHead>
                               <TableHead className="text-right">
                                  Action
@@ -165,14 +165,22 @@ export function OfficialImageUpdatesSection() {
                                        </code>
                                     </TableCell>
                                     <TableCell>
-                                       <code className="text-xs tabular-nums">
-                                          {u.localDigestShort || "—"}
-                                       </code>
+                                       <span className="text-sm tabular-nums">
+                                          {u.localVersion || "—"}
+                                       </span>
                                     </TableCell>
                                     <TableCell>
-                                       <code className="text-xs tabular-nums">
-                                          {u.remoteDigestShort || "—"}
-                                       </code>
+                                       {u.updateAvailable ? (
+                                          <span className="text-sm tabular-nums text-amber-300 font-medium">
+                                             {u.remoteVersion ||
+                                                u.remoteDigestShort ||
+                                                "disponible"}
+                                          </span>
+                                       ) : (
+                                          <span className="text-xs text-muted-foreground">
+                                             —
+                                          </span>
+                                       )}
                                     </TableCell>
                                     <TableCell>
                                        {u.updateAvailable ? (
@@ -231,7 +239,7 @@ export function OfficialImageUpdatesSection() {
             title="Mettre à jour cette image ?"
             description={
                confirmItem
-                  ? `Pull de ${confirmItem.display || confirmItem.image} puis recreate compose.\nLocal : ${confirmItem.localDigestShort || "—"} → Hub : ${confirmItem.remoteDigestShort || "—"}`
+                  ? `Pull de ${confirmItem.display || confirmItem.image} puis recreate compose.\n${confirmItem.localVersion || confirmItem.localDigestShort || "—"} → ${confirmItem.remoteVersion || confirmItem.remoteDigestShort || "—"}`
                   : null
             }
             confirmLabel="Mettre à jour"

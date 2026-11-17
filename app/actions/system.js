@@ -29,7 +29,12 @@ export async function getSystemStatsHistory(date) {
       const res = await adminApiFetch(`/api/system/stats/history${params}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Erreur API");
-      return data.data || [];
+      return {
+         data: data.data || [],
+         summary: data.summary || null,
+         lastCollectedAt: data.lastCollectedAt || null,
+         date: data.date || date || null,
+      };
    } catch (err) {
       console.error("getSystemStatsHistory:", err.message);
       throw err;

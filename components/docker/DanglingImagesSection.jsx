@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import RefreshButton from "@/components/refresh-button";
 import {
    CheckCircle2Icon,
    CopyIcon,
    Loader2Icon,
-   RefreshCwIcon,
    Trash2Icon,
    TriangleAlertIcon,
 } from "lucide-react";
@@ -146,19 +146,11 @@ export function DanglingImagesSection() {
                   </p>
                </div>
                <div className="flex items-center gap-2">
-                  <Button
-                     variant="outline"
-                     size="sm"
+                  <RefreshButton
                      onClick={() => load()}
-                     disabled={loading || isValidating || removing}
-                  >
-                     {isValidating ? (
-                        <Loader2Icon className="size-4 animate-spin" />
-                     ) : (
-                        <RefreshCwIcon className="size-4" />
-                     )}
-                     Actualiser
-                  </Button>
+                     loading={loading || isValidating}
+                     disabled={removing}
+                  />
                   {freeCount > 0 ? (
                      <Button
                         variant="destructive"

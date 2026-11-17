@@ -7,6 +7,10 @@ const TITLES = {
       title: "Images",
       subtitle: "Registry, dangling et mises à jour Hub",
    },
+   "/docker/volumes": {
+      title: "Volumes",
+      subtitle: "Volumes nommés, conteneurs attachés et bind mounts",
+   },
    "/docker/stats": { title: "Stats Docker" },
    "/docker/cheatsheet": { title: "Cheatsheet Docker" },
    "/docker/logs": { title: "Logs Docker" },
